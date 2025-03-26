@@ -1,0 +1,54 @@
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
+import { useLocation } from "wouter";
+
+interface HeaderProps {
+  onOpenAdminPanel?: () => void;
+}
+
+export function Header({ onOpenAdminPanel }: HeaderProps) {
+  const { user, logoutMutation } = useAuth();
+  const [, setLocation] = useLocation();
+
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
+
+  return (
+    <header className="bg-white shadow-sm">
+      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div className="flex items-center">
+          <h1 className="text-xl font-semibold text-primary">SoundBoard Pro</h1>
+        </div>
+        
+        <div className="flex items-center space-x-4">
+          {user && (
+            <div className="text-sm text-neutral-600">
+              Welcome, <span className="font-medium">{user.fullName}</span>
+            </div>
+          )}
+          
+          {user?.role === "admin" && onOpenAdminPanel && (
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              onClick={onOpenAdminPanel}
+              className="text-sm"
+            >
+              Admin Panel
+            </Button>
+          )}
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleLogout}
+            className="text-sm"
+          >
+            Logout
+          </Button>
+        </div>
+      </div>
+    </header>
+  );
+}
