@@ -5,6 +5,7 @@ import {
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import { hashPassword } from "./auth";
 
 const MemoryStore = createMemoryStore(session);
 
@@ -61,14 +62,23 @@ export class MemStorage implements IStorage {
     this.soundIdCounter = 1;
     
     // Initialize with admin account
-    this.seedInitialData();
+    this.initializeData();
+  }
+  
+  private async initializeData() {
+    try {
+      await this.seedInitialData();
+    } catch (error) {
+      console.error("Failed to initialize data:", error);
+    }
   }
 
-  private seedInitialData() {
-    // Create admin user
+  private async seedInitialData() {
+    // Create admin user with hashed password
+    const hashedPassword = await hashPassword("admin123");
     this.createUser({
       username: "admin",
-      password: "admin123", // This will be hashed in auth.ts
+      password: hashedPassword,
       fullName: "Administrator",
       role: "admin",
       accessLevel: "full"
@@ -156,7 +166,11 @@ export class MemStorage implements IStorage {
   
   async createSound(insertSound: InsertSound): Promise<Sound> {
     const id = this.soundIdCounter++;
-    const sound: Sound = { ...insertSound, id };
+    const sound: Sound = { 
+      ...insertSound, 
+      id,
+      accessLevel: insertSound.accessLevel || "all"
+    };
     this.sounds.set(id, sound);
     return sound;
   }
