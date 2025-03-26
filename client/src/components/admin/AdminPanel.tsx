@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, PlayCircle } from "lucide-react";
+import { Plus, Edit, Trash2, PlayCircle, Loader2 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { User, Sound, Category } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
