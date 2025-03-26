@@ -6,7 +6,8 @@ import {
   loginSchema, 
   insertUserSchema, 
   insertCategorySchema, 
-  insertSoundSchema 
+  insertSoundSchema,
+  insertBroadcastMessageSchema
 } from "@shared/schema";
 import passport from "passport";
 import multer from "multer";
@@ -299,6 +300,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Serve sound files
   app.use('/api/sounds/files', isAuthenticated, express.static(path.join(__dirname, 'public', 'sounds')));
+
+  // Broadcast message routes
+  app.get("/api/messages", isAuthenticated, async (req, res, next) => {
+    try {
+      let messages;
+      
+      // Get unread messages for the current user if the query param is set
+      if (req.query.unread === "true" && req.user) {
+        messages = await storage.getUnreadBroadcastMessages(req.user.id);
+      } else {
+        messages = await storage.getBroadcastMessages();
+      }
+      
+      res.json(messages);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.post("/api/messages", isAdmin, async (req, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const messageData = {
+        ...req.body,
+        createdBy: req.user.id
+      };
+      
+      const validation = insertBroadcastMessageSchema.safeParse(messageData);
+      if (!validation.success) {
+        return res.status(400).json({ 
+          message: "Invalid message data", 
+          errors: validation.error.errors 
+        });
+      }
+      
+      const message = await storage.createBroadcastMessage(messageData);
+      res.status(201).json(message);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.post("/api/messages/:id/read", isAuthenticated, async (req, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid message ID" });
+      }
+      
+      const message = await storage.markBroadcastMessageAsRead(id, req.user.id);
+      if (!message) {
+        return res.status(404).json({ message: "Message not found" });
+      }
+      
+      res.json(message);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.delete("/api/messages/:id", isAdmin, async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid message ID" });
+      }
+      
+      const success = await storage.deleteBroadcastMessage(id);
+      if (!success) {
+        return res.status(404).json({ message: "Message not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

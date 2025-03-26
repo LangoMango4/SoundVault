@@ -1,7 +1,8 @@
 import { 
   users, User, InsertUser, 
   categories, Category, InsertCategory,
-  sounds, Sound, InsertSound
+  sounds, Sound, InsertSound,
+  broadcastMessages, BroadcastMessage, InsertBroadcastMessage
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -36,6 +37,14 @@ export interface IStorage {
   getSounds(): Promise<Sound[]>;
   getSoundsByCategory(categoryId: number): Promise<Sound[]>;
   getSoundsByAccessLevel(accessLevel: string): Promise<Sound[]>;
+  
+  // Broadcast message operations
+  getBroadcastMessage(id: number): Promise<BroadcastMessage | undefined>;
+  createBroadcastMessage(message: InsertBroadcastMessage): Promise<BroadcastMessage>;
+  deleteBroadcastMessage(id: number): Promise<boolean>;
+  getBroadcastMessages(): Promise<BroadcastMessage[]>;
+  markBroadcastMessageAsRead(messageId: number, userId: number): Promise<BroadcastMessage | undefined>;
+  getUnreadBroadcastMessages(userId: number): Promise<BroadcastMessage[]>;
 }
 
 // In-memory storage implementation
@@ -43,16 +52,19 @@ export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private categories: Map<number, Category>;
   private sounds: Map<number, Sound>;
+  private broadcastMessages: Map<number, BroadcastMessage>;
   sessionStore: session.Store;
   
   private userIdCounter: number;
   private categoryIdCounter: number;
   private soundIdCounter: number;
+  private broadcastMessageIdCounter: number;
 
   constructor() {
     this.users = new Map();
     this.categories = new Map();
     this.sounds = new Map();
+    this.broadcastMessages = new Map();
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // Prune expired entries every 24h
     });
@@ -60,6 +72,7 @@ export class MemStorage implements IStorage {
     this.userIdCounter = 1;
     this.categoryIdCounter = 1;
     this.soundIdCounter = 1;
+    this.broadcastMessageIdCounter = 1;
     
     // Initialize with admin account
     this.initializeData();
@@ -208,6 +221,65 @@ export class MemStorage implements IStorage {
         return sound.accessLevel === "all";
       }
     });
+  }
+
+  // Broadcast message operations
+  async getBroadcastMessage(id: number): Promise<BroadcastMessage | undefined> {
+    return this.broadcastMessages.get(id);
+  }
+  
+  async createBroadcastMessage(insertMessage: InsertBroadcastMessage): Promise<BroadcastMessage> {
+    const id = this.broadcastMessageIdCounter++;
+    const timestamp = new Date();
+    
+    // Ensure priority has a default value if not provided
+    const message: BroadcastMessage = { 
+      ...insertMessage, 
+      id, 
+      createdAt: timestamp,
+      priority: insertMessage.priority || "normal",
+      expiresAt: insertMessage.expiresAt || null,
+      hasBeenRead: []
+    };
+    
+    this.broadcastMessages.set(id, message);
+    return message;
+  }
+  
+  async deleteBroadcastMessage(id: number): Promise<boolean> {
+    return this.broadcastMessages.delete(id);
+  }
+  
+  async getBroadcastMessages(): Promise<BroadcastMessage[]> {
+    return Array.from(this.broadcastMessages.values())
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+  
+  async markBroadcastMessageAsRead(messageId: number, userId: number): Promise<BroadcastMessage | undefined> {
+    const message = await this.getBroadcastMessage(messageId);
+    if (!message) return undefined;
+    
+    // Check if the user has already read this message
+    const hasBeenRead = Array.isArray(message.hasBeenRead) ? message.hasBeenRead : [];
+    
+    if (!hasBeenRead.includes(userId)) {
+      const updatedMessage = { 
+        ...message, 
+        hasBeenRead: [...hasBeenRead, userId] 
+      };
+      this.broadcastMessages.set(messageId, updatedMessage);
+      return updatedMessage;
+    }
+    
+    return message;
+  }
+  
+  async getUnreadBroadcastMessages(userId: number): Promise<BroadcastMessage[]> {
+    return (await this.getBroadcastMessages())
+      .filter(message => {
+        const hasBeenRead = Array.isArray(message.hasBeenRead) ? message.hasBeenRead : [];
+        return !hasBeenRead.includes(userId);
+      });
   }
 }
 

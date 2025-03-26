@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, jsonb, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -52,6 +52,27 @@ export type InsertCategory = z.infer<typeof insertCategorySchema>;
 
 export type Sound = typeof sounds.$inferSelect;
 export type InsertSound = z.infer<typeof insertSoundSchema>;
+
+// Broadcast message model
+export const broadcastMessages = pgTable("broadcast_messages", {
+  id: serial("id").primaryKey(),
+  message: text("message").notNull(),
+  title: text("title").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdBy: integer("created_by").notNull(), // User ID who created the message
+  priority: text("priority").notNull().default("normal"), // "low", "normal", "high", "urgent"
+  expiresAt: timestamp("expires_at"), // Optional: when the message expires
+  hasBeenRead: jsonb("has_been_read").default("[]").notNull(), // Array of user IDs who've read the message
+});
+
+export const insertBroadcastMessageSchema = createInsertSchema(broadcastMessages).omit({
+  id: true,
+  createdAt: true,
+  hasBeenRead: true,
+});
+
+export type BroadcastMessage = typeof broadcastMessages.$inferSelect;
+export type InsertBroadcastMessage = z.infer<typeof insertBroadcastMessageSchema>;
 
 // Extra validation schemas
 export const loginSchema = z.object({

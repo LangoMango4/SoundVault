@@ -180,7 +180,7 @@ export default function AuthPage() {
                   </Button>
                   
                   <div className="text-center text-sm text-muted-foreground mt-4">
-                    <p>Default admin account: admin / admin123</p>
+                    <p>Contact your system administrator for admin credentials</p>
                   </div>
                 </form>
               </Form>
