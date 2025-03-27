@@ -22,7 +22,6 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
   const [adminPassword, setAdminPassword] = useState("");
   const [error, setError] = useState("");
   const [showUnlockOptions, setShowUnlockOptions] = useState(false);
-  const [showAdminPasswordPrompt, setShowAdminPasswordPrompt] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
@@ -59,6 +58,12 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
   };
 
   const handleAdminPasswordUnlock = async () => {
+    // Double check that user is an admin before proceeding
+    if (!isAdmin) {
+      setError("You must be an admin to use this feature.");
+      return;
+    }
+    
     if (adminPassword === ADMIN_PASSWORD) {
       try {
         // API request to unlock the screen (server-side)
@@ -69,7 +74,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
         });
         setAdminPassword("");
         setError("");
-        setShowAdminPasswordPrompt(false);
+        setShowUnlockOptions(false);
         onUnlock();
       } catch (error) {
         toast({
@@ -83,71 +88,6 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
       setAdminPassword("");
     }
   };
-  
-  // If showing the admin password prompt
-  if (showAdminPasswordPrompt) {
-    return (
-      <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50">
-        <div className="max-w-xl w-full px-4">
-          <div className="flex flex-col items-center text-center space-y-6">
-            <div className="w-48 h-48 flex items-center justify-center">
-              <img 
-                src={lockScreenImage} 
-                alt="Locked Screen" 
-                className="object-contain max-w-full max-h-full"
-              />
-            </div>
-            
-            <div className="space-y-4 w-full max-w-xl">
-              <div className="rounded-md bg-blue-50 p-4 border border-blue-200">
-                <div className="flex items-start gap-3">
-                  <div className="text-blue-800 text-sm">
-                    <p className="font-medium">Admin Override</p>
-                    <p>
-                      Enter the admin password to unlock the website. This will permanently unlock the site for all users.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="space-y-1">
-                  <Input
-                    type="password"
-                    placeholder="Enter admin password"
-                    value={adminPassword}
-                    onChange={(e) => setAdminPassword(e.target.value)}
-                    className="text-center"
-                  />
-                  {error && <p className="text-sm text-destructive text-center">{error}</p>}
-                </div>
-                
-                <div className="flex gap-2 pt-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      setShowAdminPasswordPrompt(false);
-                      setError("");
-                      setAdminPassword("");
-                    }}
-                    className="flex-1"
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={handleAdminPasswordUnlock}
-                    className="flex-1"
-                  >
-                    Unlock as Admin
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // Main lock screen
   if (!showUnlockOptions) {
@@ -164,25 +104,14 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
             
             <div className="flex flex-col gap-3">
               {isAdmin ? (
-                <>
-                  <Button 
-                    variant="default" 
-                    onClick={() => setShowUnlockOptions(true)}
-                    className="mt-4"
-                  >
-                    <Lock className="mr-2 h-4 w-4" />
-                    Admin Unlock Options
-                  </Button>
-                  
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setShowAdminPasswordPrompt(true)}
-                    className="mt-2"
-                  >
-                    <Key className="mr-2 h-4 w-4" />
-                    Admin Override
-                  </Button>
-                </>
+                <Button 
+                  variant="default" 
+                  onClick={() => setShowUnlockOptions(true)}
+                  className="mt-4"
+                >
+                  <Lock className="mr-2 h-4 w-4" />
+                  Admin Unlock Options
+                </Button>
               ) : (
                 <Button 
                   variant="outline" 
@@ -230,24 +159,27 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
           
           <div className="space-y-4 w-full max-w-xl">
             <Tabs 
-              defaultValue="admin" 
-              value="admin"
+              defaultValue="pin" 
               className="w-full"
             >
-              <TabsList className="grid grid-cols-1 mb-4">
-                <TabsTrigger value="admin">
-                  <ShieldCheck className="mr-2 h-4 w-4" />
-                  Admin Unlock
+              <TabsList className="grid grid-cols-2 mb-4">
+                <TabsTrigger value="pin">
+                  <Lock className="mr-2 h-4 w-4" />
+                  PIN Unlock
+                </TabsTrigger>
+                <TabsTrigger value="password">
+                  <Key className="mr-2 h-4 w-4" />
+                  Unlock for Admins Only
                 </TabsTrigger>
               </TabsList>
               
-              <TabsContent value="admin" className="space-y-4">
+              <TabsContent value="pin" className="space-y-4">
                 <div className="rounded-md bg-amber-50 p-4 border border-amber-200">
                   <div className="flex items-start gap-3">
                     <div className="text-amber-800 text-sm">
                       <p className="font-medium">Admin Access Required</p>
                       <p>
-                        Enter the admin PIN to permanently unlock the website for all users. Only administrators have this access.
+                        Enter the admin PIN to permanently unlock the website for all users.
                       </p>
                     </div>
                   </div>
@@ -278,7 +210,53 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
                       onClick={handleAdminUnlockAttempt}
                       className="flex-1"
                     >
-                      Permanently Unlock
+                      Unlock with PIN
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="password" className="space-y-4">
+                <div className="rounded-md bg-blue-50 p-4 border border-blue-200">
+                  <div className="flex items-start gap-3">
+                    <div className="text-blue-800 text-sm">
+                      <p className="font-medium">Admin Only Access</p>
+                      <p>
+                        Enter the admin password to unlock. Only admin users can use this option.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="space-y-1">
+                    <Input
+                      type="password"
+                      placeholder="Enter admin password"
+                      value={adminPassword}
+                      onChange={(e) => setAdminPassword(e.target.value)}
+                      className="text-center"
+                    />
+                    {error && <p className="text-sm text-destructive text-center">{error}</p>}
+                  </div>
+                  
+                  <div className="flex gap-2 pt-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setShowUnlockOptions(false);
+                        setError("");
+                        setAdminPassword("");
+                      }}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleAdminPasswordUnlock}
+                      className="flex-1"
+                    >
+                      Unlock with Password
                     </Button>
                   </div>
                 </div>
