@@ -510,17 +510,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Screen lock settings routes
-  app.post("/api/settings/lock", isAdmin, async (req, res, next) => {
+  app.post("/api/settings/lock", async (req, res, next) => {
     try {
       const { locked } = req.body;
       if (typeof locked !== "boolean") {
         return res.status(400).json({ message: "Invalid lock setting" });
       }
 
-      // Store the lock state in memory
-      // In a real application, this would be stored in a database
-      global.isScreenLocked = locked;
+      // For setting to locked state, anyone can lock the screen
+      if (locked === true) {
+        global.isScreenLocked = true;
+        return res.json({ locked: global.isScreenLocked });
+      }
       
+      // For unlocking, only admins can permanently unlock for everyone
+      if (req.user?.role !== "admin") {
+        // For regular users, we don't actually unlock, just return 403
+        // The client will handle this by unlocking just for that user
+        return res.status(403).json({ 
+          message: "Forbidden: Admin access required to unlock for everyone",
+          userUnlockAllowed: true
+        });
+      }
+
+      // Admin unlocking for everyone
+      global.isScreenLocked = false;
       res.json({ locked: global.isScreenLocked });
     } catch (error) {
       next(error);
