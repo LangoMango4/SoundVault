@@ -74,6 +74,24 @@ export const insertBroadcastMessageSchema = createInsertSchema(broadcastMessages
 export type BroadcastMessage = typeof broadcastMessages.$inferSelect;
 export type InsertBroadcastMessage = z.infer<typeof insertBroadcastMessageSchema>;
 
+// Chat message model
+export const chatMessages = pgTable("chat_messages", {
+  id: serial("id").primaryKey(),
+  content: text("content").notNull(),
+  userId: integer("user_id").notNull(), // User ID who sent the message
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  isDeleted: boolean("is_deleted").default(false).notNull(),
+});
+
+export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
+  id: true,
+  timestamp: true,
+  isDeleted: true,
+});
+
+export type ChatMessage = typeof chatMessages.$inferSelect;
+export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+
 // Extra validation schemas
 export const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),

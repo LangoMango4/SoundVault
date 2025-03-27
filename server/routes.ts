@@ -7,7 +7,8 @@ import {
   insertUserSchema, 
   insertCategorySchema, 
   insertSoundSchema,
-  insertBroadcastMessageSchema
+  insertBroadcastMessageSchema,
+  insertChatMessageSchema
 } from "@shared/schema";
 import passport from "passport";
 import multer from "multer";
@@ -401,6 +402,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Chat message routes
+  app.get("/api/chat", isAuthenticated, async (req, res, next) => {
+    try {
+      const messages = await storage.getChatMessages();
+      res.json(messages);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/chat", isAuthenticated, async (req, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const chatMessageData = {
+        content: req.body.content,
+        userId: req.user.id
+      };
+      
+      const validation = insertChatMessageSchema.safeParse(chatMessageData);
+      if (!validation.success) {
+        return res.status(400).json({ 
+          message: "Invalid chat message data", 
+          errors: validation.error.errors 
+        });
+      }
+      
+      const message = await storage.createChatMessage(chatMessageData);
+      res.status(201).json(message);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.delete("/api/chat/:id", isAuthenticated, async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid chat message ID" });
+      }
+      
+      // Get the message
+      const message = await storage.getChatMessage(id);
+      if (!message) {
+        return res.status(404).json({ message: "Chat message not found" });
+      }
+      
+      // Check if the user is the owner of the message or an admin
+      if (message.userId !== req.user?.id && req.user?.role !== "admin") {
+        return res.status(403).json({ message: "You can only delete your own messages" });
+      }
+
+      // Do a soft delete to keep the message in the history but mark it as deleted
+      const updatedMessage = await storage.softDeleteChatMessage(id);
+      if (!updatedMessage) {
+        return res.status(404).json({ message: "Chat message not found" });
+      }
+      
+      res.json(updatedMessage);
     } catch (error) {
       next(error);
     }

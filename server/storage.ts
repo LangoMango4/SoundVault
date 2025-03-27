@@ -2,7 +2,8 @@ import {
   users, User, InsertUser, 
   categories, Category, InsertCategory,
   sounds, Sound, InsertSound,
-  broadcastMessages, BroadcastMessage, InsertBroadcastMessage
+  broadcastMessages, BroadcastMessage, InsertBroadcastMessage,
+  chatMessages, ChatMessage, InsertChatMessage
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -24,6 +25,7 @@ const USERS_FILE = path.join(DATA_DIR, "users.json");
 const CATEGORIES_FILE = path.join(DATA_DIR, "categories.json");
 const SOUNDS_FILE = path.join(DATA_DIR, "sounds.json");
 const MESSAGES_FILE = path.join(DATA_DIR, "messages.json");
+const CHAT_MESSAGES_FILE = path.join(DATA_DIR, "chat_messages.json");
 
 // Ensure data directory exists
 if (!fs.existsSync(DATA_DIR)) {
@@ -65,6 +67,13 @@ export interface IStorage {
   getBroadcastMessages(): Promise<BroadcastMessage[]>;
   markBroadcastMessageAsRead(messageId: number, userId: number): Promise<BroadcastMessage | undefined>;
   getUnreadBroadcastMessages(userId: number): Promise<BroadcastMessage[]>;
+  
+  // Chat message operations
+  getChatMessage(id: number): Promise<ChatMessage | undefined>;
+  createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
+  deleteChatMessage(id: number): Promise<boolean>;
+  getChatMessages(): Promise<ChatMessage[]>;
+  softDeleteChatMessage(id: number): Promise<ChatMessage | undefined>;
 }
 
 // In-memory storage implementation
@@ -73,18 +82,21 @@ export class MemStorage implements IStorage {
   private categories: Map<number, Category>;
   private sounds: Map<number, Sound>;
   private broadcastMessages: Map<number, BroadcastMessage>;
+  private chatMessages: Map<number, ChatMessage>;
   sessionStore: session.Store;
   
   private userIdCounter: number;
   private categoryIdCounter: number;
   private soundIdCounter: number;
   private broadcastMessageIdCounter: number;
+  private chatMessageIdCounter: number;
 
   constructor() {
     this.users = new Map();
     this.categories = new Map();
     this.sounds = new Map();
     this.broadcastMessages = new Map();
+    this.chatMessages = new Map();
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // Prune expired entries every 24h
     });
@@ -93,6 +105,7 @@ export class MemStorage implements IStorage {
     this.categoryIdCounter = 1;
     this.soundIdCounter = 1;
     this.broadcastMessageIdCounter = 1;
+    this.chatMessageIdCounter = 1;
     
     // Initialize with admin account and load saved data
     this.initializeData();
@@ -116,6 +129,10 @@ export class MemStorage implements IStorage {
       // Save broadcast messages
       const messagesData = JSON.stringify(Array.from(this.broadcastMessages.values()), null, 2);
       fs.writeFileSync(MESSAGES_FILE, messagesData);
+      
+      // Save chat messages
+      const chatMessagesData = JSON.stringify(Array.from(this.chatMessages.values()), null, 2);
+      fs.writeFileSync(CHAT_MESSAGES_FILE, chatMessagesData);
       
     } catch (error) {
       console.error("Error saving data to files:", error);
@@ -165,6 +182,17 @@ export class MemStorage implements IStorage {
           this.broadcastMessages.set(message.id, message);
           if (message.id >= this.broadcastMessageIdCounter) {
             this.broadcastMessageIdCounter = message.id + 1;
+          }
+        });
+      }
+      
+      // Load chat messages
+      if (fs.existsSync(CHAT_MESSAGES_FILE)) {
+        const chatMessagesData = JSON.parse(fs.readFileSync(CHAT_MESSAGES_FILE, 'utf-8'));
+        chatMessagesData.forEach((message: ChatMessage) => {
+          this.chatMessages.set(message.id, message);
+          if (message.id >= this.chatMessageIdCounter) {
+            this.chatMessageIdCounter = message.id + 1;
           }
         });
       }
@@ -403,6 +431,50 @@ export class MemStorage implements IStorage {
         const hasBeenRead = Array.isArray(message.hasBeenRead) ? message.hasBeenRead : [];
         return !hasBeenRead.includes(userId);
       });
+  }
+
+  // Chat message operations
+  async getChatMessage(id: number): Promise<ChatMessage | undefined> {
+    return this.chatMessages.get(id);
+  }
+  
+  async createChatMessage(insertMessage: InsertChatMessage): Promise<ChatMessage> {
+    const id = this.chatMessageIdCounter++;
+    const timestamp = new Date();
+    
+    const message: ChatMessage = { 
+      ...insertMessage, 
+      id, 
+      timestamp,
+      isDeleted: false
+    };
+    
+    this.chatMessages.set(id, message);
+    this.saveDataToFiles(); // Save after modification
+    return message;
+  }
+  
+  async deleteChatMessage(id: number): Promise<boolean> {
+    const result = this.chatMessages.delete(id);
+    if (result) {
+      this.saveDataToFiles(); // Save after modification
+    }
+    return result;
+  }
+  
+  async getChatMessages(): Promise<ChatMessage[]> {
+    return Array.from(this.chatMessages.values())
+      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  }
+  
+  async softDeleteChatMessage(id: number): Promise<ChatMessage | undefined> {
+    const message = await this.getChatMessage(id);
+    if (!message) return undefined;
+    
+    const updatedMessage = { ...message, isDeleted: true };
+    this.chatMessages.set(id, updatedMessage);
+    this.saveDataToFiles(); // Save after modification
+    return updatedMessage;
   }
 }
 
