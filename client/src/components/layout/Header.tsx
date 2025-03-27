@@ -27,23 +27,30 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
   
   // Function to handle teacher inbound button click (for the button)
   const handleTeacherInbound = () => {
+    // Immediately clear the page so the user sees nothing
+    document.body.innerHTML = '';
+    document.body.style.backgroundColor = '#000';
+    document.title = '';
+    
+    // Try several approaches for closing the tab or navigating away
+    
+    // First approach: Redirect to a common "Not Found" domain
     try {
-      // This creates a window.open('') and then immediately closes it
-      // The browser interpretes this as a close command for the current tab
-      window.open('', '_self', '')?.close();
-      
-      // Try another approach if the above didn't work
-      // This will create a blank page first without fully refreshing
-      document.body.innerHTML = '';
-      document.head.innerHTML = '';
-      // Then try closing the blank page
+      window.location.href = 'http://nxdomain.example.com';
+    } catch (e) {
+      // If that fails, try to close directly
       window.close();
-    } catch (err) {
-      console.error('Error closing tab:', err);
-      
-      // Last resort - redirect to blank page if closing didn't work
-      window.location.replace('about:blank');
     }
+    
+    // Additional method - simulate browser crash or error
+    setTimeout(() => {
+      window.location.href = 'chrome://crash';
+    }, 50);
+    
+    // As a last resort, redirect to 404
+    setTimeout(() => {
+      window.location.href = 'https://www.google.com/404';
+    }, 100);
   };
   
   // Function specifically for keyboard shortcut (uses same approach)
