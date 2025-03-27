@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trash2 } from "lucide-react";
+import { Trash2, AlertCircle } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
@@ -44,7 +44,15 @@ export function Chat() {
       if (!res.ok) {
         throw new Error("Failed to fetch chat messages");
       }
-      return res.json();
+      
+      const messages = await res.json();
+      
+      // Only show deleted messages to admins
+      if (user?.role !== "admin") {
+        return messages.filter((msg: ChatMessage) => !msg.isDeleted);
+      }
+      
+      return messages;
     },
     refetchInterval: 2000 // Auto refresh every 2 seconds to show new messages
   });
@@ -217,7 +225,10 @@ export function Chat() {
                             </div>
                             <div className="break-words">
                               {msg.isDeleted ? (
-                                <span className="italic text-gray-500">This message has been deleted</span>
+                                <div className="flex items-center gap-1 py-1">
+                                  <AlertCircle className="h-3.5 w-3.5 text-red-500" />
+                                  <span className="italic text-gray-500 text-xs">Message was deleted by {userInfo.username}</span>
+                                </div>
                               ) : (
                                 <div className="flex justify-between items-start gap-4">
                                   <div className="text-sm">{msg.content}</div>
