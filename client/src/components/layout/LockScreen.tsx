@@ -5,7 +5,7 @@ import { Lock, ShieldCheck, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import lockScreenImage from "@/assets/image_1743065278492.png";
+import lockScreenImage from "@/assets/new_lock_screen.png";
 import { useAuth } from "@/hooks/use-auth";
 
 // PIN for unlocking the screen (only admins can unlock)
@@ -32,6 +32,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
   }, [activeTab, isAdmin]);
 
   const handleAdminUnlockAttempt = async () => {
+    // Double check that user is an admin before proceeding
     if (!isAdmin) {
       setError("You must be an admin to use this feature.");
       return;
@@ -81,37 +82,21 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
       <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50">
         <div className="max-w-md w-full px-4">
           <div className="flex flex-col items-center text-center">
-            {/* Lock screen image with fixed dimensions to prevent stretching */}
-            <div className="w-64 h-64 flex items-center justify-center">
-              <img 
-                src={lockScreenImage} 
-                alt="Locked Screen" 
-                className="object-contain max-w-full max-h-full"
-              />
-            </div>
+            {/* Display the image which already contains the lock icon and text */}
+            <img 
+              src={lockScreenImage} 
+              alt="Locked Screen" 
+              className="w-full max-w-md object-contain mb-8"
+            />
             
-            <div className="space-y-6 mt-4">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight">
-                  THIS WEBSITE HAS BEEN LOCKED
-                </h1>
-                <h2 className="text-2xl font-bold">
-                  BY THE WEBSITE OWNER
-                </h2>
-                <p className="text-xl mt-4">
-                  OR THE WEBSITE IS DOWN FOR MAINTENANCE
-                </p>
-              </div>
-              
-              <Button 
-                variant="default" 
-                onClick={() => setShowUnlockOptions(true)}
-                className="mt-8"
-              >
-                <Lock className="mr-2 h-4 w-4" />
-                Unlock Options
-              </Button>
-            </div>
+            <Button 
+              variant="default" 
+              onClick={() => setShowUnlockOptions(true)}
+              className="mt-4"
+            >
+              <Lock className="mr-2 h-4 w-4" />
+              Unlock Options
+            </Button>
           </div>
         </div>
       </div>
