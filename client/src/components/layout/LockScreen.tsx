@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import lockScreenImage from "@/assets/security_lock_screen.png";
+import websiteDownIcon from "@/assets/website_down_icon.svg";
 import { useAuth } from "@/hooks/use-auth";
 
 // PIN for unlocking the screen (only admins can unlock)
@@ -93,14 +94,15 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
   if (!showUnlockOptions) {
     return (
       <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50">
-        <div className="max-w-xl w-full px-4"> {/* Increased from max-w-md to max-w-xl */}
+        <div className="max-w-xl w-full px-4">
           <div className="flex flex-col items-center text-center">
-            {/* Display the image which already contains the lock icon and text */}
+            {/* Display the Red X and "Website Down" text */}
             <img 
-              src={lockScreenImage} 
-              alt="Locked Screen" 
-              className="w-full max-w-xl object-contain mb-8" /* Made image larger with max-w-xl instead of max-w-md */
+              src={websiteDownIcon} 
+              alt="Website Down" 
+              className="w-40 h-40 object-contain mb-4"
             />
+            <h2 className="text-3xl font-bold text-red-600 mb-8">Website Down</h2>
             
             <div className="flex flex-col gap-3">
               {isAdmin ? (
