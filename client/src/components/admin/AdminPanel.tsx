@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { UserForm } from "./UserForm";
 import { SoundForm } from "./SoundForm";
+import { ScreenLockControl } from "./ScreenLockControl";
 import { Howl } from "howler";
 import {
   AlertDialog,
@@ -26,9 +27,16 @@ import {
 interface AdminPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  isScreenLocked?: boolean;
+  onLockChange?: (locked: boolean) => void;
 }
 
-export function AdminPanel({ open, onOpenChange }: AdminPanelProps) {
+export function AdminPanel({ 
+  open, 
+  onOpenChange,
+  isScreenLocked = false,
+  onLockChange
+}: AdminPanelProps) {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("users");
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -267,6 +275,17 @@ export function AdminPanel({ open, onOpenChange }: AdminPanelProps) {
             <DialogTitle>Admin Panel</DialogTitle>
           </DialogHeader>
           
+          {/* Screen Lock Control */}
+          <div className="mb-6 border-b pb-4">
+            <h3 className="text-lg font-medium mb-4">Security Settings</h3>
+            {onLockChange && (
+              <ScreenLockControl
+                isLocked={isScreenLocked}
+                onLockChange={onLockChange}
+              />
+            )}
+          </div>
+            
           <Tabs 
             defaultValue="users" 
             value={activeTab} 

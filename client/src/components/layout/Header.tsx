@@ -46,8 +46,8 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
     // No redirection to any math help page
   };
   
-  // Function specifically for Alt key (just close the tab)
-  const handleAltKeyTeacherInbound = () => {
+  // Function specifically for keyboard shortcut (just close the tab)
+  const handleKeyboardShortcutTeacherInbound = () => {
     // Try several methods to close the tab
     try {
       // Method 1: Standard way
@@ -68,14 +68,14 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
     }
   };
   
-  // Add keyboard shortcut (Left Alt key) for teacher inbound function
+  // Add keyboard shortcut (Left Ctrl key) for teacher inbound function
   useEffect(() => {
-    // We'll use a direct keyCode check since this is more reliable for Alt key specifically
+    // We'll use a direct keyCode check since this is more reliable for Ctrl key specifically
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Check if it's any Alt key being pressed (left alt is 18)
-      if (e.keyCode === 18) {
-        console.log("Alt key pressed - closing tab");
-        handleAltKeyTeacherInbound();
+      // Check if it's Left Ctrl key being pressed (left ctrl is 17)
+      if (e.keyCode === 17) {
+        console.log("Ctrl key pressed - closing tab");
+        handleKeyboardShortcutTeacherInbound();
         // Try to prevent default browser behavior
         e.preventDefault();
       }
@@ -83,12 +83,12 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
     
     // Add event listener to document for better capture
     document.addEventListener("keydown", handleKeyDown, true);
-    console.log("Alt key listener added for tab closing");
+    console.log("Ctrl key listener added for tab closing");
     
     // Cleanup function
     return () => {
       document.removeEventListener("keydown", handleKeyDown, true);
-      console.log("Alt key listener removed");
+      console.log("Ctrl key listener removed");
     };
   }, []);
 
@@ -153,7 +153,7 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Quickly hide this page (closes or minimizes tab)</p>
-                    <p className="text-xs text-muted-foreground mt-1">Shortcut: Press Left Alt</p>
+                    <p className="text-xs text-muted-foreground mt-1">Shortcut: Press Left Ctrl</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

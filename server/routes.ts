@@ -509,6 +509,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Screen lock settings routes
+  app.post("/api/settings/lock", isAdmin, async (req, res, next) => {
+    try {
+      const { locked } = req.body;
+      if (typeof locked !== "boolean") {
+        return res.status(400).json({ message: "Invalid lock setting" });
+      }
+
+      // Store the lock state in memory
+      // In a real application, this would be stored in a database
+      global.isScreenLocked = locked;
+      
+      res.json({ locked: global.isScreenLocked });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/settings/lock", async (req, res) => {
+    res.json({ locked: global.isScreenLocked || false });
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
