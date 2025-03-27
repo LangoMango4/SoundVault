@@ -11,6 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import ABTutorIcon from "@assets/ABTutor.ico";
 
 interface HeaderProps {
   onOpenAdminPanel?: () => void;
@@ -28,28 +29,22 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
   // Function to handle teacher inbound button click (for the button)
   const handleTeacherInbound = () => {
     try {
-      // Create a link with a special attribute that will close the window
-      const link = document.createElement('a');
-      link.href = '#';
-      link.rel = 'noreferrer';
-      link.setAttribute('target', '_self');
-      link.onclick = (e) => {
-        e.preventDefault();
-        window.close();
-        return false;
-      };
-      document.body.appendChild(link);
-      link.click();
+      // Redirect to the school website
+      window.location.href = 'https://andie.standrewscc.qld.edu.au/';
       
-      // If that doesn't work, fall back to direct window.close()
-      window.close();
-      
-      // If that also fails, as a last resort, clear the page to make it appear "closed"
+      // If the redirect doesn't happen immediately, clear the page first
+      // so that the content isn't visible during the transition
+      setTimeout(() => {
+        document.body.innerHTML = '';
+        document.body.style.background = 'white';
+        document.title = '';
+      }, 50);
+    } catch (err) {
+      console.error('Failed to redirect:', err);
+      // Fallback - at minimum ensure the page is cleared
       document.body.innerHTML = '';
       document.body.style.background = 'white';
       document.title = '';
-    } catch (err) {
-      console.error('Failed to close tab:', err);
     }
   };
   
@@ -87,7 +82,7 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center">
-            <img src="/src/assets/ABTutor.ico" alt="Maths Homework" className="h-6 w-6 mr-2" />
+            <img src={ABTutorIcon} alt="Maths Homework" className="h-6 w-6 mr-2" />
             <div>
               <h1 className="text-xl font-semibold text-primary">
                 {user ? "top homework sigma1!!11" : "Maths Homework"}
