@@ -6,5 +6,13 @@
     "role": "admin",
     "accessLevel": "full",
     "id": 1
+  },
+  {
+    "username": "user",
+    "password": "c747605f3d7d6236c51dce2b902a53df5efe251d5220b1a424de77b911b272961b9c111d27ce9cb387ee641b83b469987d67cf51e49b23a8fec85be531383da1.df964ca2a349e27fd6550a8580186122",
+    "fullName": "user",
+    "role": "user",
+    "accessLevel": "basic",
+    "id": 2
   }
 ]
