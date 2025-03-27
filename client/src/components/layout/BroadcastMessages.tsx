@@ -19,9 +19,12 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { formatDistance } from 'date-fns';
 import { BroadcastMessage } from '@shared/schema';
 import warningIcon from '@/assets/warning-icon.png';
+import { WindowsNotification } from './WindowsNotification';
 
 export function BroadcastMessages() {
   const [isOpen, setIsOpen] = useState(false);
+  const [showWindowsNotification, setShowWindowsNotification] = useState(false);
+  const [activeNotification, setActiveNotification] = useState<BroadcastMessage | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   
@@ -150,21 +153,14 @@ export function BroadcastMessages() {
   // Open notifications when there are new unread messages
   useEffect(() => {
     if (unreadMessages && unreadMessages.length > 0) {
-      // Show a toast notification for the first unread message
+      // Check if we have a new unread message
       const latestMessage = unreadMessages[0];
-      toast({
-        // When we need to show just text in the toast title
-        title: latestMessage.title,
-        description: `${latestMessage.message.substring(0, 60)}${latestMessage.message.length > 60 ? '...' : ''}`,
-        action: (
-          <Button variant="outline" size="sm" onClick={() => setIsOpen(true)}>
-            <img src={warningIcon} alt="Warning" className="h-4 w-4 mr-2" />
-            View
-          </Button>
-        )
-      });
+      
+      // Show Windows-style notification
+      setActiveNotification(latestMessage);
+      setShowWindowsNotification(true);
     }
-  }, [unreadMessages, toast]);
+  }, [unreadMessages]);
   
   // Only render if the user is authenticated
   if (!user) return null;
