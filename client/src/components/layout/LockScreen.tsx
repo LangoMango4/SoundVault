@@ -127,7 +127,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
               <TabsList className="grid grid-cols-2 mb-4">
                 <TabsTrigger value="everyone">
                   <User className="mr-2 h-4 w-4" />
-                  Everyone Unlock
+                  Unlock for Me
                 </TabsTrigger>
                 <TabsTrigger value="admin" disabled={!isAdmin}>
                   <ShieldCheck className="mr-2 h-4 w-4" />
@@ -139,7 +139,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
                 <div className="rounded-md bg-blue-50 p-4 border border-blue-200">
                   <div className="flex items-start gap-3">
                     <div className="text-blue-800 text-sm">
-                      <p className="font-medium">Regular User Unlock</p>
+                      <p className="font-medium">Temporary Unlock</p>
                       <p>
                         This will unlock the screen for you temporarily. The site will remain locked for other users until an admin unlocks it permanently.
                       </p>
@@ -201,7 +201,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
                       onClick={handleAdminUnlockAttempt}
                       className="flex-1"
                     >
-                      Unlock for All
+                      Permanently Unlock
                     </Button>
                   </div>
                 </div>
