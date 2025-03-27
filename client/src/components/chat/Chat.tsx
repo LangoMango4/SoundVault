@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
@@ -35,6 +35,8 @@ export function Chat() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [message, setMessage] = useState("");
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch all chat messages
   const { data: chatMessages = [], isLoading } = useQuery<ChatMessage[]>({
@@ -47,15 +49,18 @@ export function Chat() {
       
       const messages = await res.json();
       
-      // Only show deleted messages to admins
-      if (user?.role !== "admin") {
-        return messages.filter((msg: ChatMessage) => !msg.isDeleted);
-      }
-      
-      return messages;
+      // Hide deleted messages for everyone in the chat (they'll still be visible in chat logs for admins)
+      return messages.filter((msg: ChatMessage) => !msg.isDeleted);
     },
     refetchInterval: 2000 // Auto refresh every 2 seconds to show new messages
   });
+  
+  // Scroll to bottom whenever messages change
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [chatMessages]);
 
   // Fetch all users to show their names with messages
   const { data: users = [] } = useQuery<UserInfo[]>({
@@ -258,6 +263,8 @@ export function Chat() {
                 Loading messages...
               </div>
             )}
+            {/* This div is used for auto-scrolling to the latest message */}
+            <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
       </div>
