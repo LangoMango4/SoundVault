@@ -27,35 +27,34 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
   
   // Function to handle teacher inbound button click (for the button)
   const handleTeacherInbound = () => {
-    // Immediately clear the page so the user sees nothing
-    document.body.innerHTML = '';
-    document.body.style.backgroundColor = '#000';
-    document.title = '';
-    
-    // Try several approaches for closing the tab or navigating away
-    
-    // First approach: Redirect to a common "Not Found" domain
     try {
-      window.location.href = 'http://nxdomain.example.com';
-    } catch (e) {
-      // If that fails, try to close directly
+      // Create a link with a special attribute that will close the window
+      const link = document.createElement('a');
+      link.href = '#';
+      link.rel = 'noreferrer';
+      link.setAttribute('target', '_self');
+      link.onclick = (e) => {
+        e.preventDefault();
+        window.close();
+        return false;
+      };
+      document.body.appendChild(link);
+      link.click();
+      
+      // If that doesn't work, fall back to direct window.close()
       window.close();
+      
+      // If that also fails, as a last resort, clear the page to make it appear "closed"
+      document.body.innerHTML = '';
+      document.body.style.background = 'white';
+      document.title = '';
+    } catch (err) {
+      console.error('Failed to close tab:', err);
     }
-    
-    // Additional method - simulate browser crash or error
-    setTimeout(() => {
-      window.location.href = 'chrome://crash';
-    }, 50);
-    
-    // As a last resort, redirect to 404
-    setTimeout(() => {
-      window.location.href = 'https://www.google.com/404';
-    }, 100);
   };
   
-  // Function specifically for keyboard shortcut (uses same approach)
+  // Function specifically for keyboard shortcut
   const handleKeyboardShortcutTeacherInbound = () => {
-    // Use the exact same function for consistency
     handleTeacherInbound();
   };
   
