@@ -29,7 +29,7 @@ export function WindowsNotification({
         {/* Header bar */}
         <div className="flex items-center justify-between px-2 py-1 bg-gradient-to-r from-[#009900] to-[#006600] text-white">
           <div className="flex items-center">
-            <span className="text-sm font-medium">{sender}</span>
+            <span className="text-sm font-medium">{title}</span>
           </div>
           <div className="flex items-center space-x-1">
             <span className="px-2">?</span>
@@ -50,6 +50,7 @@ export function WindowsNotification({
             <img src={warningIcon} alt="Warning" className="h-8 w-8" />
           </div>
           <div className="flex-1">
+            <p className="font-medium text-sm mb-1">{sender}</p>
             <p className="text-sm whitespace-pre-line">{message}</p>
           </div>
         </div>

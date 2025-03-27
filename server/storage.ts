@@ -7,8 +7,28 @@ import {
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import { hashPassword } from "./auth";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+// Get current directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const MemoryStore = createMemoryStore(session);
+
+// Define data file paths
+const DATA_DIR = path.join(__dirname, "data");
+const USERS_FILE = path.join(DATA_DIR, "users.json");
+const CATEGORIES_FILE = path.join(DATA_DIR, "categories.json");
+const SOUNDS_FILE = path.join(DATA_DIR, "sounds.json");
+const MESSAGES_FILE = path.join(DATA_DIR, "messages.json");
+
+// Ensure data directory exists
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
 
 // Define storage interface
 export interface IStorage {
@@ -74,13 +94,97 @@ export class MemStorage implements IStorage {
     this.soundIdCounter = 1;
     this.broadcastMessageIdCounter = 1;
     
-    // Initialize with admin account
+    // Initialize with admin account and load saved data
     this.initializeData();
+  }
+  
+  // Save data to files
+  private saveDataToFiles() {
+    try {
+      // Save users
+      const usersData = JSON.stringify(Array.from(this.users.values()), null, 2);
+      fs.writeFileSync(USERS_FILE, usersData);
+      
+      // Save categories
+      const categoriesData = JSON.stringify(Array.from(this.categories.values()), null, 2);
+      fs.writeFileSync(CATEGORIES_FILE, categoriesData);
+      
+      // Save sounds
+      const soundsData = JSON.stringify(Array.from(this.sounds.values()), null, 2);
+      fs.writeFileSync(SOUNDS_FILE, soundsData);
+      
+      // Save broadcast messages
+      const messagesData = JSON.stringify(Array.from(this.broadcastMessages.values()), null, 2);
+      fs.writeFileSync(MESSAGES_FILE, messagesData);
+      
+    } catch (error) {
+      console.error("Error saving data to files:", error);
+    }
+  }
+  
+  // Load data from files
+  private loadDataFromFiles() {
+    try {
+      // Load users
+      if (fs.existsSync(USERS_FILE)) {
+        const usersData = JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
+        usersData.forEach((user: User) => {
+          this.users.set(user.id, user);
+          if (user.id >= this.userIdCounter) {
+            this.userIdCounter = user.id + 1;
+          }
+        });
+      }
+      
+      // Load categories
+      if (fs.existsSync(CATEGORIES_FILE)) {
+        const categoriesData = JSON.parse(fs.readFileSync(CATEGORIES_FILE, 'utf-8'));
+        categoriesData.forEach((category: Category) => {
+          this.categories.set(category.id, category);
+          if (category.id >= this.categoryIdCounter) {
+            this.categoryIdCounter = category.id + 1;
+          }
+        });
+      }
+      
+      // Load sounds
+      if (fs.existsSync(SOUNDS_FILE)) {
+        const soundsData = JSON.parse(fs.readFileSync(SOUNDS_FILE, 'utf-8'));
+        soundsData.forEach((sound: Sound) => {
+          this.sounds.set(sound.id, sound);
+          if (sound.id >= this.soundIdCounter) {
+            this.soundIdCounter = sound.id + 1;
+          }
+        });
+      }
+      
+      // Load broadcast messages
+      if (fs.existsSync(MESSAGES_FILE)) {
+        const messagesData = JSON.parse(fs.readFileSync(MESSAGES_FILE, 'utf-8'));
+        messagesData.forEach((message: BroadcastMessage) => {
+          this.broadcastMessages.set(message.id, message);
+          if (message.id >= this.broadcastMessageIdCounter) {
+            this.broadcastMessageIdCounter = message.id + 1;
+          }
+        });
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error loading data from files:", error);
+      return false;
+    }
   }
   
   private async initializeData() {
     try {
-      await this.seedInitialData();
+      // First try to load data from files
+      const dataLoaded = this.loadDataFromFiles();
+      
+      // If no data was loaded, seed with initial data
+      if (!dataLoaded || this.users.size === 0) {
+        await this.seedInitialData();
+      }
     } catch (error) {
       console.error("Failed to initialize data:", error);
     }
@@ -130,6 +234,7 @@ export class MemStorage implements IStorage {
       accessLevel: insertUser.accessLevel || "basic" 
     };
     this.users.set(id, user);
+    this.saveDataToFiles(); // Save after modification
     return user;
   }
   
@@ -139,11 +244,16 @@ export class MemStorage implements IStorage {
     
     const updatedUser = { ...user, ...userData };
     this.users.set(id, updatedUser);
+    this.saveDataToFiles(); // Save after modification
     return updatedUser;
   }
   
   async deleteUser(id: number): Promise<boolean> {
-    return this.users.delete(id);
+    const result = this.users.delete(id);
+    if (result) {
+      this.saveDataToFiles(); // Save after modification
+    }
+    return result;
   }
   
   async getUsers(): Promise<User[]> {
@@ -165,6 +275,7 @@ export class MemStorage implements IStorage {
     const id = this.categoryIdCounter++;
     const category: Category = { ...insertCategory, id };
     this.categories.set(id, category);
+    this.saveDataToFiles(); // Save after modification
     return category;
   }
   
@@ -185,6 +296,7 @@ export class MemStorage implements IStorage {
       accessLevel: insertSound.accessLevel || "all"
     };
     this.sounds.set(id, sound);
+    this.saveDataToFiles(); // Save after modification
     return sound;
   }
   
@@ -194,11 +306,16 @@ export class MemStorage implements IStorage {
     
     const updatedSound = { ...sound, ...soundData };
     this.sounds.set(id, updatedSound);
+    this.saveDataToFiles(); // Save after modification
     return updatedSound;
   }
   
   async deleteSound(id: number): Promise<boolean> {
-    return this.sounds.delete(id);
+    const result = this.sounds.delete(id);
+    if (result) {
+      this.saveDataToFiles(); // Save after modification
+    }
+    return result;
   }
   
   async getSounds(): Promise<Sound[]> {
@@ -243,11 +360,16 @@ export class MemStorage implements IStorage {
     };
     
     this.broadcastMessages.set(id, message);
+    this.saveDataToFiles(); // Save after modification
     return message;
   }
   
   async deleteBroadcastMessage(id: number): Promise<boolean> {
-    return this.broadcastMessages.delete(id);
+    const result = this.broadcastMessages.delete(id);
+    if (result) {
+      this.saveDataToFiles(); // Save after modification
+    }
+    return result;
   }
   
   async getBroadcastMessages(): Promise<BroadcastMessage[]> {
@@ -268,6 +390,7 @@ export class MemStorage implements IStorage {
         hasBeenRead: [...hasBeenRead, userId] 
       };
       this.broadcastMessages.set(messageId, updatedMessage);
+      this.saveDataToFiles(); // Save after modification
       return updatedMessage;
     }
     
