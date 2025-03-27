@@ -25,33 +25,70 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
     logoutMutation.mutate();
   };
   
-  // Function to handle teacher inbound button click
+  // Function to handle teacher inbound button click (for the button)
   const handleTeacherInbound = () => {
     // Try to close the tab
     window.close();
     // If closing fails (browsers may block this), minimize or hide the window
     window.blur();
-    // As a last resort, navigate to a safe website
-    setTimeout(() => {
-      window.location.href = "https://www.google.com/search?q=math+homework+help";
-    }, 100);
+    // Try to simulate Ctrl+W key combination to close tab
+    try {
+      const closeEvent = new KeyboardEvent('keydown', {
+        key: 'w',
+        code: 'KeyW',
+        ctrlKey: true,
+        bubbles: true
+      });
+      document.dispatchEvent(closeEvent);
+    } catch (error) {
+      console.error('Failed to close tab:', error);
+    }
+    // No redirection to any math help page
   };
   
-  // Add keyboard shortcut (ESC key) for teacher inbound function
+  // Function specifically for Alt key (just close the tab)
+  const handleAltKeyTeacherInbound = () => {
+    // Try several methods to close the tab
+    try {
+      // Method 1: Standard way
+      window.close();
+      
+      // Method 2: Try to simulate Ctrl+W key combination
+      const closeEvent = new KeyboardEvent('keydown', {
+        key: 'w',
+        code: 'KeyW',
+        ctrlKey: true,
+        bubbles: true
+      });
+      document.dispatchEvent(closeEvent);
+      
+      // No redirection to any external pages
+    } catch (error) {
+      console.error('Failed to close tab:', error);
+    }
+  };
+  
+  // Add keyboard shortcut (Left Alt key) for teacher inbound function
   useEffect(() => {
+    // We'll use a direct keyCode check since this is more reliable for Alt key specifically
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Listen for Escape key
-      if (e.key === "Escape") {
-        handleTeacherInbound();
+      // Check if it's any Alt key being pressed (left alt is 18)
+      if (e.keyCode === 18) {
+        console.log("Alt key pressed - closing tab");
+        handleAltKeyTeacherInbound();
+        // Try to prevent default browser behavior
+        e.preventDefault();
       }
     };
     
-    // Add event listener
-    window.addEventListener("keydown", handleKeyDown);
+    // Add event listener to document for better capture
+    document.addEventListener("keydown", handleKeyDown, true);
+    console.log("Alt key listener added for tab closing");
     
     // Cleanup function
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keydown", handleKeyDown, true);
+      console.log("Alt key listener removed");
     };
   }, []);
 
@@ -116,6 +153,7 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Quickly hide this page (closes or minimizes tab)</p>
+                    <p className="text-xs text-muted-foreground mt-1">Shortcut: Press Left Alt</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
