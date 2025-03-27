@@ -165,6 +165,50 @@ export function BroadcastMessages() {
   // Only render if the user is authenticated
   if (!user) return null;
   
+  // Delete broadcast message
+  const deleteBroadcastMessageMutation = useMutation({
+    mutationFn: async (messageId: number) => {
+      const res = await apiRequest('DELETE', `/api/messages/${messageId}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      // Invalidate all message-related queries to update the UI
+      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/messages', 'unread'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/messages', 'all'] });
+      
+      toast({
+        title: "Message deleted",
+        description: "The message has been removed"
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to delete message",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Handle the Windows notification close
+  const handleCloseNotification = () => {
+    setShowWindowsNotification(false);
+    
+    // Mark the message as read
+    if (activeNotification) {
+      markAsReadMutation.mutate(activeNotification.id);
+    }
+  };
+  
+  // Handle the message deletion from notification
+  const handleDeleteNotification = () => {
+    if (activeNotification) {
+      deleteBroadcastMessageMutation.mutate(activeNotification.id);
+      setShowWindowsNotification(false);
+    }
+  };
+
   return (
     <>
       <Button 
@@ -186,6 +230,18 @@ export function BroadcastMessages() {
           </span>
         )}
       </Button>
+      
+      {/* Windows-style notification */}
+      {activeNotification && (
+        <WindowsNotification 
+          title="Maths Homework"
+          message={activeNotification.message}
+          sender="System Admin"
+          open={showWindowsNotification}
+          onClose={handleCloseNotification}
+          onDelete={handleDeleteNotification}
+        />
+      )}
       
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-md">
@@ -241,7 +297,7 @@ export function BroadcastMessages() {
                       <CardContent className="pb-2">
                         <p className="text-sm whitespace-pre-line">{message.message}</p>
                       </CardContent>
-                      <CardFooter className="pt-0 justify-end">
+                      <CardFooter className="pt-0 justify-end gap-2">
                         {!hasBeenRead && (
                           <Button 
                             variant="ghost" 
@@ -252,6 +308,15 @@ export function BroadcastMessages() {
                             Mark as read
                           </Button>
                         )}
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-100"
+                          onClick={() => deleteBroadcastMessageMutation.mutate(message.id)}
+                        >
+                          <X className="mr-1 h-4 w-4" />
+                          Delete
+                        </Button>
                       </CardFooter>
                     </Card>
                   );
