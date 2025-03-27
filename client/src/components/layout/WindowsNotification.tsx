@@ -50,7 +50,7 @@ export function WindowsNotification({
             <img src={warningIcon} alt="Warning" className="h-8 w-8" />
           </div>
           <div className="flex-1">
-            <p className="font-medium text-sm mb-1">{sender}</p>
+            {sender && <p className="font-medium text-sm mb-1">{sender}</p>}
             <p className="text-sm whitespace-pre-line">{message}</p>
           </div>
         </div>

@@ -234,9 +234,9 @@ export function BroadcastMessages() {
       {/* Windows-style notification */}
       {activeNotification && (
         <WindowsNotification 
-          title="Maths Homework"
+          title={activeNotification.title}
           message={activeNotification.message}
-          sender="System Admin"
+          sender=""
           open={showWindowsNotification}
           onClose={handleCloseNotification}
           onDelete={handleDeleteNotification}
