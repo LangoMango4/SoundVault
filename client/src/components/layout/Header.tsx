@@ -98,9 +98,16 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center">
             <img src="/src/assets/ABTutor.ico" alt="Maths Homework" className="h-6 w-6 mr-2" />
-            <h1 className="text-xl font-semibold text-primary">
-              {user ? "top homework sigma1!!11" : "Maths Homework"}
-            </h1>
+            <div>
+              <h1 className="text-xl font-semibold text-primary">
+                {user ? "top homework sigma1!!11" : "Maths Homework"}
+              </h1>
+              {user && (
+                <p className="text-xs text-gray-500 -mt-1">
+                  made by sniff sniff / skibidi._fish
+                </p>
+              )}
+            </div>
           </div>
           
           <div className="flex items-center space-x-4">
