@@ -70,11 +70,11 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
   
   // Add keyboard shortcut (Left Ctrl key) for teacher inbound function
   useEffect(() => {
-    // We'll use a direct keyCode check since this is more reliable for Ctrl key specifically
+    // Use code property to specifically check for ControlLeft (Left Ctrl key)
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Check if it's Left Ctrl key being pressed (left ctrl is 17)
-      if (e.keyCode === 17) {
-        console.log("Ctrl key pressed - closing tab");
+      // Check if it's specifically the Left Ctrl key being pressed
+      if (e.code === 'ControlLeft') {
+        console.log("Left Ctrl key pressed - closing tab");
         handleKeyboardShortcutTeacherInbound();
         // Try to prevent default browser behavior
         e.preventDefault();
@@ -83,12 +83,12 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
     
     // Add event listener to document for better capture
     document.addEventListener("keydown", handleKeyDown, true);
-    console.log("Ctrl key listener added for tab closing");
+    console.log("Left Ctrl key listener added for tab closing");
     
     // Cleanup function
     return () => {
       document.removeEventListener("keydown", handleKeyDown, true);
-      console.log("Ctrl key listener removed");
+      console.log("Left Ctrl key listener removed");
     };
   }, []);
 
