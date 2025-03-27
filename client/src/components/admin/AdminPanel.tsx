@@ -44,6 +44,7 @@ export function AdminPanel({
   const [isSoundFormOpen, setIsSoundFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ type: "user" | "sound", id: number } | null>(null);
+  const [showConfig, setShowConfig] = useState(false);
 
   // Users query
   const { 
@@ -295,6 +296,7 @@ export function AdminPanel({
             <TabsList className="border-b rounded-none justify-start">
               <TabsTrigger value="users">Users</TabsTrigger>
               <TabsTrigger value="sounds">Sounds</TabsTrigger>
+              <TabsTrigger value="config">Config</TabsTrigger>
             </TabsList>
             
             <TabsContent value="users" className="flex-1 overflow-auto p-1">
@@ -336,6 +338,60 @@ export function AdminPanel({
               ) : (
                 <DataTable columns={soundColumns} data={sounds || []} />
               )}
+            </TabsContent>
+            
+            <TabsContent value="config" className="flex-1 overflow-auto p-1">
+              <div className="mb-6">
+                <h3 className="text-lg font-medium mb-4">Config People</h3>
+                
+                <div className="rounded-md bg-neutral-50 p-4 mb-6">
+                  <h4 className="font-medium mb-2">User Credentials</h4>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-neutral-100">
+                        <tr>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Password (Hash)</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {usersLoading ? (
+                          <tr>
+                            <td colSpan={4} className="px-4 py-4 text-center">
+                              <Loader2 className="h-5 w-5 animate-spin text-primary mx-auto" />
+                            </td>
+                          </tr>
+                        ) : (
+                          users?.map((user) => (
+                            <tr key={user.id} className="hover:bg-neutral-50">
+                              <td className="px-4 py-2">{user.username}</td>
+                              <td className="px-4 py-2">{user.fullName}</td>
+                              <td className="px-4 py-2">
+                                <code className="text-xs font-mono break-all bg-neutral-100 p-1 rounded">
+                                  {user.password}
+                                </code>
+                              </td>
+                              <td className="px-4 py-2">
+                                <Badge variant={user.role === "admin" ? "success" : "secondary"}>
+                                  {user.role}
+                                </Badge>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end">
+                  <Button onClick={() => setActiveTab("users")}>
+                    Manage Users
+                  </Button>
+                </div>
+              </div>
             </TabsContent>
           </Tabs>
         </DialogContent>

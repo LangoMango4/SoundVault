@@ -172,11 +172,16 @@ export function UserForm({ open, onOpenChange, user }: UserFormProps) {
                   <FormLabel>{isEditing ? "New Password (leave blank to keep current)" : "Password"}</FormLabel>
                   <FormControl>
                     <Input 
-                      type="password" 
+                      type="text" 
                       {...field} 
                       required={!isEditing}
                     />
                   </FormControl>
+                  {isEditing && user?.password && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Current hashed password: <span className="font-mono text-xs break-all">{user.password}</span>
+                    </div>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}

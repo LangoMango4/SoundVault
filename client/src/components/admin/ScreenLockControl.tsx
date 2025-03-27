@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Lock, Unlock } from "lucide-react";
+import { Lock, Unlock, ShieldCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -27,7 +27,14 @@ export function ScreenLockControl({ isLocked, onLockChange }: ScreenLockControlP
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
+  const [adminOnlyUnlock, setAdminOnlyUnlock] = useState(false);
   const { toast } = useToast();
+  
+  // Check for admin-only unlock status on component mount
+  useEffect(() => {
+    const tempUnlock = sessionStorage.getItem('temporaryUnlock');
+    setAdminOnlyUnlock(tempUnlock === 'true');
+  }, []);
 
   const handleLockScreen = async () => {
     try {
@@ -88,11 +95,13 @@ export function ScreenLockControl({ isLocked, onLockChange }: ScreenLockControlP
           className="flex items-center gap-2 w-full justify-between"
         >
           <div className="flex items-center gap-2">
-            {isLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+            {isLocked ? <Lock className="h-4 w-4" /> : 
+             (adminOnlyUnlock ? <ShieldCheck className="h-4 w-4" /> : <Unlock className="h-4 w-4" />)}
             <span>Screen Lock</span>
           </div>
-          <span className="text-xs bg-neutral-100 px-2 py-1 rounded">
-            {isLocked ? "LOCKED" : "UNLOCKED"}
+          <span className={`text-xs ${adminOnlyUnlock ? "bg-blue-100 text-blue-800" : "bg-neutral-100"} px-2 py-1 rounded`}>
+            {isLocked ? "LOCKED" : 
+             (adminOnlyUnlock ? "ADMIN ONLY" : "UNLOCKED")}
           </span>
         </Button>
       </DialogTrigger>
@@ -112,6 +121,18 @@ export function ScreenLockControl({ isLocked, onLockChange }: ScreenLockControlP
         
         {isLocked ? (
           <div className="space-y-4">
+            <div className="rounded-md bg-amber-50 p-4 border border-amber-200 mb-4">
+              <div className="flex items-start gap-3">
+                <div className="text-amber-800 text-sm">
+                  <p className="font-medium">Global Unlock</p>
+                  <p>
+                    Enter the admin PIN to permanently unlock the website for ALL users.
+                    This will remove the lock for everyone.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
             <div className="space-y-2">
               <Label htmlFor="pin">Enter 4-digit PIN</Label>
               <Input
@@ -121,6 +142,11 @@ export function ScreenLockControl({ isLocked, onLockChange }: ScreenLockControlP
                 placeholder="Enter PIN"
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleUnlockAttempt();
+                  }
+                }}
               />
               {error && <p className="text-sm text-destructive">{error}</p>}
             </div>
@@ -130,7 +156,7 @@ export function ScreenLockControl({ isLocked, onLockChange }: ScreenLockControlP
                 Cancel
               </Button>
               <Button onClick={handleUnlockAttempt}>
-                Unlock
+                Unlock for Everyone
               </Button>
             </DialogFooter>
           </div>

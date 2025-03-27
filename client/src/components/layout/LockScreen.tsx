@@ -6,13 +6,10 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import lockScreenImage from "@/assets/security_lock_screen.png";
-import websiteDownIcon from "@/assets/website_down_icon.svg";
 import { useAuth } from "@/hooks/use-auth";
 
 // PIN for unlocking the screen (only admins can unlock)
 const ADMIN_PIN = "2012";
-// Admin password for direct unlock
-const ADMIN_PASSWORD = "alarms12";
 
 interface LockScreenProps {
   onUnlock: () => void;
@@ -20,7 +17,7 @@ interface LockScreenProps {
 
 export function LockScreen({ onUnlock }: LockScreenProps) {
   const [pin, setPin] = useState("");
-  const [adminPassword, setAdminPassword] = useState("");
+  const [adminPin, setAdminPin] = useState("");
   const [error, setError] = useState("");
   const [showUnlockOptions, setShowUnlockOptions] = useState(false);
   const { toast } = useToast();
@@ -38,9 +35,13 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
       try {
         // API request to unlock the screen (server-side)
         await apiRequest("POST", "/api/settings/lock", { locked: false });
+        
+        // Clear any temporary unlock flag when doing a global unlock
+        sessionStorage.removeItem('temporaryUnlock');
+        
         toast({
           title: "Screen Unlocked",
-          description: "The website has been unlocked successfully.",
+          description: "The website has been unlocked successfully for everyone.",
         });
         setPin("");
         setError("");
@@ -58,22 +59,26 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
     }
   };
 
-  const handleAdminPasswordUnlock = async () => {
+  const handleAdminOnlyUnlock = async () => {
     // Double check that user is an admin before proceeding
     if (!isAdmin) {
       setError("You must be an admin to use this feature.");
       return;
     }
     
-    if (adminPassword === ADMIN_PASSWORD) {
+    if (adminPin === ADMIN_PIN) {
       try {
         // This doesn't change the global lock state, just unlocks for this admin
         // We don't make an API request to change locked state for everyone
+        
+        // Store in sessionStorage that this is a temporary admin-only unlock
+        sessionStorage.setItem('temporaryUnlock', 'true');
+        
         toast({
           title: "Admin Access Granted",
           description: "The website has been unlocked for your admin session only.",
         });
-        setAdminPassword("");
+        setAdminPin("");
         setError("");
         setShowUnlockOptions(false);
         onUnlock(); // Just unlock the UI for this admin user
@@ -85,8 +90,8 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
         });
       }
     } else {
-      setError("Incorrect admin password. Please try again.");
-      setAdminPassword("");
+      setError("Incorrect PIN. Please try again.");
+      setAdminPin("");
     }
   };
 
@@ -94,15 +99,14 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
   if (!showUnlockOptions) {
     return (
       <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50">
-        <div className="max-w-xl w-full px-4">
+        <div className="max-w-xl w-full px-4"> {/* Increased from max-w-md to max-w-xl */}
           <div className="flex flex-col items-center text-center">
-            {/* Display the Red X and "Website Down" text */}
+            {/* Display the image which already contains the lock icon and text */}
             <img 
-              src={websiteDownIcon} 
-              alt="Website Down" 
-              className="w-40 h-40 object-contain mb-4"
+              src={lockScreenImage} 
+              alt="Locked Screen" 
+              className="w-full max-w-xl object-contain mb-8" /* Made image larger with max-w-xl instead of max-w-md */
             />
-            <h2 className="text-3xl font-bold text-red-600 mb-8">Website Down</h2>
             
             <div className="flex flex-col gap-3">
               {isAdmin ? (
@@ -225,7 +229,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
                     <div className="text-blue-800 text-sm">
                       <p className="font-medium">Admin Only Access</p>
                       <p>
-                        Enter the admin password to unlock the screen for your session only. 
+                        Enter the admin PIN to unlock the screen for your session only. 
                         The website will remain locked for other users.
                       </p>
                     </div>
@@ -236,9 +240,10 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
                   <div className="space-y-1">
                     <Input
                       type="password"
-                      placeholder="Enter admin password"
-                      value={adminPassword}
-                      onChange={(e) => setAdminPassword(e.target.value)}
+                      maxLength={4}
+                      placeholder="Enter 4-digit PIN"
+                      value={adminPin}
+                      onChange={(e) => setAdminPin(e.target.value)}
                       className="text-center"
                     />
                     {error && <p className="text-sm text-destructive text-center">{error}</p>}
@@ -250,17 +255,17 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
                       onClick={() => {
                         setShowUnlockOptions(false);
                         setError("");
-                        setAdminPassword("");
+                        setAdminPin("");
                       }}
                       className="flex-1"
                     >
                       Cancel
                     </Button>
                     <Button 
-                      onClick={handleAdminPasswordUnlock}
+                      onClick={handleAdminOnlyUnlock}
                       className="flex-1"
                     >
-                      Unlock with Password
+                      Unlock with PIN
                     </Button>
                   </div>
                 </div>
