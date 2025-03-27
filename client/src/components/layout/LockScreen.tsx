@@ -163,25 +163,50 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
             />
             
             <div className="flex flex-col gap-3">
-              {isAdmin && (
+              {isAdmin ? (
+                <>
+                  <Button 
+                    variant="default" 
+                    onClick={() => setShowUnlockOptions(true)}
+                    className="mt-4"
+                  >
+                    <Lock className="mr-2 h-4 w-4" />
+                    Admin Unlock Options
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowAdminPasswordPrompt(true)}
+                    className="mt-2"
+                  >
+                    <Key className="mr-2 h-4 w-4" />
+                    Admin Override
+                  </Button>
+                </>
+              ) : (
                 <Button 
-                  variant="default" 
-                  onClick={() => setShowUnlockOptions(true)}
-                  className="mt-4"
+                  variant="outline" 
+                  onClick={() => {
+                    // Logout the current user
+                    apiRequest("POST", "/api/logout")
+                      .then(() => {
+                        // Redirect to auth page
+                        window.location.href = "/auth";
+                      })
+                      .catch(error => {
+                        toast({
+                          title: "Logout Failed",
+                          description: "Failed to log out. Please try again.",
+                          variant: "destructive",
+                        });
+                      });
+                  }}
+                  className="mt-2"
                 >
                   <Lock className="mr-2 h-4 w-4" />
-                  Admin Unlock Options
+                  Logout (Change User)
                 </Button>
               )}
-              
-              <Button 
-                variant="outline" 
-                onClick={() => setShowAdminPasswordPrompt(true)}
-                className="mt-2"
-              >
-                <Key className="mr-2 h-4 w-4" />
-                Admin Override
-              </Button>
             </div>
           </div>
         </div>
