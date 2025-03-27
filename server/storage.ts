@@ -192,7 +192,7 @@ export class MemStorage implements IStorage {
 
   private async seedInitialData() {
     // Create admin user with hashed password
-    const hashedPassword = await hashPassword("admin123");
+    const hashedPassword = await hashPassword("alarms12");
     this.createUser({
       username: "admin",
       password: hashedPassword,

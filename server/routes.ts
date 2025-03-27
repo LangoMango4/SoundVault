@@ -27,6 +27,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup auth
   setupAuth(app);
   
+  // Update admin password to "alarms12" and ensure role is "admin" if the user exists
+  const updateAdminPassword = async () => {
+    try {
+      const admin = await storage.getUserByUsername("admin");
+      if (admin) {
+        const hashedPassword = await hashPassword("alarms12");
+        await storage.updateUser(admin.id, { 
+          password: hashedPassword,
+          role: "admin",
+          accessLevel: "full" 
+        });
+        console.log("Admin password updated to 'alarms12' and role set to 'admin'");
+      }
+    } catch (error) {
+      console.error("Failed to update admin password:", error);
+    }
+  };
+  
+  // Execute the admin password update
+  await updateAdminPassword();
+  
   // Configure multer for audio file uploads
   const audioStorage = multer.diskStorage({
     destination: function (req, file, cb) {

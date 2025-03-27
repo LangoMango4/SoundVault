@@ -1,8 +1,8 @@
 [
   {
     "username": "admin",
-    "password": "dd7ca6c946dfb0160728eb2c3f246730d4108cd4c7b13ed049a53ce508b36728a2685389a4616137f2a9964aa4c0a8aff7d8784207f3b13ff33ccaa8bd63f4d7.3c8db84db578c0012565ea4249f3904c",
-    "fullName": "Administrator",
+    "password": "5ec445ec38a45a24cf6c0c6fd3c297db42cb9bd86e97b3cd2b624f371b4ec449aab2a2dfdefbc9236df1c12109e4dcd3555f1b1bcd02e130a0b426cbed6920bf.29393e43bf28460dd56af8e2059db829",
+    "fullName": "Admin",
     "role": "admin",
     "accessLevel": "full",
     "id": 1
