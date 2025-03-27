@@ -66,16 +66,16 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
     
     if (adminPassword === ADMIN_PASSWORD) {
       try {
-        // API request to unlock the screen (server-side)
-        await apiRequest("POST", "/api/settings/lock", { locked: false });
+        // This doesn't change the global lock state, just unlocks for this admin
+        // We don't make an API request to change locked state for everyone
         toast({
-          title: "Screen Unlocked",
-          description: "The website has been unlocked successfully using admin password.",
+          title: "Admin Access Granted",
+          description: "The website has been unlocked for your admin session only.",
         });
         setAdminPassword("");
         setError("");
         setShowUnlockOptions(false);
-        onUnlock();
+        onUnlock(); // Just unlock the UI for this admin user
       } catch (error) {
         toast({
           title: "Unlock Failed",
@@ -165,7 +165,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
               <TabsList className="grid grid-cols-2 mb-4">
                 <TabsTrigger value="pin">
                   <Lock className="mr-2 h-4 w-4" />
-                  PIN Unlock
+                  Unlock for Everyone
                 </TabsTrigger>
                 <TabsTrigger value="password">
                   <Key className="mr-2 h-4 w-4" />
@@ -177,9 +177,10 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
                 <div className="rounded-md bg-amber-50 p-4 border border-amber-200">
                   <div className="flex items-start gap-3">
                     <div className="text-amber-800 text-sm">
-                      <p className="font-medium">Admin Access Required</p>
+                      <p className="font-medium">Global Unlock - Admin Access Required</p>
                       <p>
-                        Enter the admin PIN to permanently unlock the website for all users.
+                        Enter the admin PIN to permanently unlock the website for ALL users.
+                        This will remove the lock for everyone.
                       </p>
                     </div>
                   </div>
@@ -222,7 +223,8 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
                     <div className="text-blue-800 text-sm">
                       <p className="font-medium">Admin Only Access</p>
                       <p>
-                        Enter the admin password to unlock. Only admin users can use this option.
+                        Enter the admin password to unlock the screen for your session only. 
+                        The website will remain locked for other users.
                       </p>
                     </div>
                   </div>
