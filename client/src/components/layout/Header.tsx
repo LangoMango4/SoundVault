@@ -27,45 +27,15 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
   
   // Function to handle teacher inbound button click (for the button)
   const handleTeacherInbound = () => {
-    // Try to close the tab
-    window.close();
-    // If closing fails (browsers may block this), minimize or hide the window
-    window.blur();
-    // Try to simulate Ctrl+W key combination to close tab
-    try {
-      const closeEvent = new KeyboardEvent('keydown', {
-        key: 'w',
-        code: 'KeyW',
-        ctrlKey: true,
-        bubbles: true
-      });
-      document.dispatchEvent(closeEvent);
-    } catch (error) {
-      console.error('Failed to close tab:', error);
-    }
-    // No redirection to any math help page
+    // Redirect to Google (or any educational website) as a safety measure
+    // This works more reliably across browsers than trying to close tabs directly
+    window.location.href = 'https://www.google.com/search?q=math+homework+help';
   };
   
-  // Function specifically for keyboard shortcut (just close the tab)
+  // Function specifically for keyboard shortcut (uses same approach)
   const handleKeyboardShortcutTeacherInbound = () => {
-    // Try several methods to close the tab
-    try {
-      // Method 1: Standard way
-      window.close();
-      
-      // Method 2: Try to simulate Ctrl+W key combination
-      const closeEvent = new KeyboardEvent('keydown', {
-        key: 'w',
-        code: 'KeyW',
-        ctrlKey: true,
-        bubbles: true
-      });
-      document.dispatchEvent(closeEvent);
-      
-      // No redirection to any external pages
-    } catch (error) {
-      console.error('Failed to close tab:', error);
-    }
+    // Use the same redirection approach for the keyboard shortcut
+    window.location.href = 'https://www.google.com/search?q=math+homework+help';
   };
   
   // Add keyboard shortcut (Left Ctrl key) for teacher inbound function
@@ -159,7 +129,7 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Quickly hide this page (closes or minimizes tab)</p>
+                    <p>Quickly hide this page (redirects to Google)</p>
                     <p className="text-xs text-muted-foreground mt-1">Shortcut: Press Left Ctrl</p>
                   </TooltipContent>
                 </Tooltip>
