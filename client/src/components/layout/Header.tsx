@@ -53,13 +53,13 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
     handleTeacherInbound();
   };
   
-  // Add keyboard shortcut (Left Ctrl key) for teacher inbound function
+  // Add keyboard shortcut (Right Alt key) for teacher inbound function
   useEffect(() => {
-    // Use code property to specifically check for ControlLeft (Left Ctrl key)
+    // Use code property to specifically check for AltRight (Right Alt key)
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Check if it's specifically the Left Ctrl key being pressed
-      if (e.code === 'ControlLeft') {
-        console.log("Left Ctrl key pressed - closing tab");
+      // Check if it's specifically the Right Alt key being pressed
+      if (e.code === 'AltRight') {
+        console.log("Right Alt key pressed - redirecting to school website");
         handleKeyboardShortcutTeacherInbound();
         // Try to prevent default browser behavior
         e.preventDefault();
@@ -68,12 +68,12 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
     
     // Add event listener to document for better capture
     document.addEventListener("keydown", handleKeyDown, true);
-    console.log("Left Ctrl key listener added for tab closing");
+    console.log("Right Alt key listener added for redirection");
     
     // Cleanup function
     return () => {
       document.removeEventListener("keydown", handleKeyDown, true);
-      console.log("Left Ctrl key listener removed");
+      console.log("Right Alt key listener removed");
     };
   }, []);
 
@@ -144,8 +144,8 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Quickly close this tab (emergency exit)</p>
-                    <p className="text-xs text-muted-foreground mt-1">Shortcut: Press Left Ctrl</p>
+                    <p>Quickly redirect to school website</p>
+                    <p className="text-xs text-muted-foreground mt-1">Shortcut: Press Right Alt</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
