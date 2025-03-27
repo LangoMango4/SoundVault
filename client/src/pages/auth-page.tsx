@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import abtutorIcon from "@assets/ABTutor.ico";
 
 export default function AuthPage() {
   const { user, isLoading, loginMutation } = useAuth();
@@ -52,7 +53,10 @@ export default function AuthPage() {
     <div className="min-h-screen bg-neutral-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-semibold text-primary">SoundBoard Pro</CardTitle>
+          <div className="flex justify-center mb-4">
+            <img src={abtutorIcon} alt="Maths Homework" className="h-12 w-12" />
+          </div>
+          <CardTitle className="text-2xl font-semibold text-primary">Maths Homework</CardTitle>
           <CardDescription>
             Enter your credentials to access the soundboard
           </CardDescription>
