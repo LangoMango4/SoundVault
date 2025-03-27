@@ -21,17 +21,9 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
   const [showUnlockOptions, setShowUnlockOptions] = useState(false);
-  const [activeTab, setActiveTab] = useState("everyone");
   const { toast } = useToast();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
-  
-  // If user tries to access admin tab but is not an admin, switch to everyone tab
-  useEffect(() => {
-    if (activeTab === "admin" && !isAdmin) {
-      setActiveTab("everyone");
-    }
-  }, [activeTab, isAdmin]);
 
   const handleAdminUnlockAttempt = async () => {
     // Double check that user is an admin before proceeding
@@ -64,21 +56,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
     }
   };
   
-  const handleTemporaryUnlock = () => {
-    // For "Unlock for Me", we only unlock locally for this user
-    // We don't make any server API calls - this way it only affects this user's session
-    
-    // Set the session storage flag to indicate this user has temporarily unlocked
-    sessionStorage.setItem('temporaryUnlock', 'true');
-    
-    toast({
-      title: "Temporarily Unlocked",
-      description: "The site is unlocked just for you. Other users will still see it as locked.",
-    });
-    
-    // Call the onUnlock callback to hide the lock screen for this user
-    onUnlock();
-  };
+  // Only admins can unlock the screen now
 
   // Main lock screen
   if (!showUnlockOptions) {
@@ -93,21 +71,23 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
               className="w-full max-w-xl object-contain mb-8" /* Made image larger with max-w-xl instead of max-w-md */
             />
             
-            <Button 
-              variant="default" 
-              onClick={() => setShowUnlockOptions(true)}
-              className="mt-4"
-            >
-              <Lock className="mr-2 h-4 w-4" />
-              Unlock Options
-            </Button>
+            {isAdmin && (
+              <Button 
+                variant="default" 
+                onClick={() => setShowUnlockOptions(true)}
+                className="mt-4"
+              >
+                <Lock className="mr-2 h-4 w-4" />
+                Admin Unlock Options
+              </Button>
+            )}
           </div>
         </div>
       </div>
     );
   }
 
-  // Unlock options screen
+  // Admin-only unlock options screen
   return (
     <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50">
       <div className="max-w-xl w-full px-4"> {/* Increased from max-w-md to max-w-xl */}
@@ -123,52 +103,16 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
           
           <div className="space-y-4 w-full max-w-xl">
             <Tabs 
-              defaultValue="everyone" 
-              value={activeTab}
-              onValueChange={setActiveTab}
+              defaultValue="admin" 
+              value="admin"
               className="w-full"
             >
-              <TabsList className={`grid ${isAdmin ? 'grid-cols-2' : 'grid-cols-1'} mb-4`}>
-                <TabsTrigger value="everyone">
-                  <User className="mr-2 h-4 w-4" />
-                  Unlock for Me
+              <TabsList className="grid grid-cols-1 mb-4">
+                <TabsTrigger value="admin">
+                  <ShieldCheck className="mr-2 h-4 w-4" />
+                  Admin Unlock
                 </TabsTrigger>
-                {isAdmin && (
-                  <TabsTrigger value="admin">
-                    <ShieldCheck className="mr-2 h-4 w-4" />
-                    Admin Unlock
-                  </TabsTrigger>
-                )}
               </TabsList>
-              
-              <TabsContent value="everyone" className="space-y-4">
-                <div className="rounded-md bg-blue-50 p-4 border border-blue-200">
-                  <div className="flex items-start gap-3">
-                    <div className="text-blue-800 text-sm">
-                      <p className="font-medium">Temporary Unlock</p>
-                      <p>
-                        This will unlock the screen for you temporarily. The site will remain locked for other users until an admin unlocks it permanently.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex gap-2 pt-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setShowUnlockOptions(false)}
-                    className="flex-1"
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={handleTemporaryUnlock}
-                    className="flex-1"
-                  >
-                    Unlock for Me
-                  </Button>
-                </div>
-              </TabsContent>
               
               <TabsContent value="admin" className="space-y-4">
                 <div className="rounded-md bg-amber-50 p-4 border border-amber-200">
