@@ -84,13 +84,13 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
   if (!showUnlockOptions) {
     return (
       <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50">
-        <div className="max-w-md w-full px-4">
+        <div className="max-w-xl w-full px-4"> {/* Increased from max-w-md to max-w-xl */}
           <div className="flex flex-col items-center text-center">
             {/* Display the image which already contains the lock icon and text */}
             <img 
               src={lockScreenImage} 
               alt="Locked Screen" 
-              className="w-full max-w-md object-contain mb-8"
+              className="w-full max-w-xl object-contain mb-8" /* Made image larger with max-w-xl instead of max-w-md */
             />
             
             <Button 
@@ -110,10 +110,10 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
   // Unlock options screen
   return (
     <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50">
-      <div className="max-w-md w-full px-4">
+      <div className="max-w-xl w-full px-4"> {/* Increased from max-w-md to max-w-xl */}
         <div className="flex flex-col items-center text-center space-y-6">
-          {/* Lock icon with fixed dimensions */}
-          <div className="w-32 h-32 flex items-center justify-center">
+          {/* Lock icon with fixed dimensions, increased size */}
+          <div className="w-48 h-48 flex items-center justify-center"> {/* Increased from w-32 h-32 to w-48 h-48 */}
             <img 
               src={lockScreenImage} 
               alt="Locked Screen" 
@@ -121,22 +121,24 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
             />
           </div>
           
-          <div className="space-y-4 w-full max-w-md">
+          <div className="space-y-4 w-full max-w-xl">
             <Tabs 
               defaultValue="everyone" 
               value={activeTab}
               onValueChange={setActiveTab}
               className="w-full"
             >
-              <TabsList className="grid grid-cols-2 mb-4">
+              <TabsList className={`grid ${isAdmin ? 'grid-cols-2' : 'grid-cols-1'} mb-4`}>
                 <TabsTrigger value="everyone">
                   <User className="mr-2 h-4 w-4" />
                   Unlock for Me
                 </TabsTrigger>
-                <TabsTrigger value="admin" disabled={!isAdmin}>
-                  <ShieldCheck className="mr-2 h-4 w-4" />
-                  Admin Unlock
-                </TabsTrigger>
+                {isAdmin && (
+                  <TabsTrigger value="admin">
+                    <ShieldCheck className="mr-2 h-4 w-4" />
+                    Admin Unlock
+                  </TabsTrigger>
+                )}
               </TabsList>
               
               <TabsContent value="everyone" className="space-y-4">
