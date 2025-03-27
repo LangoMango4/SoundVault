@@ -33,11 +33,15 @@ export function ScreenLockControl({ isLocked, onLockChange }: ScreenLockControlP
     try {
       // API request to lock the screen (server-side)
       await apiRequest("POST", "/api/settings/lock", { locked: true });
+      
+      // Clear any temporary unlock that might be in this session
+      sessionStorage.removeItem('temporaryUnlock');
+      
       onLockChange(true);
       setIsDialogOpen(false);
       toast({
         title: "Screen Locked",
-        description: "The website has been locked successfully.",
+        description: "The website has been locked for all users successfully.",
         variant: "default",
       });
     } catch (error) {

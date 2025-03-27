@@ -22,10 +22,20 @@ export default function HomePage() {
     refetchInterval: 5000, // Refresh every 5 seconds to check for lock changes
   });
 
-  // Update local state when the query data changes
+  // Update local state when the query data changes, but respect temporary unlocks
   useEffect(() => {
     if (lockData) {
-      setIsScreenLocked(lockData.locked);
+      // Check if we have a temporary unlock in the session
+      const temporaryUnlock = sessionStorage.getItem('temporaryUnlock') === 'true';
+      
+      // Only lock the screen if server says it's locked AND we don't have a temporary unlock
+      if (lockData.locked && !temporaryUnlock) {
+        setIsScreenLocked(true);
+      } else if (!lockData.locked) {
+        // If server says it's unlocked, make sure we're unlocked and clear any temporary unlock
+        setIsScreenLocked(false);
+        sessionStorage.removeItem('temporaryUnlock');
+      }
     }
   }, [lockData]);
   

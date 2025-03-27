@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import lockScreenImage from "@/assets/new_lock_screen.png";
 import { useAuth } from "@/hooks/use-auth";
 
+// We'll use the browser's sessionStorage API for temporary unlocks
+
 // PIN for unlocking the screen (only admins can unlock)
 const ADMIN_PIN = "2012";
 
@@ -62,18 +64,20 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
     }
   };
   
-  const handleEveryoneUnlock = async () => {
-    try {
-      // This will fail for regular users as the API requires admin access
-      // But we'll handle the error and simulate unlocking for the demo
-      await apiRequest("POST", "/api/settings/lock", { locked: false });
-      onUnlock();
-    } catch (error) {
-      // For a regular user, we just close the lock screen locally
-      // without actually unlocking the server-side lock
-      // In a real app, we would have a separate endpoint for regular users
-      onUnlock();
-    }
+  const handleTemporaryUnlock = () => {
+    // For "Unlock for Me", we only unlock locally for this user
+    // We don't make any server API calls - this way it only affects this user's session
+    
+    // Set the session storage flag to indicate this user has temporarily unlocked
+    sessionStorage.setItem('temporaryUnlock', 'true');
+    
+    toast({
+      title: "Temporarily Unlocked",
+      description: "The site is unlocked just for you. Other users will still see it as locked.",
+    });
+    
+    // Call the onUnlock callback to hide the lock screen for this user
+    onUnlock();
   };
 
   // Main lock screen
@@ -156,7 +160,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
                     Cancel
                   </Button>
                   <Button 
-                    onClick={handleEveryoneUnlock}
+                    onClick={handleTemporaryUnlock}
                     className="flex-1"
                   >
                     Unlock for Me
