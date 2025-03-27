@@ -27,28 +27,22 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
   
   // Function to handle teacher inbound button click (for the button)
   const handleTeacherInbound = () => {
-    // Use window.location.href = 'about:blank' to effectively close the tab in most browsers
-    window.location.href = 'about:blank';
-    
-    // Try multiple approaches to close the tab
     try {
-      // Method 1: Try to close the window
+      // This creates a window.open('') and then immediately closes it
+      // The browser interpretes this as a close command for the current tab
+      window.open('', '_self', '')?.close();
+      
+      // Try another approach if the above didn't work
+      // This will create a blank page first without fully refreshing
+      document.body.innerHTML = '';
+      document.head.innerHTML = '';
+      // Then try closing the blank page
       window.close();
-      
-      // Method 2: Try history.back() which may take users away from the app
-      window.history.back();
-      
-      // Method 3: Try to execute Ctrl+W keyboard shortcut
-      const event = new KeyboardEvent('keydown', {
-        key: 'w',
-        code: 'KeyW',
-        ctrlKey: true,
-        bubbles: true,
-        cancelable: true
-      });
-      document.dispatchEvent(event);
     } catch (err) {
       console.error('Error closing tab:', err);
+      
+      // Last resort - redirect to blank page if closing didn't work
+      window.location.replace('about:blank');
     }
   };
   
