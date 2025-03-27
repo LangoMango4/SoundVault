@@ -5,7 +5,7 @@ import { Lock, ShieldCheck, Key } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import lockScreenImage from "@/assets/new_lock_screen_image.png";
+import lockScreenImage from "@/assets/website_locked.png";
 import { useAuth } from "@/hooks/use-auth";
 
 // PIN for unlocking the screen (only admins can unlock)
