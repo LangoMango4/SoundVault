@@ -1,10 +1,16 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { useState } from "react";
-import { MessageSquarePlus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { MessageSquarePlus, AlertTriangle } from "lucide-react";
 import { BroadcastMessages } from "./BroadcastMessages";
 import { BroadcastMessageForm } from "@/components/admin/BroadcastMessageForm";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface HeaderProps {
   onOpenAdminPanel?: () => void;
@@ -18,6 +24,36 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
   const handleLogout = () => {
     logoutMutation.mutate();
   };
+  
+  // Function to handle teacher inbound button click
+  const handleTeacherInbound = () => {
+    // Try to close the tab
+    window.close();
+    // If closing fails (browsers may block this), minimize or hide the window
+    window.blur();
+    // As a last resort, navigate to a safe website
+    setTimeout(() => {
+      window.location.href = "https://www.google.com/search?q=math+homework+help";
+    }, 100);
+  };
+  
+  // Add keyboard shortcut (ESC key) for teacher inbound function
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Listen for Escape key
+      if (e.key === "Escape") {
+        handleTeacherInbound();
+      }
+    };
+    
+    // Add event listener
+    window.addEventListener("keydown", handleKeyDown);
+    
+    // Cleanup function
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   return (
     <>
@@ -61,6 +97,28 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
               >
                 Admin Panel
               </Button>
+            )}
+            
+            {/* Teacher Inbound Button (Emergency Hide) */}
+            {user && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      onClick={handleTeacherInbound}
+                      className="text-sm flex items-center gap-1"
+                    >
+                      <AlertTriangle className="h-4 w-4" />
+                      Teacher Inbound
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Quickly hide this page (closes or minimizes tab)</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
             
             <Button 
