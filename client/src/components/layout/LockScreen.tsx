@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Lock, ShieldCheck, User } from "lucide-react";
@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import lockScreenImage from "@/assets/image_1743065278492.png";
+import { useAuth } from "@/hooks/use-auth";
 
 // PIN for unlocking the screen (only admins can unlock)
 const ADMIN_PIN = "2012";
@@ -20,8 +21,22 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
   const [showUnlockOptions, setShowUnlockOptions] = useState(false);
   const [activeTab, setActiveTab] = useState("everyone");
   const { toast } = useToast();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  
+  // If user tries to access admin tab but is not an admin, switch to everyone tab
+  useEffect(() => {
+    if (activeTab === "admin" && !isAdmin) {
+      setActiveTab("everyone");
+    }
+  }, [activeTab, isAdmin]);
 
   const handleAdminUnlockAttempt = async () => {
+    if (!isAdmin) {
+      setError("You must be an admin to use this feature.");
+      return;
+    }
+    
     if (pin === ADMIN_PIN) {
       try {
         // API request to unlock the screen (server-side)
@@ -60,27 +75,43 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
     }
   };
 
-  // Use the full screen design from the provided image
+  // Main lock screen
   if (!showUnlockOptions) {
     return (
       <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50">
         <div className="max-w-md w-full px-4">
           <div className="flex flex-col items-center text-center">
-            {/* Full screen image */}
-            <img 
-              src={lockScreenImage} 
-              alt="Locked Screen" 
-              className="w-full max-w-xs mb-8"
-            />
+            {/* Lock screen image with fixed dimensions to prevent stretching */}
+            <div className="w-64 h-64 flex items-center justify-center">
+              <img 
+                src={lockScreenImage} 
+                alt="Locked Screen" 
+                className="object-contain max-w-full max-h-full"
+              />
+            </div>
             
-            <Button 
-              variant="default" 
-              onClick={() => setShowUnlockOptions(true)}
-              className="mt-8"
-            >
-              <Lock className="mr-2 h-4 w-4" />
-              Unlock Options
-            </Button>
+            <div className="space-y-6 mt-4">
+              <div className="space-y-2">
+                <h1 className="text-3xl font-bold tracking-tight">
+                  THIS WEBSITE HAS BEEN LOCKED
+                </h1>
+                <h2 className="text-2xl font-bold">
+                  BY THE WEBSITE OWNER
+                </h2>
+                <p className="text-xl mt-4">
+                  OR THE WEBSITE IS DOWN FOR MAINTENANCE
+                </p>
+              </div>
+              
+              <Button 
+                variant="default" 
+                onClick={() => setShowUnlockOptions(true)}
+                className="mt-8"
+              >
+                <Lock className="mr-2 h-4 w-4" />
+                Unlock Options
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -92,11 +123,14 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
     <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50">
       <div className="max-w-md w-full px-4">
         <div className="flex flex-col items-center text-center space-y-6">
-          <img 
-            src={lockScreenImage} 
-            alt="Locked Screen" 
-            className="w-64 mb-4"
-          />
+          {/* Lock icon with fixed dimensions */}
+          <div className="w-32 h-32 flex items-center justify-center">
+            <img 
+              src={lockScreenImage} 
+              alt="Locked Screen" 
+              className="object-contain max-w-full max-h-full"
+            />
+          </div>
           
           <div className="space-y-4 w-full max-w-md">
             <Tabs 
@@ -106,11 +140,11 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
               className="w-full"
             >
               <TabsList className="grid grid-cols-2 mb-4">
-                <TabsTrigger value="everyone" onClick={() => setActiveTab("everyone")}>
+                <TabsTrigger value="everyone">
                   <User className="mr-2 h-4 w-4" />
                   Everyone Unlock
                 </TabsTrigger>
-                <TabsTrigger value="admin" onClick={() => setActiveTab("admin")}>
+                <TabsTrigger value="admin" disabled={!isAdmin}>
                   <ShieldCheck className="mr-2 h-4 w-4" />
                   Admin Unlock
                 </TabsTrigger>
