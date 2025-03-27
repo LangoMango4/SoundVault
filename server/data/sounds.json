@@ -1,1 +1,82 @@
-[]
+[
+  {
+    "name": "Wow",
+    "filename": "file-1743060513765-914594121.mp3",
+    "duration": "5.5",
+    "categoryId": 1,
+    "accessLevel": "all",
+    "id": 1
+  },
+  {
+    "name": "Scream",
+    "filename": "file-1743060522635-719651696.mp3",
+    "duration": "2.3",
+    "categoryId": 1,
+    "accessLevel": "all",
+    "id": 2
+  },
+  {
+    "name": "Tada",
+    "filename": "file-1743060531991-824530542.mp3",
+    "duration": "3",
+    "categoryId": 1,
+    "accessLevel": "all",
+    "id": 3
+  },
+  {
+    "name": "Sad Trombone",
+    "filename": "file-1743060570121-580137729.mp3",
+    "duration": "5.1",
+    "categoryId": 1,
+    "accessLevel": "all",
+    "id": 4
+  },
+  {
+    "name": "Hogrida",
+    "filename": "file-1743060584228-963527643.mp3",
+    "duration": "4.4",
+    "categoryId": 1,
+    "accessLevel": "all",
+    "id": 5
+  },
+  {
+    "name": "Boom",
+    "filename": "file-1743060600895-589829320.mp3",
+    "duration": "4.5",
+    "categoryId": 1,
+    "accessLevel": "all",
+    "id": 6
+  },
+  {
+    "name": "Boing",
+    "filename": "file-1743060622964-917440438.mp3",
+    "duration": "2.2",
+    "categoryId": 1,
+    "accessLevel": "all",
+    "id": 8
+  },
+  {
+    "name": "Applause",
+    "filename": "file-1743060635584-176773254.mp3",
+    "duration": "25.8",
+    "categoryId": 1,
+    "accessLevel": "all",
+    "id": 9
+  },
+  {
+    "name": "Airhorn",
+    "filename": "file-1743060649090-542140758.mp3",
+    "duration": "1.2",
+    "categoryId": 1,
+    "accessLevel": "all",
+    "id": 10
+  },
+  {
+    "name": "Susy 911",
+    "filename": "file-1743060731368-97133606.mp3",
+    "duration": "9.4",
+    "categoryId": 1,
+    "accessLevel": "all",
+    "id": 11
+  }
+]
