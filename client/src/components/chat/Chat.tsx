@@ -143,6 +143,16 @@ export function Chat() {
       };
     }
     
+    // For message user info (if available in the message)
+    const matchingMessage = chatMessages.find(msg => msg.userId === userId && msg.user);
+    if (matchingMessage && matchingMessage.user) {
+      return {
+        username: matchingMessage.user.username,
+        fullName: matchingMessage.user.fullName,
+        role: matchingMessage.user.role
+      };
+    }
+    
     // Default for other users
     return {
       username: `User ${userId}`,

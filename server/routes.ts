@@ -411,7 +411,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/chat", isAuthenticated, async (req, res, next) => {
     try {
       const messages = await storage.getChatMessages();
-      res.json(messages);
+      
+      // Enhance messages with user information
+      const enhancedMessages = await Promise.all(
+        messages.map(async (message) => {
+          const user = await storage.getUser(message.userId);
+          if (user) {
+            // Remove sensitive information like password
+            const { password, ...safeUser } = user;
+            return {
+              ...message,
+              user: safeUser
+            };
+          }
+          return message;
+        })
+      );
+      
+      res.json(enhancedMessages);
     } catch (error) {
       next(error);
     }
@@ -437,7 +454,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const message = await storage.createChatMessage(chatMessageData);
-      res.status(201).json(message);
+      
+      // Add user information to the response
+      const { password, ...safeUser } = req.user;
+      const enhancedMessage = {
+        ...message,
+        user: safeUser
+      };
+      
+      res.status(201).json(enhancedMessage);
     } catch (error) {
       next(error);
     }
@@ -467,7 +492,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Chat message not found" });
       }
       
-      res.json(updatedMessage);
+      // Add user information to the response
+      const messageUser = await storage.getUser(updatedMessage.userId);
+      if (messageUser) {
+        const { password, ...safeUser } = messageUser;
+        const enhancedMessage = {
+          ...updatedMessage,
+          user: safeUser
+        };
+        res.json(enhancedMessage);
+      } else {
+        res.json(updatedMessage);
+      }
     } catch (error) {
       next(error);
     }
