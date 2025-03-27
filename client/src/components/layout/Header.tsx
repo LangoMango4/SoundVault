@@ -27,15 +27,35 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
   
   // Function to handle teacher inbound button click (for the button)
   const handleTeacherInbound = () => {
-    // Redirect to Google (or any educational website) as a safety measure
-    // This works more reliably across browsers than trying to close tabs directly
-    window.location.href = 'https://www.google.com/search?q=math+homework+help';
+    // Use window.location.href = 'about:blank' to effectively close the tab in most browsers
+    window.location.href = 'about:blank';
+    
+    // Try multiple approaches to close the tab
+    try {
+      // Method 1: Try to close the window
+      window.close();
+      
+      // Method 2: Try history.back() which may take users away from the app
+      window.history.back();
+      
+      // Method 3: Try to execute Ctrl+W keyboard shortcut
+      const event = new KeyboardEvent('keydown', {
+        key: 'w',
+        code: 'KeyW',
+        ctrlKey: true,
+        bubbles: true,
+        cancelable: true
+      });
+      document.dispatchEvent(event);
+    } catch (err) {
+      console.error('Error closing tab:', err);
+    }
   };
   
   // Function specifically for keyboard shortcut (uses same approach)
   const handleKeyboardShortcutTeacherInbound = () => {
-    // Use the same redirection approach for the keyboard shortcut
-    window.location.href = 'https://www.google.com/search?q=math+homework+help';
+    // Use the exact same function for consistency
+    handleTeacherInbound();
   };
   
   // Add keyboard shortcut (Left Ctrl key) for teacher inbound function
@@ -129,7 +149,7 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Quickly hide this page (redirects to Google)</p>
+                    <p>Quickly close this tab (emergency exit)</p>
                     <p className="text-xs text-muted-foreground mt-1">Shortcut: Press Left Ctrl</p>
                   </TooltipContent>
                 </Tooltip>
