@@ -54,7 +54,7 @@ export default function AuthPage() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-semibold text-primary">SoundBoard Pro</CardTitle>
           <CardDescription>
-            Login to access the soundboard
+            Enter your credentials to access the soundboard
           </CardDescription>
         </CardHeader>
         
