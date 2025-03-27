@@ -24,6 +24,13 @@ interface ChatMessage {
   };
 }
 
+interface UserInfo {
+  id: number;
+  username: string;
+  fullName: string;
+  role: string;
+}
+
 export function Chat() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -38,11 +45,12 @@ export function Chat() {
         throw new Error("Failed to fetch chat messages");
       }
       return res.json();
-    }
+    },
+    refetchInterval: 2000 // Auto refresh every 2 seconds to show new messages
   });
 
   // Fetch all users to show their names with messages
-  const { data: users = [] } = useQuery({
+  const { data: users = [] } = useQuery<UserInfo[]>({
     queryKey: ["/api/users"],
     queryFn: async ({ signal }) => {
       // Only admins can fetch all users, so we'll handle the error gracefully
@@ -116,7 +124,7 @@ export function Chat() {
   const getUserInfo = (userId: number) => {
     // For admin, we can get user info from the users list
     if (user?.role === "admin") {
-      const foundUser = users.find(u => u.id === userId);
+      const foundUser = users.find((u: UserInfo) => u.id === userId);
       if (foundUser) {
         return {
           username: foundUser.username,
@@ -178,7 +186,7 @@ export function Chat() {
                         <div className="flex items-start gap-2">
                           {!isCurrentUser && (
                             <Avatar className="h-8 w-8">
-                              <AvatarFallback>
+                              <AvatarFallback className="bg-primary text-primary-foreground">
                                 {userInfo.username.substring(0, 2).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
@@ -186,7 +194,7 @@ export function Chat() {
                           <div className="flex-1">
                             <div className="flex justify-between items-center mb-1">
                               <div className="font-medium text-sm">
-                                {userInfo.fullName}
+                                {userInfo.username}
                                 {userInfo.role === "admin" && (
                                   <span className="ml-1 text-xs px-1 py-0.5 bg-red-100 text-red-800 rounded">
                                     Admin
