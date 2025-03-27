@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Bell, Check, X } from 'lucide-react';
+import { Bell, Check, X, RefreshCw } from 'lucide-react';
 import { 
   Dialog, 
   DialogContent,
@@ -25,7 +25,7 @@ export function BroadcastMessages() {
   const { user } = useAuth();
   
   // Check for unread messages
-  const { data: unreadMessages, isLoading } = useQuery({
+  const { data: unreadMessages, isLoading, refetch: refetchUnread } = useQuery({
     queryKey: ['/api/messages', 'unread'],
     queryFn: async () => {
       const res = await fetch('/api/messages?unread=true');
@@ -34,12 +34,28 @@ export function BroadcastMessages() {
     },
     // Only fetch for authenticated users
     enabled: !!user,
-    // Check for new messages every minute
-    refetchInterval: 60000,
+    // Check for new messages every 15 seconds for better responsiveness
+    refetchInterval: 15000,
   });
   
+  // Set up real-time updates for new messages
+  useEffect(() => {
+    if (!user) return;
+    
+    // Force refetch when new messages might have been created
+    const checkForNewMessages = () => {
+      refetchUnread();
+    };
+    
+    // Check every 5 seconds (more frequent than the regular refetch interval)
+    const intervalId = setInterval(checkForNewMessages, 5000);
+    
+    // Cleanup on unmount
+    return () => clearInterval(intervalId);
+  }, [user, refetchUnread]);
+  
   // Get all messages when dialog is opened
-  const { data: allMessages } = useQuery({
+  const { data: allMessages, refetch: refetchAll } = useQuery({
     queryKey: ['/api/messages', 'all'],
     queryFn: async () => {
       const res = await fetch('/api/messages');
@@ -49,6 +65,13 @@ export function BroadcastMessages() {
     enabled: isOpen && !!user,
   });
   
+  // Refresh messages when dialog is opened
+  useEffect(() => {
+    if (isOpen && user) {
+      refetchAll();
+    }
+  }, [isOpen, user, refetchAll]);
+  
   // Mark a message as read
   const markAsReadMutation = useMutation({
     mutationFn: async (messageId: number) => {
@@ -56,7 +79,8 @@ export function BroadcastMessages() {
       return res.json();
     },
     onSuccess: () => {
-      // Invalidate both message queries to update the UI
+      // Invalidate all message-related queries to update the UI
+      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
       queryClient.invalidateQueries({ queryKey: ['/api/messages', 'unread'] });
       queryClient.invalidateQueries({ queryKey: ['/api/messages', 'all'] });
     },
@@ -81,7 +105,10 @@ export function BroadcastMessages() {
       return true;
     },
     onSuccess: () => {
+      // Invalidate all message-related queries
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/messages', 'unread'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/messages', 'all'] });
       toast({
         title: "All messages marked as read",
         description: "You've cleared all your notifications",
@@ -159,10 +186,25 @@ export function BroadcastMessages() {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Broadcast Messages</DialogTitle>
-            <DialogDescription>
-              System notifications and announcements from administrators.
-            </DialogDescription>
+            <div className="flex justify-between items-center">
+              <div>
+                <DialogTitle>Broadcast Messages</DialogTitle>
+                <DialogDescription>
+                  System notifications and announcements from administrators.
+                </DialogDescription>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => {
+                  refetchAll();
+                  refetchUnread();
+                }} 
+                title="Refresh messages"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </div>
           </DialogHeader>
           
           <ScrollArea className="max-h-[60vh]">

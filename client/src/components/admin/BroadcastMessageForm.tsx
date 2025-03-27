@@ -82,7 +82,10 @@ export function BroadcastMessageForm({ open, onOpenChange }: BroadcastMessageFor
         title: "Message broadcast successfully",
         description: "Your message has been sent to all users",
       });
+      // Invalidate all message-related queries to ensure updates everywhere
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/messages', 'unread'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/messages', 'all'] });
       onOpenChange(false);
       form.reset();
     },
@@ -98,6 +101,15 @@ export function BroadcastMessageForm({ open, onOpenChange }: BroadcastMessageFor
   // Form submission handler
   function onSubmit(values: FormValues) {
     createMessageMutation.mutate(values);
+    
+    // Additionally, set a timeout to refresh queries after a brief delay
+    // This ensures that even if the cache invalidation doesn't trigger immediately,
+    // users will still see the new message
+    setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/messages', 'unread'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/messages', 'all'] });
+    }, 1000);
   }
   
   return (
