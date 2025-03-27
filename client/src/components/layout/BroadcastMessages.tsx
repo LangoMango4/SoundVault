@@ -18,6 +18,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { formatDistance } from 'date-fns';
 import { BroadcastMessage } from '@shared/schema';
+import warningIcon from '@/assets/warning-icon.png';
 
 export function BroadcastMessages() {
   const [isOpen, setIsOpen] = useState(false);
@@ -152,10 +153,12 @@ export function BroadcastMessages() {
       // Show a toast notification for the first unread message
       const latestMessage = unreadMessages[0];
       toast({
+        // When we need to show just text in the toast title
         title: latestMessage.title,
         description: `${latestMessage.message.substring(0, 60)}${latestMessage.message.length > 60 ? '...' : ''}`,
         action: (
           <Button variant="outline" size="sm" onClick={() => setIsOpen(true)}>
+            <img src={warningIcon} alt="Warning" className="h-4 w-4 mr-2" />
             View
           </Button>
         )
@@ -174,7 +177,12 @@ export function BroadcastMessages() {
         onClick={() => setIsOpen(true)}
         className="relative"
       >
-        <Bell className="h-5 w-5" />
+        {/* Use warning icon instead of bell when there are unread messages */}
+        {!isLoading && unreadMessages && unreadMessages.length > 0 ? (
+          <img src={warningIcon} alt="Warning" className="h-6 w-6" />
+        ) : (
+          <Bell className="h-5 w-5" />
+        )}
         {!isLoading && unreadMessages && unreadMessages.length > 0 && (
           <span className="absolute top-0 right-0 flex h-3 w-3">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -220,7 +228,14 @@ export function BroadcastMessages() {
                     <Card key={message.id} className={hasBeenRead ? 'opacity-70' : ''}>
                       <CardHeader className="pb-2">
                         <div className="flex justify-between items-start">
-                          <CardTitle className="text-base">{message.title}</CardTitle>
+                          <div className="flex items-center gap-2">
+                            <img 
+                              src={warningIcon} 
+                              alt="Warning" 
+                              className="h-5 w-5"
+                            />
+                            <CardTitle className="text-base">{message.title}</CardTitle>
+                          </div>
                           {getPriorityBadge(message.priority)}
                         </div>
                         <CardDescription className="text-xs">

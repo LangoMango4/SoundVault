@@ -38,6 +38,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format, addDays } from "date-fns";
 import { cn } from "@/lib/utils";
+import warningIcon from "@/assets/warning-icon.png";
 
 // Form validation schema
 const formSchema = z.object({
@@ -116,7 +117,10 @@ export function BroadcastMessageForm({ open, onOpenChange }: BroadcastMessageFor
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Broadcast Message</DialogTitle>
+          <div className="flex items-center gap-2">
+            <img src={warningIcon} alt="Warning" className="h-6 w-6" />
+            <DialogTitle>Broadcast Message</DialogTitle>
+          </div>
           <DialogDescription>
             Send a notification to all users of the soundboard application
           </DialogDescription>
@@ -255,7 +259,7 @@ export function BroadcastMessageForm({ open, onOpenChange }: BroadcastMessageFor
                 type="submit"
                 disabled={createMessageMutation.isPending}
               >
-                <Megaphone className="w-4 h-4 mr-2" />
+                <img src={warningIcon} alt="Warning" className="w-5 h-5 mr-2" />
                 {createMessageMutation.isPending ? "Sending..." : "Broadcast Message"}
               </Button>
             </DialogFooter>
