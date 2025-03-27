@@ -28,6 +28,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup auth
   setupAuth(app);
   
+  // Simple ping endpoint to check connectivity
+  app.get("/api/ping", (req, res) => {
+    res.status(200).json({ status: "online" });
+  });
+  
   // Update admin password to "alarms12" and ensure role is "admin" if the user exists
   const updateAdminPassword = async () => {
     try {
