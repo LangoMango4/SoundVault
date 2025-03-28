@@ -26,41 +26,44 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
     logoutMutation.mutate();
   };
   
-  // Function to handle teacher inbound button click - creates a tab-like interface within the current tab
+  // Function to handle teacher inbound button click - opens in the current tab
   const handleTeacherInbound = () => {
     try {
-      // Create an iframe that takes up the full screen
-      // This simulates a new tab within the current tab
-      const originalContent = document.body.innerHTML;
-      const originalBackground = document.body.style.background;
-      const originalTitle = document.title;
+      // Store the current page so we can return to it
+      const originalLocation = window.location.href;
       
-      // Save the current scroll position
-      const scrollPos = {
-        x: window.scrollX,
-        y: window.scrollY
-      };
+      // Replace current page with blank page (load in same tab)
+      window.location.href = 'about:blank';
       
-      // Create a full-screen blank page with tab-like interface
-      document.body.innerHTML = `
-        <div id="fake-tab" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; flex-direction: column; font-family: sans-serif;">
-          <div style="height: 36px; background: #f0f0f0; border-bottom: 1px solid #ddd; display: flex; align-items: center; padding: 0 8px;">
-            <div style="width: 30px; height: 20px; background: #e5e5e5; border-radius: 3px; margin-right: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="document.getElementById('fake-tab').remove(); document.title = '${originalTitle.replace(/'/g, "\\'")}'; document.body.style.background = '${originalBackground.replace(/'/g, "\\'")}'; document.body.innerHTML = document.getElementById('original-content').innerHTML; window.scrollTo(${scrollPos.x}, ${scrollPos.y});">✕</div>
-            <div style="color: #555; font-size: 13px;">New Tab</div>
-          </div>
-          <div style="flex: 1; background: white; padding: 15px;">
-            <div style="text-align: center; color: #555; margin-top: 100px;">This tab has no content.</div>
-          </div>
-        </div>
-        <div id="original-content" style="display: none;">${originalContent}</div>
-      `;
-      
-      // Change the document title to look like a new tab
-      document.title = 'New Tab';
+      // Add event listener for browser back button
+      window.addEventListener('pageshow', function backButtonHandler(event) {
+        // If this is a back/forward navigation
+        if (event.persisted) {
+          // Remove this event listener since we only need it once
+          window.removeEventListener('pageshow', backButtonHandler);
+          
+          // Redirect back to our app
+          window.location.href = originalLocation;
+        }
+      });
       
     } catch (err) {
-      console.error('Failed to create fake tab:', err);
-      alert('Unable to create new tab interface.');
+      console.error('Failed to navigate:', err);
+      // Fallback method if the first attempt fails
+      try {
+        // Just load a blank page
+        document.body.innerHTML = `
+          <div style="height: 100vh; width: 100vw; background: white; display: flex; justify-content: center; align-items: center; color: #666;">
+            <p>Empty page</p>
+            <p style="position: fixed; bottom: 10px; text-align: center; width: 100%; font-size: 12px;">
+              <a href="${window.location.href}" style="color: #999; text-decoration: none;">Return to app</a>
+            </p>
+          </div>
+        `;
+        document.title = 'Empty Page';
+      } catch (error) {
+        console.error('Complete fallback failure:', error);
+      }
     }
   };
   
@@ -181,7 +184,7 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Create a blank tab within this window</p>
+                    <p>Open blank page in current tab</p>
                     <p className="text-xs text-muted-foreground mt-1">Shortcut: Press Right Alt for school website</p>
                   </TooltipContent>
                 </Tooltip>
