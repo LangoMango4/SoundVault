@@ -36,6 +36,9 @@ if (!fs.existsSync(DATA_DIR)) {
 export interface IStorage {
   // Session store
   sessionStore: session.Store;
+  
+  // Data persistence
+  saveDataToFiles(): void;
 
   // User operations
   getUser(id: number): Promise<User | undefined>;
@@ -112,7 +115,7 @@ export class MemStorage implements IStorage {
   }
   
   // Save data to files
-  private saveDataToFiles() {
+  saveDataToFiles() {
     try {
       // Save users
       const usersData = JSON.stringify(Array.from(this.users.values()), null, 2);

@@ -1,70 +1,212 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { storage } from "./storage";
 
-const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// Track application uptime
+const startTime = new Date();
+let lastHeartbeat = new Date();
+let isServerRunning = false;
 
-app.use((req, res, next) => {
-  const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
+// Format uptime into days, hours, minutes, seconds
+function formatUptime(seconds: number): string {
+  const days = Math.floor(seconds / (24 * 60 * 60));
+  seconds -= days * 24 * 60 * 60;
+  const hours = Math.floor(seconds / (60 * 60));
+  seconds -= hours * 60 * 60;
+  const minutes = Math.floor(seconds / 60);
+  seconds -= minutes * 60;
+  
+  return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+}
 
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
-  res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      log(logLine);
-    }
-  });
-
-  next();
-});
-
-(async () => {
-  const server = await registerRoutes(app);
-
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
-  });
-
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
+// Function to start the server
+async function startServer() {
+  if (isServerRunning) {
+    log("Server is already running, no need to restart", "system");
+    return;
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
-})();
+  try {
+    const app = express();
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: false }));
+
+    app.use((req, res, next) => {
+      const start = Date.now();
+      const path = req.path;
+      let capturedJsonResponse: Record<string, any> | undefined = undefined;
+
+      const originalResJson = res.json;
+      res.json = function (bodyJson, ...args) {
+        capturedJsonResponse = bodyJson;
+        return originalResJson.apply(res, [bodyJson, ...args]);
+      };
+
+      res.on("finish", () => {
+        const duration = Date.now() - start;
+        if (path.startsWith("/api")) {
+          let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
+          if (capturedJsonResponse) {
+            logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+          }
+
+          if (logLine.length > 80) {
+            logLine = logLine.slice(0, 79) + "…";
+          }
+
+          log(logLine);
+        }
+      });
+
+      next();
+    });
+
+    // Add server heartbeat endpoint
+    app.get('/api/heartbeat', (_req, res) => {
+      const now = new Date();
+      lastHeartbeat = now;
+      const uptime = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+      const uptimeFormatted = formatUptime(uptime);
+      
+      res.json({
+        status: 'healthy',
+        uptime: uptimeFormatted,
+        startTime: startTime.toISOString(),
+        currentTime: now.toISOString()
+      });
+    });
+
+    const server = await registerRoutes(app);
+
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
+      
+      log(`Error handled: ${message}`, "error");
+      res.status(status).json({ message });
+      
+      // Don't throw the error, just log it to prevent crashing
+      console.error("Error in request:", err);
+    });
+
+    // importantly only setup vite in development and after
+    // setting up all the other routes so the catch-all route
+    // doesn't interfere with the other routes
+    if (app.get("env") === "development") {
+      await setupVite(app, server);
+    } else {
+      serveStatic(app);
+    }
+
+    // ALWAYS serve the app on port 5000
+    // this serves both the API and the client.
+    // It is the only port that is not firewalled.
+    const port = 5000;
+    server.listen({
+      port,
+      host: "0.0.0.0",
+      reusePort: true,
+    }, () => {
+      log(`serving on port ${port}`);
+      log(`Application started at ${startTime.toISOString()} and running 24/7`, "system");
+      isServerRunning = true;
+    });
+
+    // Handle server shutdown gracefully
+    const gracefulShutdown = () => {
+      log("Received shutdown signal, saving data before exit...", "system");
+      storage.saveDataToFiles();
+      
+      server.close(() => {
+        log("Server shut down gracefully", "system");
+        isServerRunning = false;
+        
+        // Attempt to restart server after shutdown
+        setTimeout(() => {
+          log("Attempting to restart server after shutdown...", "system");
+          startServer();
+        }, 5000);
+      });
+    };
+
+    // Setup auto-save interval for data persistence
+    const autoSaveInterval = setInterval(() => {
+      storage.saveDataToFiles();
+      log('Auto-saved data to persistent storage', 'system');
+    }, 5 * 60 * 1000); // Auto-save every 5 minutes
+
+    // Health check interval to ensure server is responsive
+    const healthCheckInterval = setInterval(() => {
+      const now = new Date();
+      const timeSinceLastHeartbeat = now.getTime() - lastHeartbeat.getTime();
+      
+      // If no heartbeat received in 15 minutes, restart server
+      if (timeSinceLastHeartbeat > 15 * 60 * 1000) {
+        log("No heartbeat detected for 15 minutes, restarting server...", "system");
+        clearInterval(healthCheckInterval);
+        clearInterval(autoSaveInterval);
+        gracefulShutdown();
+      }
+    }, 5 * 60 * 1000); // Check every 5 minutes
+
+    // Heartbeat logger to track continuous operation
+    const uptimeLoggerInterval = setInterval(() => {
+      const now = new Date();
+      const uptime = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+      log(`Server uptime: ${formatUptime(uptime)}`, 'system');
+    }, 60 * 60 * 1000); // Log uptime every hour
+
+    // Watch for exit signals
+    process.on('SIGTERM', gracefulShutdown);
+    process.on('SIGINT', gracefulShutdown);
+
+    return server;
+  } catch (err) {
+    log(`Error starting server: ${err}`, "error");
+    console.error("Failed to start server:", err);
+    
+    isServerRunning = false;
+    
+    // Attempt to restart server after error
+    setTimeout(() => {
+      log("Attempting to restart server after error...", "system");
+      startServer();
+    }, 10000); // Wait 10 seconds before trying again
+  }
+}
+
+// Handle unexpected errors to prevent crashes
+process.on('uncaughtException', (err) => {
+  log(`Uncaught exception: ${err.message}`, 'error');
+  console.error('Uncaught Exception:', err);
+  
+  // If server crashed due to exception, restart it
+  if (isServerRunning) {
+    isServerRunning = false;
+    setTimeout(() => {
+      log("Attempting to restart server after uncaught exception...", "system");
+      startServer();
+    }, 5000);
+  }
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  log(`Unhandled promise rejection: ${reason}`, 'error');
+  console.error('Unhandled Promise Rejection:', reason);
+  
+  // Server continues running despite rejection
+  // These are usually non-fatal
+});
+
+// Start the server
+startServer().catch((err) => {
+  console.error("Critical server startup failure:", err);
+  log(`Critical server startup failure: ${err}`, "error");
+  
+  // Always try to restart after failure
+  setTimeout(() => {
+    log("Attempting final restart after critical failure...", "system");
+    startServer().catch(console.error);
+  }, 15000); // Wait 15 seconds before final restart attempt
+});

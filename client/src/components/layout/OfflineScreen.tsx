@@ -35,6 +35,31 @@ export function OfflineScreen() {
       document.body.style.overflow = originalStyle;
     };
   }, []);
+  
+  // Send heartbeat to keep server alive even when offline screen is shown
+  useEffect(() => {
+    const sendHeartbeat = async () => {
+      try {
+        await fetch('/api/heartbeat', {
+          method: 'GET',
+          cache: 'no-cache',
+          signal: AbortSignal.timeout(3000)
+        });
+      } catch (error) {
+        // Heartbeat failed but that's expected when offline
+      }
+    };
+    
+    // Initial heartbeat
+    sendHeartbeat();
+    
+    // Send heartbeat every minute to keep server running 24/7
+    const heartbeatInterval = setInterval(sendHeartbeat, 60000);
+    
+    return () => {
+      clearInterval(heartbeatInterval);
+    };
+  }, []);
 
   return (
     <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-[100]">
