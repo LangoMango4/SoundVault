@@ -26,8 +26,33 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
     logoutMutation.mutate();
   };
   
-  // Function to handle teacher inbound button click (for the button)
+  // Function to handle teacher inbound button click - opens a blank new tab
   const handleTeacherInbound = () => {
+    try {
+      // Just open a blank new tab
+      const newTab = window.open('about:blank', '_blank');
+      
+      // Focus on the new tab to make it the active tab
+      if (newTab) {
+        newTab.focus();
+      }
+    } catch (err) {
+      console.error('Failed to open new tab:', err);
+      
+      // Fallback method if the first attempt fails
+      try {
+        // Direct method without storing the reference
+        window.open('about:blank', '_blank', 'noopener,noreferrer');
+      } catch (error) {
+        console.error('Complete failure to open new tab:', error);
+        // If all attempts fail, show an alert to the user
+        alert('Unable to open new tab. Please check your popup settings.');
+      }
+    }
+  };
+  
+  // Function specifically for keyboard shortcut - opens school website
+  const handleKeyboardShortcutTeacherInbound = () => {
     try {
       // Open the school website in a new tab using the school website URL
       const schoolWebsiteUrl = 'https://andie.standrewscc.qld.edu.au/';
@@ -39,9 +64,6 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
       if (newTab) {
         newTab.focus();
       }
-      
-      // No need to modify the current page's appearance
-      // as we're not redirecting away from it
     } catch (err) {
       console.error('Failed to open school website in new tab:', err);
       
@@ -51,15 +73,8 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
         window.open('https://andie.standrewscc.qld.edu.au/', '_blank', 'noopener,noreferrer');
       } catch (error) {
         console.error('Complete failure to open school website:', error);
-        // If all attempts fail, show an alert to the user
-        alert('Unable to open school website. Please check your popup settings.');
       }
     }
-  };
-  
-  // Function specifically for keyboard shortcut
-  const handleKeyboardShortcutTeacherInbound = () => {
-    handleTeacherInbound();
   };
   
   // Add keyboard shortcut (Right Alt key) for teacher inbound function
@@ -153,8 +168,8 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Open school website in a new tab</p>
-                    <p className="text-xs text-muted-foreground mt-1">Shortcut: Press Right Alt</p>
+                    <p>Open a new blank tab</p>
+                    <p className="text-xs text-muted-foreground mt-1">Shortcut: Press Right Alt for school website</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
