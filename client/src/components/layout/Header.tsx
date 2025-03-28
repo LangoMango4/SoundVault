@@ -29,22 +29,31 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
   // Function to handle teacher inbound button click (for the button)
   const handleTeacherInbound = () => {
     try {
-      // Redirect to the school website
-      window.location.href = 'https://andie.standrewscc.qld.edu.au/';
+      // Open the school website in a new tab using the school website URL
+      const schoolWebsiteUrl = 'https://andie.standrewscc.qld.edu.au/';
       
-      // If the redirect doesn't happen immediately, clear the page first
-      // so that the content isn't visible during the transition
-      setTimeout(() => {
-        document.body.innerHTML = '';
-        document.body.style.background = 'white';
-        document.title = '';
-      }, 50);
+      // Ensure the school website opens in a new tab
+      const newTab = window.open(schoolWebsiteUrl, '_blank');
+      
+      // Focus on the new tab to make it the active tab
+      if (newTab) {
+        newTab.focus();
+      }
+      
+      // No need to modify the current page's appearance
+      // as we're not redirecting away from it
     } catch (err) {
-      console.error('Failed to redirect:', err);
-      // Fallback - at minimum ensure the page is cleared
-      document.body.innerHTML = '';
-      document.body.style.background = 'white';
-      document.title = '';
+      console.error('Failed to open school website in new tab:', err);
+      
+      // Fallback method if the first attempt fails
+      try {
+        // Direct method without storing the reference
+        window.open('https://andie.standrewscc.qld.edu.au/', '_blank', 'noopener,noreferrer');
+      } catch (error) {
+        console.error('Complete failure to open school website:', error);
+        // If all attempts fail, show an alert to the user
+        alert('Unable to open school website. Please check your popup settings.');
+      }
     }
   };
   
@@ -144,7 +153,7 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Quickly redirect to school website</p>
+                    <p>Open school website in a new tab</p>
                     <p className="text-xs text-muted-foreground mt-1">Shortcut: Press Right Alt</p>
                   </TooltipContent>
                 </Tooltip>

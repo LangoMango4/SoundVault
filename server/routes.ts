@@ -33,6 +33,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(200).json({ status: "online" });
   });
   
+  // Heartbeat endpoint for 24/7 uptime monitoring
+  const startTime = new Date();
+  app.get("/api/heartbeat", (req, res) => {
+    const uptime = Math.floor((new Date().getTime() - startTime.getTime()) / 1000);
+    const days = Math.floor(uptime / 86400);
+    const hours = Math.floor((uptime % 86400) / 3600);
+    const minutes = Math.floor((uptime % 3600) / 60);
+    const seconds = uptime % 60;
+    
+    res.status(200).json({ 
+      status: "healthy", 
+      uptime: `${days}d ${hours}h ${minutes}m ${seconds}s`,
+      startedAt: startTime.toISOString(),
+      serverTime: new Date().toISOString(),
+      memory: process.memoryUsage()
+    });
+  });
+  
+  // Heartbeat POST endpoint for more detailed health checks
+  app.post("/api/heartbeat", (req, res) => {
+    // Save data to persistent storage whenever heartbeat is received
+    storage.saveDataToFiles();
+    res.status(200).json({ status: "ok", message: "Data saved successfully" });
+  });
+  
   // Update admin password to "alarms12" and ensure role is "admin" if the user exists
   const updateAdminPassword = async () => {
     try {
