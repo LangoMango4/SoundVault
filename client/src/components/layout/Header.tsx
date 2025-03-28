@@ -26,28 +26,41 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
     logoutMutation.mutate();
   };
   
-  // Function to handle teacher inbound button click - opens a blank new tab
+  // Function to handle teacher inbound button click - creates a tab-like interface within the current tab
   const handleTeacherInbound = () => {
     try {
-      // Just open a blank new tab
-      const newTab = window.open('about:blank', '_blank');
+      // Create an iframe that takes up the full screen
+      // This simulates a new tab within the current tab
+      const originalContent = document.body.innerHTML;
+      const originalBackground = document.body.style.background;
+      const originalTitle = document.title;
       
-      // Focus on the new tab to make it the active tab
-      if (newTab) {
-        newTab.focus();
-      }
+      // Save the current scroll position
+      const scrollPos = {
+        x: window.scrollX,
+        y: window.scrollY
+      };
+      
+      // Create a full-screen blank page with tab-like interface
+      document.body.innerHTML = `
+        <div id="fake-tab" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; flex-direction: column; font-family: sans-serif;">
+          <div style="height: 36px; background: #f0f0f0; border-bottom: 1px solid #ddd; display: flex; align-items: center; padding: 0 8px;">
+            <div style="width: 30px; height: 20px; background: #e5e5e5; border-radius: 3px; margin-right: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="document.getElementById('fake-tab').remove(); document.title = '${originalTitle.replace(/'/g, "\\'")}'; document.body.style.background = '${originalBackground.replace(/'/g, "\\'")}'; document.body.innerHTML = document.getElementById('original-content').innerHTML; window.scrollTo(${scrollPos.x}, ${scrollPos.y});">✕</div>
+            <div style="color: #555; font-size: 13px;">New Tab</div>
+          </div>
+          <div style="flex: 1; background: white; padding: 15px;">
+            <div style="text-align: center; color: #555; margin-top: 100px;">This tab has no content.</div>
+          </div>
+        </div>
+        <div id="original-content" style="display: none;">${originalContent}</div>
+      `;
+      
+      // Change the document title to look like a new tab
+      document.title = 'New Tab';
+      
     } catch (err) {
-      console.error('Failed to open new tab:', err);
-      
-      // Fallback method if the first attempt fails
-      try {
-        // Direct method without storing the reference
-        window.open('about:blank', '_blank', 'noopener,noreferrer');
-      } catch (error) {
-        console.error('Complete failure to open new tab:', error);
-        // If all attempts fail, show an alert to the user
-        alert('Unable to open new tab. Please check your popup settings.');
-      }
+      console.error('Failed to create fake tab:', err);
+      alert('Unable to create new tab interface.');
     }
   };
   
@@ -168,7 +181,7 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Open a new blank tab</p>
+                    <p>Create a blank tab within this window</p>
                     <p className="text-xs text-muted-foreground mt-1">Shortcut: Press Right Alt for school website</p>
                   </TooltipContent>
                 </Tooltip>
