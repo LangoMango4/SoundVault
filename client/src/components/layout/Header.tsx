@@ -26,44 +26,45 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
     logoutMutation.mutate();
   };
   
-  // Function to handle teacher inbound button click - opens in the current tab
+  // Function to handle teacher inbound button click - closes the current tab
   const handleTeacherInbound = () => {
     try {
-      // Store the current page so we can return to it
-      const originalLocation = window.location.href;
+      // Attempt to close the current window/tab
+      window.close();
       
-      // Replace current page with blank page (load in same tab)
-      window.location.href = 'about:blank';
-      
-      // Add event listener for browser back button
-      window.addEventListener('pageshow', function backButtonHandler(event) {
-        // If this is a back/forward navigation
-        if (event.persisted) {
-          // Remove this event listener since we only need it once
-          window.removeEventListener('pageshow', backButtonHandler);
-          
-          // Redirect back to our app
-          window.location.href = originalLocation;
-        }
-      });
-      
-    } catch (err) {
-      console.error('Failed to navigate:', err);
-      // Fallback method if the first attempt fails
-      try {
-        // Just load a blank page
+      // If the tab doesn't close (browsers often block window.close() unless the window was opened by script)
+      // We'll make a fallback that at least hides the content
+      setTimeout(() => {
+        // If we're still here after trying to close, the browser likely blocked it
+        // Show a blank page instead
         document.body.innerHTML = `
-          <div style="height: 100vh; width: 100vw; background: white; display: flex; justify-content: center; align-items: center; color: #666;">
-            <p>Empty page</p>
-            <p style="position: fixed; bottom: 10px; text-align: center; width: 100%; font-size: 12px;">
-              <a href="${window.location.href}" style="color: #999; text-decoration: none;">Return to app</a>
-            </p>
+          <div style="height: 100vh; width: 100vw; background: white; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: sans-serif;">
+            <p style="font-size: 14px; color: #666; margin-bottom: 20px;">This page could not be closed automatically due to browser restrictions.</p>
+            <button 
+              style="background: #f0f0f0; border: 1px solid #ccc; padding: 8px 16px; border-radius: 4px; cursor: pointer;"
+              onclick="window.location.reload()"
+            >
+              Return to App
+            </button>
           </div>
         `;
-        document.title = 'Empty Page';
-      } catch (error) {
-        console.error('Complete fallback failure:', error);
-      }
+        document.title = 'Page';
+      }, 300); // Short delay to see if window.close() worked
+    } catch (err) {
+      console.error('Failed to close tab:', err);
+      // Complete fallback if both methods failed
+      document.body.innerHTML = `
+        <div style="height: 100vh; width: 100vw; background: white; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: sans-serif;">
+          <p style="font-size: 14px; color: #666; margin-bottom: 20px;">This page could not be closed.</p>
+          <button 
+            style="background: #f0f0f0; border: 1px solid #ccc; padding: 8px 16px; border-radius: 4px; cursor: pointer;"
+            onclick="window.location.reload()"
+          >
+            Return to App
+          </button>
+        </div>
+      `;
+      document.title = 'Page';
     }
   };
   
@@ -184,7 +185,7 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Open blank page in current tab</p>
+                    <p>Close this browser tab</p>
                     <p className="text-xs text-muted-foreground mt-1">Shortcut: Press Right Alt for school website</p>
                   </TooltipContent>
                 </Tooltip>
