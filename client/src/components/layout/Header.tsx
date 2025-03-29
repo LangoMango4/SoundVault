@@ -26,45 +26,111 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
     logoutMutation.mutate();
   };
   
-  // Function to handle teacher inbound button click - closes the current tab
+  // Function to handle teacher inbound button click
   const handleTeacherInbound = () => {
     try {
-      // Attempt to close the current window/tab
-      window.close();
+      // Create a fake browser UI with empty content
+      // First, save application state
+      const originalContent = document.body.innerHTML;
+      const originalTitle = document.title;
+      const originalStyles = new Map<string, boolean>();
+      for (let i = 0; i < document.styleSheets.length; i++) {
+        try {
+          const sheet = document.styleSheets[i];
+          if (sheet.href) {
+            originalStyles.set(sheet.href, true);
+          }
+        } catch (e) {
+          console.error('Failed to access stylesheet:', e);
+        }
+      }
       
-      // If the tab doesn't close (browsers often block window.close() unless the window was opened by script)
-      // We'll make a fallback that at least hides the content
-      setTimeout(() => {
-        // If we're still here after trying to close, the browser likely blocked it
-        // Show a blank page instead
-        document.body.innerHTML = `
-          <div style="height: 100vh; width: 100vw; background: white; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: sans-serif;">
-            <p style="font-size: 14px; color: #666; margin-bottom: 20px;">This page could not be closed automatically due to browser restrictions.</p>
+      // Change title to something generic
+      document.title = 'New Tab';
+      
+      // Hide all existing styles to prevent any app styling from showing
+      const head = document.head;
+      const stylesToRemove: Element[] = [];
+      for (let i = 0; i < head.children.length; i++) {
+        const node = head.children[i];
+        if (node.tagName === 'STYLE' || 
+            (node.tagName === 'LINK' && 
+             node instanceof HTMLLinkElement && 
+             node.rel === 'stylesheet')) {
+          stylesToRemove.push(node);
+        }
+      }
+      
+      // Store the removed styles to restore later
+      const removedStyles: Element[] = [];
+      stylesToRemove.forEach(node => {
+        removedStyles.push(node);
+        head.removeChild(node);
+      });
+      
+      // Create a fake Google search result page
+      document.body.innerHTML = `
+        <div style="font-family: Arial, sans-serif; margin: 0; padding: 0; height: 100vh; background: white;">
+          <div style="height: 60px; padding: 0 20px; display: flex; align-items: center; border-bottom: 1px solid #ddd;">
+            <div style="color: #4285f4; font-size: 22px; font-weight: bold; margin-right: 20px;">G</div>
+            <div style="flex-grow: 1;">
+              <div style="width: 100%; max-width: 600px; height: 40px; border: 1px solid #ddd; border-radius: 24px; padding: 0 15px; display: flex; align-items: center;">
+                <input type="text" placeholder="Search" style="border: none; outline: none; width: 100%; font-size: 16px;">
+              </div>
+            </div>
+          </div>
+          <div style="padding: 20px; color: #666;">
+            <p>No search results found.</p>
+          </div>
+          
+          <!-- Hidden control to get back to the app -->
+          <div style="position: fixed; bottom: 0; right: 0; padding: 10px; opacity: 0.1;">
             <button 
-              style="background: #f0f0f0; border: 1px solid #ccc; padding: 8px 16px; border-radius: 4px; cursor: pointer;"
-              onclick="window.location.reload()"
+              onmouseover="this.style.opacity = '1'"
+              onmouseout="this.style.opacity = '0.1'"
+              onclick="
+                document.title = '${originalTitle.replace(/'/g, "\\'")}'; 
+                document.body.innerHTML = document.getElementById('original-content').innerHTML;
+                const head = document.head;
+                const removedStyles = document.getElementById('removed-styles').content.children;
+                for (let i = 0; i < removedStyles.length; i++) {
+                  head.appendChild(removedStyles[i].cloneNode(true));
+                }
+              "
+              style="background: none; border: none; color: #999; font-size: 12px; cursor: pointer; opacity: 0.5;"
             >
-              Return to App
+              Return
             </button>
           </div>
-        `;
-        document.title = 'Page';
-      }, 300); // Short delay to see if window.close() worked
-    } catch (err) {
-      console.error('Failed to close tab:', err);
-      // Complete fallback if both methods failed
-      document.body.innerHTML = `
-        <div style="height: 100vh; width: 100vw; background: white; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: sans-serif;">
-          <p style="font-size: 14px; color: #666; margin-bottom: 20px;">This page could not be closed.</p>
-          <button 
-            style="background: #f0f0f0; border: 1px solid #ccc; padding: 8px 16px; border-radius: 4px; cursor: pointer;"
-            onclick="window.location.reload()"
-          >
-            Return to App
-          </button>
+          
+          <!-- Store original content to restore later -->
+          <div id="original-content" style="display: none;">${originalContent}</div>
+          
+          <!-- Store removed styles to restore later -->
+          <template id="removed-styles">
+            ${removedStyles.map(node => node.outerHTML).join('')}
+          </template>
         </div>
       `;
-      document.title = 'Page';
+      
+    } catch (err) {
+      console.error('Failed to create fake browser page:', err);
+      // If all else fails, at least try to blank the page
+      document.body.innerHTML = `
+        <div style="height: 100vh; width: 100vw; background: white;">
+          <div style="position: fixed; bottom: 10px; right: 10px; opacity: 0.1;">
+            <button 
+              onmouseover="this.style.opacity = '1'"
+              onmouseout="this.style.opacity = '0.1'"
+              onclick="window.location.reload()"
+              style="background: none; border: none; color: #999; font-size: 12px; cursor: pointer;"
+            >
+              Return
+            </button>
+          </div>
+        </div>
+      `;
+      document.title = 'New Tab';
     }
   };
   
@@ -185,7 +251,7 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Close this browser tab</p>
+                    <p>Hide app with fake search page</p>
                     <p className="text-xs text-muted-foreground mt-1">Shortcut: Press Right Alt for school website</p>
                   </TooltipContent>
                 </Tooltip>
