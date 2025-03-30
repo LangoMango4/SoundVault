@@ -540,7 +540,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Screen lock settings routes
-  app.post("/api/settings/lock", async (req, res, next) => {
+  app.post("/api/settings/lock", isAuthenticated, async (req, res, next) => {
     try {
       const { locked } = req.body;
       if (typeof locked !== "boolean") {
@@ -554,25 +554,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // For unlocking, only admins can permanently unlock for everyone
-      if (req.user?.role !== "admin") {
+      // Fixed: Using isAdmin middleware logic directly here
+      if (req.isAuthenticated() && req.user.role === "admin") {
+        // Admin unlocking for everyone
+        global.isScreenLocked = false;
+        return res.json({ locked: global.isScreenLocked });
+      } else {
         // For regular users, we don't actually unlock, just return 403
         // The client will handle this by unlocking just for that user
         return res.status(403).json({ 
           message: "Forbidden: Admin access required to unlock for everyone",
-          userUnlockAllowed: true
+          userUnlockAllowed: true,
+          userRole: req.user?.role || "none", // For debugging
+          isAuthenticated: req.isAuthenticated()
         });
       }
-
-      // Admin unlocking for everyone
-      global.isScreenLocked = false;
-      res.json({ locked: global.isScreenLocked });
     } catch (error) {
       next(error);
     }
   });
 
   app.get("/api/settings/lock", async (req, res) => {
-    res.json({ locked: global.isScreenLocked || false });
+    // Add debug info about authentication status
+    const isAdminUser = req.isAuthenticated() && req.user?.role === "admin";
+    res.json({ 
+      locked: global.isScreenLocked || false,
+      isAdminUser: isAdminUser,
+      isAuthenticated: req.isAuthenticated(),
+      userRole: req.user?.role || "none"
+    });
   });
 
   const httpServer = createServer(app);

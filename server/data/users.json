@@ -1,11 +1,19 @@
 [
   {
     "username": "admin",
-    "password": "d8968f29462296b48923f608050bff86d5e58112e9fc4c0d77f6d89962ac9de58021254702601e57a1b53f8b2822b78dad567fe124c829a42ead1dfc261fa6c2.7f2d282ee2500b448ee732dc41f287d4",
+    "password": "1447aaa216081d2786c52394c7ad42edf103338dfc6222f0a4fce0ab0dd7ab8539ce417795c37d022bb6e14417d33d74ba16d59914c74e62da538c64762e6962.55943db3580175fa68352e42891d192f",
     "fullName": "Admin",
     "role": "admin",
     "accessLevel": "full",
     "id": 1
+  },
+  {
+    "username": "cjohnson3",
+    "password": "9db181f39faf43d80bd719fac05bfa3bf48d04d6a6a2b1a4936b5333488a293c289833e848ac8f5feb63e745534796f263d660479e3fe60aa69354d56c3672c5.0262958ae57fe61ebf6a459d9b57d9f5",
+    "fullName": "callym",
+    "role": "user",
+    "accessLevel": "basic",
+    "id": 2
   },
   {
     "username": "user",
@@ -13,6 +21,6 @@
     "fullName": "user",
     "role": "user",
     "accessLevel": "basic",
-    "id": 2
+    "id": 3
   }
 ]
