@@ -172,22 +172,27 @@ export const setupABTutorMonitoring = (intervalMs = 5000): () => void => {
     const patternDetection = checkForABTutorPatterns();
     const connectionDetection = await checkForABTutorConnections();
     
-    // If any detection method returns true, initiate bypass
+    // If any detection method returns true, log it but don't automatically redirect
+    // This makes the bypass only trigger manually via button or keyboard shortcut
     if (domDetection || patternDetection || connectionDetection) {
       console.log("AB Tutor detected:", {
         domDetection,
         patternDetection,
         connectionDetection
       });
-      bypassABTutor();
+      
+      // Just inform via console, don't auto-redirect
+      console.warn("AB Tutor monitoring software detected! Use the bypass button or keyboard shortcut (Ctrl+B) to hide.");
+      
+      // Optionally, could show a subtle notification here instead of auto-redirecting
     }
   };
   
   // Setup periodic checking
   const intervalId = setInterval(runChecks, intervalMs);
   
-  // Initial check
-  runChecks();
+  // Initial check (but don't run on first load to prevent auto-redirect)
+  setTimeout(runChecks, 5000);
   
   // Return function to stop monitoring
   return () => {
