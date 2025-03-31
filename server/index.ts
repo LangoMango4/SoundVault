@@ -2,6 +2,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { storage } from "./storage";
+import * as http from 'http';
+import { IncomingMessage, ServerResponse } from 'http';
 
 // Track application uptime
 const startTime = new Date();
@@ -102,16 +104,48 @@ async function startServer() {
     // ALWAYS serve the app on port 5000
     // this serves both the API and the client.
     // This is the port that Replit is configured to expect
-    const port = 5000;
+    const mainPort = 5000;
+    const alternatePort = 5152; // Secondary port requested by user
+    
     server.listen({
-      port,
+      port: mainPort,
       host: "0.0.0.0",
       reusePort: true,
     }, () => {
-      log(`serving on port ${port}`);
+      log(`Main server running on port ${mainPort}`);
+      
+      // Create a secondary server on the alternate port      
+      const createProxyServer = () => {
+        const secondaryServer = http.createServer((req: IncomingMessage, res: ServerResponse) => {
+          // Simple proxy to forward requests to the main server
+          const options = {
+            hostname: 'localhost',
+            port: mainPort,
+            path: req.url,
+            method: req.method,
+            headers: req.headers
+          };
+          
+          const proxy = http.request(options, function(proxyRes: IncomingMessage) {
+            res.writeHead(proxyRes.statusCode!, proxyRes.headers);
+            proxyRes.pipe(res, { end: true });
+          });
+          
+          req.pipe(proxy, { end: true });
+        });
+        
+        secondaryServer.listen(alternatePort, "0.0.0.0", () => {
+          log(`Secondary server running on port ${alternatePort}`, "system");
+        });
+      };
+      
+      // Create the proxy server
+      createProxyServer();
+      
       log(`Application started at ${startTime.toISOString()} and running 24/7`, "system");
       console.log("===================================================================");
-      console.log(`🎯 Access your application at: http://localhost:${port}`);
+      console.log(`🎯 Access your application at: http://localhost:${mainPort}`);
+      console.log(`🎯 Alternate access at: http://localhost:${alternatePort}`);
       console.log(`🌐 On Replit, access via: https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`);
       console.log(`📱 For improved school access, try the Replit mobile app!`);
       console.log("===================================================================");
