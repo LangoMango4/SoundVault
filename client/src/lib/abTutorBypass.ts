@@ -2,26 +2,8 @@
  * Utility functions for detecting and bypassing AB Tutor monitoring
  */
 
-// URLs to redirect to when AB Tutor is detected
-const SAFE_SITES = [
-  'https://classroom.google.com/',
-  'https://www.khanacademy.org/',
-  'https://www.bbc.co.uk/bitesize',
-  'https://quizlet.com/',
-  'https://www.wolframalpha.com/',
-  'https://www.desmos.com/calculator',
-  'https://www.mathsisfun.com/',
-  'https://www.geogebra.org/',
-  'https://www.ixl.com/',
-  'https://www.duolingo.com/',
-  'https://www.edx.org/',
-  'https://www.coursera.org/',
-  // Keep original sites as well
-  'https://standrewscc.qld.edu.au/',
-  'https://school.qld.edu.au/',
-  'https://qld.edu.au/',
-  'https://andie.standrewscc.qld.edu.au/' // Moving this to the end of the list
-];
+// Single educational site to redirect to when AB Tutor is detected
+const SAFE_SITE = 'https://andie.standrewscc.qld.edu.au/';
 
 /**
  * AB Tutor commonly injects monitoring scripts with specific class names or IDs
@@ -106,58 +88,74 @@ export const checkForABTutorConnections = async (): Promise<boolean> => {
 export const bypassABTutor = (): void => {
   console.log("AB Tutor detection triggered - initiating bypass");
   
-  // Get list of sites and shuffle it to make random selection more unpredictable
-  const shuffledSites = [...SAFE_SITES].sort(() => 0.5 - Math.random());
+  // Store the original URL to return to
+  const originalUrl = window.location.href;
+  sessionStorage.setItem('originalAppUrl', originalUrl);
   
-  // Select a random safe site from the shuffled array - avoid always picking the first one
-  const randomIndex = Math.floor(Math.random() * shuffledSites.length);
-  const randomSafeUrl = shuffledSites[randomIndex];
+  console.log(`Redirecting to: ${SAFE_SITE}`);
   
-  // Store the last used URL in sessionStorage to avoid repeated redirects to same site
-  const lastUsedUrl = sessionStorage.getItem('lastBypassUrl');
+  // Open the educational website in a new window/tab
+  const newWindow = window.open(SAFE_SITE, '_blank');
   
-  // If we got the same URL as last time and we have more than one option, pick another
-  let finalUrl = randomSafeUrl;
-  if (lastUsedUrl === finalUrl && shuffledSites.length > 1) {
-    // Pick a different URL from the shuffled array
-    const newIndex = (randomIndex + 1) % shuffledSites.length;
-    finalUrl = shuffledSites[newIndex];
-  }
-  
-  // Save this URL for next time
-  sessionStorage.setItem('lastBypassUrl', finalUrl);
-  
-  console.log(`Redirecting to: ${finalUrl}`);
-  
-  try {
-    // Navigate to the safe site
-    window.location.href = finalUrl;
-  } catch (err) {
-    console.error('Failed primary bypass method:', err);
-    
-    // Fallback method
+  // If popup is blocked, try the direct approach
+  if (!newWindow) {
     try {
-      document.location.replace(finalUrl);
-    } catch (error) {
-      console.error('Failed secondary bypass method:', error);
+      // Navigate directly to the safe site
+      window.location.href = SAFE_SITE;
       
-      // Last resort - try to create a visual cover
-      const cover = document.createElement('div');
-      cover.style.position = 'fixed';
-      cover.style.top = '0';
-      cover.style.left = '0';
-      cover.style.width = '100%';
-      cover.style.height = '100%';
-      cover.style.backgroundColor = 'white';
-      cover.style.zIndex = '9999';
-      cover.innerHTML = '<h1 style="text-align:center;margin-top:40vh">Loading educational resources...</h1>';
-      document.body.appendChild(cover);
-      
-      // Try again after a short delay
+      // Set a timer to automatically return after 2 seconds
       setTimeout(() => {
-        window.location.href = finalUrl;
-      }, 500);
+        console.log("Auto-returning to soundboard app");
+        window.location.href = originalUrl;
+      }, 2000);
+    } catch (err) {
+      console.error('Failed primary bypass method:', err);
+      
+      // Fallback method - use replace to avoid browser history
+      try {
+        document.location.replace(SAFE_SITE);
+        
+        // Still try to come back automatically
+        setTimeout(() => {
+          console.log("Auto-returning to soundboard app (fallback)");
+          document.location.replace(originalUrl);
+        }, 2000);
+      } catch (error) {
+        console.error('Failed secondary bypass method:', error);
+        
+        // Last resort - create a visual cover that mimics the educational site
+        const cover = document.createElement('div');
+        cover.style.position = 'fixed';
+        cover.style.top = '0';
+        cover.style.left = '0';
+        cover.style.width = '100%';
+        cover.style.height = '100%';
+        cover.style.backgroundColor = 'white';
+        cover.style.zIndex = '9999';
+        cover.innerHTML = `
+          <div style="padding: 20px; font-family: Arial, sans-serif;">
+            <h1 style="color: #0056b3;">Andie Student Portal</h1>
+            <h2 style="color: #444;">Loading resources...</h2>
+            <div style="background: #f0f0f0; padding: 15px; border-radius: 4px; margin-top: 20px;">
+              <p>Please wait while we connect to the educational resources.</p>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(cover);
+        
+        // Remove the cover after 2 seconds
+        setTimeout(() => {
+          cover.remove();
+        }, 2000);
+      }
     }
+  } else {
+    // If we successfully opened a new window, set a timeout to close it after 2 seconds
+    setTimeout(() => {
+      if (newWindow && !newWindow.closed) {
+        newWindow.close();
+      }
+    }, 2000);
   }
 };
 
