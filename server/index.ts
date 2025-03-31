@@ -110,6 +110,11 @@ async function startServer() {
     }, () => {
       log(`serving on port ${port}`);
       log(`Application started at ${startTime.toISOString()} and running 24/7`, "system");
+      console.log("===================================================================");
+      console.log(`🎯 Access your application at: http://localhost:${port}`);
+      console.log(`🌐 On Replit, access via: https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`);
+      console.log(`📱 For improved school access, try the Replit mobile app!`);
+      console.log("===================================================================");
       isServerRunning = true;
     });
 
