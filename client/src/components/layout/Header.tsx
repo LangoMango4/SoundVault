@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { useState, useEffect } from "react";
-import { MessageSquarePlus, AlertTriangle, ShieldAlert } from "lucide-react";
+import { MessageSquarePlus, AlertTriangle } from "lucide-react";
 import { BroadcastMessages } from "./BroadcastMessages";
 import { BroadcastMessageForm } from "@/components/admin/BroadcastMessageForm";
 import { 
@@ -12,7 +12,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import ABTutorIcon from "@assets/ABTutor.ico";
-import { setupABTutorMonitoring, manualBypassTrigger } from "@/lib/abTutorBypass";
 
 interface HeaderProps {
   onOpenAdminPanel?: () => void;
@@ -54,9 +53,9 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
   // Now the keyboard shortcut uses the same function as the button
   const handleKeyboardShortcutTeacherInbound = handleTeacherInbound;
   
-  // Add keyboard shortcuts for teacher inbound and AB Tutor bypass functions
+  // Add keyboard shortcut for teacher inbound function
   useEffect(() => {
-    // Use code property to specifically check for AltRight and other keys
+    // Use code property to specifically check for AltRight key
     const handleKeyDown = (e: KeyboardEvent) => {
       // Check if it's specifically the Right Alt key being pressed
       if (e.code === 'AltRight') {
@@ -65,46 +64,18 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
         // Try to prevent default browser behavior
         e.preventDefault();
       }
-      
-      // Check for Shift+Escape shortcut for AB Tutor bypass
-      if (e.key === 'Escape' && e.shiftKey) {
-        console.log("Shift+Escape pressed - activating AB Tutor bypass");
-        manualBypassTrigger();
-        e.preventDefault();
-      }
-      
-      // Alternative shortcut: Ctrl+B for AB Tutor bypass (easier to press)
-      if (e.key === 'b' && e.ctrlKey) {
-        console.log("Ctrl+B pressed - activating AB Tutor bypass");
-        manualBypassTrigger();
-        e.preventDefault();
-      }
     };
     
     // Add event listener to document for better capture
     document.addEventListener("keydown", handleKeyDown, true);
-    console.log("Keyboard shortcut listeners added for emergency functions");
+    console.log("Keyboard shortcut listener added for emergency function");
     
     // Cleanup function
     return () => {
       document.removeEventListener("keydown", handleKeyDown, true);
-      console.log("Keyboard shortcut listeners removed");
+      console.log("Keyboard shortcut listener removed");
     };
   }, []);
-  
-  // Set up AB Tutor detection and bypass
-  useEffect(() => {
-    if (user) {
-      // Only run monitoring when logged in
-      console.log("Setting up AB Tutor detection");
-      const stopMonitoring = setupABTutorMonitoring(3000); // Check every 3 seconds
-      
-      // Cleanup function to stop monitoring
-      return () => {
-        stopMonitoring();
-      };
-    }
-  }, [user]);
 
   return (
     <>
@@ -180,29 +151,7 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
               </TooltipProvider>
             )}
             
-            {/* AB Tutor Bypass Button */}
-            {user && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={manualBypassTrigger}
-                      className="text-sm flex items-center gap-1 bg-amber-50 hover:bg-amber-100 border-amber-200"
-                    >
-                      <ShieldAlert className="h-4 w-4 text-amber-600" />
-                      <span className="text-amber-700">Bypass AB</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Bypass AB Tutor monitoring</p>
-                    <p className="text-xs text-muted-foreground mt-1">Shortcuts: Shift+Esc or Ctrl+B</p>
-                    <p className="text-xs text-muted-foreground">Redirects to a safe site</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
+            {/* AB Tutor Bypass Button removed as requested */}
             
             <Button 
               variant="outline" 

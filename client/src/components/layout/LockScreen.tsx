@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Lock, ShieldCheck, Key } from "lucide-react";
@@ -20,9 +20,27 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
   const [adminPin, setAdminPin] = useState("");
   const [error, setError] = useState("");
   const [showUnlockOptions, setShowUnlockOptions] = useState(false);
+  const [lockReason, setLockReason] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
+  
+  // Fetch lock status and reason when component mounts
+  useEffect(() => {
+    const fetchLockStatus = async () => {
+      try {
+        const response = await fetch('/api/settings/lock');
+        const data = await response.json();
+        if (data.reason) {
+          setLockReason(data.reason);
+        }
+      } catch (error) {
+        console.error('Failed to fetch lock status:', error);
+      }
+    };
+    
+    fetchLockStatus();
+  }, []);
 
   const handleAdminUnlockAttempt = async () => {
     // Double check that user is an admin before proceeding
@@ -105,8 +123,15 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
             <img 
               src={lockScreenImage} 
               alt="Locked Screen" 
-              className="w-full max-w-xl object-contain mb-8" /* Made image larger with max-w-xl instead of max-w-md */
+              className="w-full max-w-xl object-contain mb-4" /* Made image larger with max-w-xl instead of max-w-md */
             />
+            
+            {lockReason && (
+              <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mb-4 w-full max-w-md">
+                <p className="text-amber-800 font-medium text-sm">Reason for lock:</p>
+                <p className="text-amber-900">{lockReason}</p>
+              </div>
+            )}
             
             <div className="flex flex-col gap-3">
               {isAdmin ? (
@@ -162,6 +187,13 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
               className="object-contain max-w-full max-h-full"
             />
           </div>
+          
+          {lockReason && (
+            <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mb-2 w-full max-w-md">
+              <p className="text-amber-800 font-medium text-sm">Reason for lock:</p>
+              <p className="text-amber-900">{lockReason}</p>
+            </div>
+          )}
           
           <div className="space-y-4 w-full max-w-xl">
             <Tabs 

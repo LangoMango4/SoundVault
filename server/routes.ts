@@ -542,7 +542,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Screen lock settings routes
   app.post("/api/settings/lock", isAuthenticated, async (req, res, next) => {
     try {
-      const { locked } = req.body;
+      const { locked, reason } = req.body;
       if (typeof locked !== "boolean") {
         return res.status(400).json({ message: "Invalid lock setting" });
       }
@@ -550,7 +550,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For setting to locked state, anyone can lock the screen
       if (locked === true) {
         global.isScreenLocked = true;
-        return res.json({ locked: global.isScreenLocked });
+        // Store the reason when locking the screen
+        global.lockReason = reason || null;
+        return res.json({ 
+          locked: global.isScreenLocked,
+          reason: global.lockReason
+        });
       }
       
       // For unlocking, only admins can permanently unlock for everyone
@@ -558,7 +563,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.isAuthenticated() && req.user.role === "admin") {
         // Admin unlocking for everyone
         global.isScreenLocked = false;
-        return res.json({ locked: global.isScreenLocked });
+        global.lockReason = null; // Clear the reason when unlocking
+        return res.json({ 
+          locked: global.isScreenLocked,
+          reason: global.lockReason 
+        });
       } else {
         // For regular users, we don't actually unlock, just return 403
         // The client will handle this by unlocking just for that user
@@ -579,6 +588,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const isAdminUser = req.isAuthenticated() && req.user?.role === "admin";
     res.json({ 
       locked: global.isScreenLocked || false,
+      reason: global.lockReason || null,
       isAdminUser: isAdminUser,
       isAuthenticated: req.isAuthenticated(),
       userRole: req.user?.role || "none"
@@ -593,7 +603,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Only admin users with the correct PIN can unlock for everyone
       if (req.isAuthenticated() && req.user.role === "admin" && pin === "2012") {
         global.isScreenLocked = false;
-        return res.json({ locked: false, success: true });
+        global.lockReason = null; // Clear the reason when unlocking for everyone
+        return res.json({ locked: false, reason: null, success: true });
       } else {
         return res.status(403).json({ 
           message: "Forbidden: Admin access with correct PIN required to unlock for everyone",

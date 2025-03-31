@@ -27,6 +27,7 @@ interface ScreenLockControlProps {
 export function ScreenLockControl({ isLocked, onLockChange }: ScreenLockControlProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [pin, setPin] = useState("");
+  const [lockReason, setLockReason] = useState("");
   const [error, setError] = useState("");
   const [adminOnlyUnlock, setAdminOnlyUnlock] = useState(false);
   const { toast } = useToast();
@@ -39,8 +40,11 @@ export function ScreenLockControl({ isLocked, onLockChange }: ScreenLockControlP
 
   const handleLockScreen = async () => {
     try {
-      // API request to lock the screen (server-side)
-      await apiRequest("POST", "/api/settings/lock", { locked: true });
+      // API request to lock the screen (server-side) with reason
+      await apiRequest("POST", "/api/settings/lock", { 
+        locked: true,
+        reason: lockReason.trim() || null 
+      });
       
       // Clear any temporary unlock that might be in this session
       sessionStorage.removeItem('temporaryUnlock');
@@ -49,9 +53,12 @@ export function ScreenLockControl({ isLocked, onLockChange }: ScreenLockControlP
       setIsDialogOpen(false);
       toast({
         title: "Screen Locked",
-        description: "The website has been locked for all users successfully.",
+        description: `The website has been locked for all users successfully${lockReason ? ` with reason: ${lockReason}` : ''}.`,
         variant: "default",
       });
+      
+      // Reset reason after locking
+      setLockReason("");
     } catch (error) {
       toast({
         title: "Lock Failed",
@@ -221,6 +228,20 @@ export function ScreenLockControl({ isLocked, onLockChange }: ScreenLockControlP
                   </p>
                 </div>
               </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="lockReason">Reason (optional)</Label>
+              <Input
+                id="lockReason"
+                type="text"
+                placeholder="e.g., testing, maintenance, teacher nearby"
+                value={lockReason}
+                onChange={(e) => setLockReason(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Provide a reason for locking the screen. This will be visible when an admin unlocks the screen.
+              </p>
             </div>
             
             <DialogFooter>
