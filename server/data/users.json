@@ -1,7 +1,7 @@
 [
   {
     "username": "admin",
-    "password": "1447aaa216081d2786c52394c7ad42edf103338dfc6222f0a4fce0ab0dd7ab8539ce417795c37d022bb6e14417d33d74ba16d59914c74e62da538c64762e6962.55943db3580175fa68352e42891d192f",
+    "password": "42ad194e520b9ef34f03f8a74adabf68f06238080b5fd8865fd9553ce9ca3a8672ef7795e989f6a87604ef9a58973bc8468b0661e94aee70ec96c5b7bdb1ef9b.1c06e89dd492d8a3151a21f7db686372",
     "fullName": "Admin",
     "role": "admin",
     "accessLevel": "full",
@@ -22,5 +22,21 @@
     "role": "user",
     "accessLevel": "basic",
     "id": 3
+  },
+  {
+    "username": "bjohnson4",
+    "password": "63936ff519acbcd4af84c256c5f495dea4836519b52df9d30d1631a8a415816b68b386f9bc45cd3a7c7cdf8ddd6f3ab89ccbc72d168591c6cfd9cb7b498cf5a7.3d454450e5c971810bd7466922e1679a",
+    "fullName": "brysen",
+    "role": "user",
+    "accessLevel": "basic",
+    "id": 4
+  },
+  {
+    "username": "sbetts",
+    "password": "3868d1fa4a2c4c988017734144dd9af61403324a66f4dd91202f2355043781844a1d12a17ac8514ccd060d222553d924a54deb10a5db1ff4f46048f49a948d29.1d1445f0bce900f8566e932417f21d61",
+    "fullName": "sam",
+    "role": "user",
+    "accessLevel": "basic",
+    "id": 5
   }
 ]

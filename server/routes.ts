@@ -585,6 +585,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Special endpoint for the "Unlock for Everyone" feature
+  app.post("/api/settings/lock/unlock-all", isAuthenticated, async (req, res, next) => {
+    try {
+      const { pin } = req.body;
+      
+      // Only admin users with the correct PIN can unlock for everyone
+      if (req.isAuthenticated() && req.user.role === "admin" && pin === "2012") {
+        global.isScreenLocked = false;
+        return res.json({ locked: false, success: true });
+      } else {
+        return res.status(403).json({ 
+          message: "Forbidden: Admin access with correct PIN required to unlock for everyone",
+          success: false
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

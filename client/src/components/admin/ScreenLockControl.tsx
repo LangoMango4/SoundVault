@@ -64,15 +64,21 @@ export function ScreenLockControl({ isLocked, onLockChange }: ScreenLockControlP
   const handleUnlockAttempt = async () => {
     if (pin === UNLOCK_PIN) {
       try {
-        // API request to unlock the screen (server-side)
-        await apiRequest("POST", "/api/settings/lock", { locked: false });
+        // API request to unlock the screen for everyone using the dedicated endpoint
+        await apiRequest("POST", "/api/settings/lock/unlock-all", { pin: UNLOCK_PIN });
+        
+        // Clear any temporary unlock flag
+        sessionStorage.removeItem('temporaryUnlock');
+        
         onLockChange(false);
         setIsDialogOpen(false);
         setPin("");
         setError("");
+        setAdminOnlyUnlock(false);
+        
         toast({
           title: "Screen Unlocked",
-          description: "The website has been unlocked successfully.",
+          description: "The website has been unlocked successfully for everyone.",
           variant: "default",
         });
       } catch (error) {

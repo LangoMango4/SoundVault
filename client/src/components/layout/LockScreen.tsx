@@ -33,8 +33,8 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
     
     if (pin === ADMIN_PIN) {
       try {
-        // API request to unlock the screen (server-side)
-        await apiRequest("POST", "/api/settings/lock", { locked: false });
+        // API request to unlock the screen for everyone using the dedicated endpoint
+        await apiRequest("POST", "/api/settings/lock/unlock-all", { pin: ADMIN_PIN });
         
         // Clear any temporary unlock flag when doing a global unlock
         sessionStorage.removeItem('temporaryUnlock');
