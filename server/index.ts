@@ -101,7 +101,7 @@ async function startServer() {
 
     // ALWAYS serve the app on port 5000
     // this serves both the API and the client.
-    // It is the only port that is not firewalled.
+    // This is the port that Replit is configured to expect
     const port = 5000;
     server.listen({
       port,
