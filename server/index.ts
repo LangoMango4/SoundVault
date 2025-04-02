@@ -101,11 +101,10 @@ async function startServer() {
       serveStatic(app);
     }
 
-    // ALWAYS serve the app on port 5000
+    // Use environment port in production, default to 5000 in development
     // this serves both the API and the client.
-    // This is the port that Replit is configured to expect
-    const mainPort = 5000;
-    const alternatePort = 5152; // Secondary port requested by user
+    const mainPort = process.env.PORT ? parseInt(process.env.PORT) : 5000;
+    const alternatePort = 5152; // Secondary port requested by user (only used in development)
     
     server.listen({
       port: mainPort,
@@ -114,33 +113,36 @@ async function startServer() {
     }, () => {
       log(`Main server running on port ${mainPort}`);
       
-      // Create a secondary server on the alternate port      
-      const createProxyServer = () => {
-        const secondaryServer = http.createServer((req: IncomingMessage, res: ServerResponse) => {
-          // Simple proxy to forward requests to the main server
-          const options = {
-            hostname: 'localhost',
-            port: mainPort,
-            path: req.url,
-            method: req.method,
-            headers: req.headers
-          };
-          
-          const proxy = http.request(options, function(proxyRes: IncomingMessage) {
-            res.writeHead(proxyRes.statusCode!, proxyRes.headers);
-            proxyRes.pipe(res, { end: true });
+      // Only create a secondary server in development mode
+      if (app.get("env") === "development") {
+        // Create a secondary server on the alternate port      
+        const createProxyServer = () => {
+          const secondaryServer = http.createServer((req: IncomingMessage, res: ServerResponse) => {
+            // Simple proxy to forward requests to the main server
+            const options = {
+              hostname: 'localhost',
+              port: mainPort,
+              path: req.url,
+              method: req.method,
+              headers: req.headers
+            };
+            
+            const proxy = http.request(options, function(proxyRes: IncomingMessage) {
+              res.writeHead(proxyRes.statusCode!, proxyRes.headers);
+              proxyRes.pipe(res, { end: true });
+            });
+            
+            req.pipe(proxy, { end: true });
           });
           
-          req.pipe(proxy, { end: true });
-        });
+          secondaryServer.listen(alternatePort, "0.0.0.0", () => {
+            log(`Secondary server running on port ${alternatePort}`, "system");
+          });
+        };
         
-        secondaryServer.listen(alternatePort, "0.0.0.0", () => {
-          log(`Secondary server running on port ${alternatePort}`, "system");
-        });
-      };
-      
-      // Create the proxy server
-      createProxyServer();
+        // Create the proxy server
+        createProxyServer();
+      }
       
       log(`Application started at ${startTime.toISOString()} and running 24/7`, "system");
       console.log("===================================================================");
