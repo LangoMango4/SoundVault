@@ -22,21 +22,21 @@ export function GamesGrid() {
     {
       id: "crazycattle3d",
       name: "Crazy Cattle 3D",
-      url: "https://www.crazygames.com/game/crazy-runner-3d",
+      url: "https://html5.gameslol.com/data/t9opp/h5g917/index.html",
       category: "arcade",
       description: "Navigate through obstacles in this exciting 3D runner game!"
     },
     {
       id: "fnaf",
       name: "Five Nights at Freddy's",
-      url: "https://www.crazygames.com/game/five-nights-at-freddys",
+      url: "https://w8.snokido.com/games/html5/fnaf/index.html",
       category: "horror",
       description: "Can you survive five nights as a security guard at Freddy Fazbear's Pizza?"
     },
     {
       id: "slope",
       name: "Slope",
-      url: "https://www.crazygames.com/game/slope",
+      url: "https://slope1.io/",
       category: "arcade",
       description: "Roll down a randomized slope in this fast-paced arcade game."
     },
@@ -49,57 +49,57 @@ export function GamesGrid() {
     },
     {
       id: "among-us",
-      name: "Among Us Clone",
-      url: "https://www.crazygames.com/game/impostor",
+      name: "Among Us",
+      url: "https://amongusplay.online/",
       category: "multiplayer",
-      description: "Find the impostor among your crewmates in this Among Us-inspired game."
+      description: "Find the impostor among your crewmates in this spaceship."
     },
     {
       id: "basketball",
       name: "Basketball Stars",
-      url: "https://www.crazygames.com/game/basketball-stars",
+      url: "https://basketball-stars.io/",
       category: "sports",
       description: "Play basketball in this multiplayer sports game."
     },
     {
       id: "tetris",
       name: "Tetris",
-      url: "https://www.crazygames.com/game/tetris-cube",
+      url: "https://tetris.com/play-tetris",
       category: "puzzle",
       description: "The classic puzzle game - arrange falling blocks to create and clear lines."
     },
     {
       id: "2048",
       name: "2048",
-      url: "https://www.crazygames.com/game/2048",
+      url: "https://play2048.co/",
       category: "puzzle",
       description: "Combine the numbers to reach the 2048 tile in this addictive puzzle game."
     },
     {
       id: "flappy-bird",
       name: "Flappy Bird",
-      url: "https://www.crazygames.com/game/flappy-bird",
+      url: "https://flappybird.io/",
       category: "arcade",
       description: "Navigate a bird through pipes without touching them in this addictive arcade game."
     },
     {
       id: "snake",
       name: "Snake",
-      url: "https://www.crazygames.com/game/snake",
+      url: "https://www.google.com/fbx?fbx=snake_arcade",
       category: "arcade",
       description: "Control a snake, eat food and grow longer without hitting walls or yourself."
     },
     {
-      id: "parkour-block",
-      name: "Parkour Block 3D",
-      url: "https://www.crazygames.com/game/parkour-block-3d",
-      category: "sandbox",
-      description: "A 3D parkour game with block-style graphics similar to Minecraft."
+      id: "run3",
+      name: "Run 3",
+      url: "https://lekug.github.io/run-3/",
+      category: "arcade",
+      description: "Navigate through a space tunnel in this exciting platform game."
     },
     {
       id: "wordle",
       name: "Wordle",
-      url: "https://www.crazygames.com/game/words-wordle",
+      url: "https://wordlegame.org/",
       category: "puzzle",
       description: "Guess the five-letter word in six tries with color-coded hints."
     }
@@ -185,6 +185,8 @@ export function GamesGrid() {
             title={activeGame.name}
             className="w-full h-full border-0"
             allowFullScreen
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
           ></iframe>
         </div>
       )}
