@@ -2,14 +2,19 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Gamepad2, ArrowLeftRight } from "lucide-react";
+import { Gamepad2, ArrowLeftRight, Home } from "lucide-react";
+// Import local games
+import { DinoDash } from "./local-games/DinoDash";
+import { MemoryMatch } from "./local-games/MemoryMatch";
 
 interface Game {
   id: string;
   name: string;
-  url: string;
+  url?: string;
+  component?: React.FC;
   category: string;
   description: string;
+  isLocal?: boolean;
 }
 
 export function GamesGrid() {
@@ -19,24 +24,25 @@ export function GamesGrid() {
   
   // Game library
   const games: Game[] = [
+    // Online games
     {
-      id: "crazycattle3d",
-      name: "Crazy Cattle 3D",
-      url: "https://html5.gameslol.com/data/t9opp/h5g917/index.html",
+      id: "subway-surfers",
+      name: "Subway Surfers",
+      url: "https://subway-surfers.io/",
       category: "arcade",
-      description: "Navigate through obstacles in this exciting 3D runner game!"
+      description: "Run as fast as you can through the subway while avoiding obstacles!"
     },
     {
       id: "fnaf",
       name: "Five Nights at Freddy's",
-      url: "https://w8.snokido.com/games/html5/fnaf/index.html",
+      url: "https://wellgames.com/html5/fnaf/",
       category: "horror",
       description: "Can you survive five nights as a security guard at Freddy Fazbear's Pizza?"
     },
     {
       id: "slope",
       name: "Slope",
-      url: "https://slope1.io/",
+      url: "https://slope-game.io/",
       category: "arcade",
       description: "Roll down a randomized slope in this fast-paced arcade game."
     },
@@ -48,23 +54,23 @@ export function GamesGrid() {
       description: "Play the classic version of the popular sandbox game."
     },
     {
-      id: "among-us",
-      name: "Among Us",
-      url: "https://amongusplay.online/",
+      id: "krunker",
+      name: "Krunker",
+      url: "https://krunker.io/",
       category: "multiplayer",
-      description: "Find the impostor among your crewmates in this spaceship."
+      description: "Fast-paced multiplayer action game with customizable characters."
     },
     {
       id: "basketball",
       name: "Basketball Stars",
-      url: "https://basketball-stars.io/",
+      url: "https://www.silvergames.com/en/basketball-stars",
       category: "sports",
       description: "Play basketball in this multiplayer sports game."
     },
     {
       id: "tetris",
       name: "Tetris",
-      url: "https://tetris.com/play-tetris",
+      url: "https://www.silvergames.com/en/tetrix",
       category: "puzzle",
       description: "The classic puzzle game - arrange falling blocks to create and clear lines."
     },
@@ -78,7 +84,7 @@ export function GamesGrid() {
     {
       id: "flappy-bird",
       name: "Flappy Bird",
-      url: "https://flappybird.io/",
+      url: "https://flappybird.ee/",
       category: "arcade",
       description: "Navigate a bird through pipes without touching them in this addictive arcade game."
     },
@@ -90,11 +96,11 @@ export function GamesGrid() {
       description: "Control a snake, eat food and grow longer without hitting walls or yourself."
     },
     {
-      id: "run3",
-      name: "Run 3",
-      url: "https://lekug.github.io/run-3/",
+      id: "geometry-dash",
+      name: "Geometry Dash",
+      url: "https://geometrydash.io/",
       category: "arcade",
-      description: "Navigate through a space tunnel in this exciting platform game."
+      description: "Jump and fly your way through danger in this rhythm-based platformer."
     },
     {
       id: "wordle",
@@ -102,12 +108,30 @@ export function GamesGrid() {
       url: "https://wordlegame.org/",
       category: "puzzle",
       description: "Guess the five-letter word in six tries with color-coded hints."
+    },
+    
+    // Local games (no URL issues - will always work, even with school filters)
+    {
+      id: "dino-dash",
+      name: "Dino Dash",
+      component: DinoDash,
+      category: "local",
+      description: "Jump over obstacles in this endless runner game (works offline).",
+      isLocal: true
+    },
+    {
+      id: "memory-match",
+      name: "Memory Match",
+      component: MemoryMatch,
+      category: "local",
+      description: "Match pairs of cards in this memory game (works offline).",
+      isLocal: true
     }
   ];
 
-  // Extract unique categories
+  // Extract unique categories and add the "local" category first
   const uniqueCategories = Array.from(new Set(games.map(game => game.category)));
-  const categories = ["all", ...uniqueCategories];
+  const categories = ["all", "local", ...uniqueCategories.filter(cat => cat !== "local")];
   
   // Filter games by selected category
   const filteredGames = selectedCategory === "all" 
@@ -144,6 +168,12 @@ export function GamesGrid() {
                 </TabsTrigger>
               ))}
             </TabsList>
+            {selectedCategory === "local" && (
+              <div className="p-3 mb-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm">
+                <p className="font-medium">Local games</p>
+                <p>These games work directly from our server and will function even when school internet filters block external game sites.</p>
+              </div>
+            )}
           </Tabs>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -152,15 +182,15 @@ export function GamesGrid() {
                 <CardContent className="p-4 flex flex-col h-full">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-lg font-bold">{game.name}</h3>
-                    <span className="text-xs px-2 py-1 bg-primary/10 rounded-full capitalize">
-                      {game.category}
+                    <span className={`text-xs px-2 py-1 ${game.isLocal ? 'bg-green-100 text-green-800' : 'bg-primary/10'} rounded-full capitalize`}>
+                      {game.isLocal ? 'Local' : game.category}
                     </span>
                   </div>
                   <p className="text-sm mb-4 flex-grow">{game.description}</p>
                   <Button 
                     onClick={() => playGame(game)} 
                     className="w-full"
-                    variant="default"
+                    variant={game.isLocal ? "secondary" : "default"}
                   >
                     <Gamepad2 className="w-4 h-4 mr-2" /> Play Game
                   </Button>
@@ -177,17 +207,26 @@ export function GamesGrid() {
               <span className="ml-2">{fullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</span>
             </Button>
             <Button variant="destructive" size="sm" onClick={closeGame}>
-              Close Game
+              <Home className="w-4 h-4 mr-2" /> Back to Games
             </Button>
           </div>
-          <iframe
-            src={activeGame.url}
-            title={activeGame.name}
-            className="w-full h-full border-0"
-            allowFullScreen
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-          ></iframe>
+          
+          {activeGame.isLocal ? (
+            // Render local game component
+            <div className="w-full h-full p-4 bg-white overflow-y-auto">
+              {activeGame.component && <activeGame.component />}
+            </div>
+          ) : (
+            // Render external game in iframe
+            <iframe
+              src={activeGame.url}
+              title={activeGame.name}
+              className="w-full h-full border-0"
+              allowFullScreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+            ></iframe>
+          )}
         </div>
       )}
     </div>
