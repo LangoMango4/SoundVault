@@ -22,21 +22,21 @@ export function GamesGrid() {
     {
       id: "crazycattle3d",
       name: "Crazy Cattle 3D",
-      url: "https://ubg77.github.io/game131022/crazy-cattle-3d/",
+      url: "https://www.crazygames.com/game/crazy-runner-3d",
       category: "arcade",
       description: "Navigate through obstacles in this exciting 3D runner game!"
     },
     {
       id: "fnaf",
       name: "Five Nights at Freddy's",
-      url: "https://ubg77.github.io/game131022/fnaf/",
+      url: "https://www.crazygames.com/game/five-nights-at-freddys",
       category: "horror",
       description: "Can you survive five nights as a security guard at Freddy Fazbear's Pizza?"
     },
     {
       id: "slope",
       name: "Slope",
-      url: "https://ubg77.github.io/game131022/slope/",
+      url: "https://www.crazygames.com/game/slope",
       category: "arcade",
       description: "Roll down a randomized slope in this fast-paced arcade game."
     },
@@ -49,31 +49,59 @@ export function GamesGrid() {
     },
     {
       id: "among-us",
-      name: "Among Us",
-      url: "https://now.gg/play/innersloth-llc/4047/among-us",
+      name: "Among Us Clone",
+      url: "https://www.crazygames.com/game/impostor",
       category: "multiplayer",
-      description: "Find the impostor among your crewmates."
+      description: "Find the impostor among your crewmates in this Among Us-inspired game."
     },
     {
-      id: "basketbros",
-      name: "Basketball Bros",
-      url: "https://www.basketbros.io/",
+      id: "basketball",
+      name: "Basketball Stars",
+      url: "https://www.crazygames.com/game/basketball-stars",
       category: "sports",
-      description: "Play basketball with friends in this multiplayer game."
+      description: "Play basketball in this multiplayer sports game."
     },
     {
       id: "tetris",
       name: "Tetris",
-      url: "https://tetris.com/play-tetris",
+      url: "https://www.crazygames.com/game/tetris-cube",
       category: "puzzle",
       description: "The classic puzzle game - arrange falling blocks to create and clear lines."
     },
     {
       id: "2048",
       name: "2048",
-      url: "https://play2048.co/",
+      url: "https://www.crazygames.com/game/2048",
       category: "puzzle",
       description: "Combine the numbers to reach the 2048 tile in this addictive puzzle game."
+    },
+    {
+      id: "flappy-bird",
+      name: "Flappy Bird",
+      url: "https://www.crazygames.com/game/flappy-bird",
+      category: "arcade",
+      description: "Navigate a bird through pipes without touching them in this addictive arcade game."
+    },
+    {
+      id: "snake",
+      name: "Snake",
+      url: "https://www.crazygames.com/game/snake",
+      category: "arcade",
+      description: "Control a snake, eat food and grow longer without hitting walls or yourself."
+    },
+    {
+      id: "parkour-block",
+      name: "Parkour Block 3D",
+      url: "https://www.crazygames.com/game/parkour-block-3d",
+      category: "sandbox",
+      description: "A 3D parkour game with block-style graphics similar to Minecraft."
+    },
+    {
+      id: "wordle",
+      name: "Wordle",
+      url: "https://www.crazygames.com/game/words-wordle",
+      category: "puzzle",
+      description: "Guess the five-letter word in six tries with color-coded hints."
     }
   ];
 
