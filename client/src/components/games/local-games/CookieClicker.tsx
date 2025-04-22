@@ -1,13 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from '@/components/ui/dialog';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
+import { Crown, Bug, Sparkles, GiftIcon } from 'lucide-react';
+import { ErrorMessage } from './ErrorMessage';
 
 export function CookieClicker() {
+  // Game state
   const [cookies, setCookies] = useState<number>(0);
   const [clickPower, setClickPower] = useState<number>(1);
   const [autoClickers, setAutoClickers] = useState<number>(0);
   const [grandmas, setGrandmas] = useState<number>(0);
   const [factories, setFactories] = useState<number>(0);
+  
+  // Admin panel
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [adminMode, setAdminMode] = useState<boolean>(false);
+  const [giftAmount, setGiftAmount] = useState<number>(100);
+  const [giftType, setGiftType] = useState<string>("cookies");
+  const [cheatCode, setCheatCode] = useState<string>("");
+  
+  // Error Message
+  const [showError, setShowError] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  
+  // Styling
+  const [background, setBackground] = useState<string>("none");
+  const backgrounds = [
+    { id: "none", name: "None" },
+    { id: "bakery", name: "Bakery", color: "bg-amber-50" },
+    { id: "space", name: "Space", color: "bg-slate-900 text-white" },
+    { id: "rainbow", name: "Rainbow", color: "bg-gradient-to-r from-red-500 to-blue-500 text-white" },
+    { id: "forest", name: "Forest", color: "bg-green-100" }
+  ];
   
   // Upgrade costs
   const autoClickerCost = Math.floor(10 * Math.pow(1.15, autoClickers));
@@ -17,6 +59,23 @@ export function CookieClicker() {
   
   // Cookie production per second
   const cookiesPerSecond = autoClickers + (grandmas * 5) + (factories * 50);
+  
+  // Admin Verification - Check if the current user is admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const response = await fetch('/api/user');
+        if (response.ok) {
+          const userData = await response.json();
+          setIsAdmin(userData.role === 'admin');
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+      }
+    };
+    
+    checkAdminStatus();
+  }, []);
   
   // Auto-clickers functionality
   useEffect(() => {
@@ -34,11 +93,24 @@ export function CookieClicker() {
     setCookies(cookies + clickPower);
   };
   
+  // Check cheat code
+  const checkCheatCode = () => {
+    if (cheatCode === "cookiemonster") {
+      setCookies(cookies + 1000);
+      setCheatCode("");
+      return true;
+    }
+    return false;
+  };
+  
   // Purchase auto clicker
   const buyAutoClicker = () => {
     if (cookies >= autoClickerCost) {
       setCookies(cookies - autoClickerCost);
       setAutoClickers(autoClickers + 1);
+    } else {
+      setErrorMessage(`You are not authorized to purchase 'Auto Clicker'\nNeed ${autoClickerCost} cookies. You have ${Math.floor(cookies)}.`);
+      setShowError(true);
     }
   };
   
@@ -47,6 +119,9 @@ export function CookieClicker() {
     if (cookies >= clickPowerCost) {
       setCookies(cookies - clickPowerCost);
       setClickPower(clickPower + 1);
+    } else {
+      setErrorMessage(`You are not authorized to purchase 'Click Power'\nNeed ${clickPowerCost} cookies. You have ${Math.floor(cookies)}.`);
+      setShowError(true);
     }
   };
   
@@ -55,6 +130,9 @@ export function CookieClicker() {
     if (cookies >= grandmaCost) {
       setCookies(cookies - grandmaCost);
       setGrandmas(grandmas + 1);
+    } else {
+      setErrorMessage(`You are not authorized to hire 'Cookie Grandma'\nNeed ${grandmaCost} cookies. You have ${Math.floor(cookies)}.`);
+      setShowError(true);
     }
   };
   
@@ -63,6 +141,34 @@ export function CookieClicker() {
     if (cookies >= factoryCost) {
       setCookies(cookies - factoryCost);
       setFactories(factories + 1);
+    } else {
+      setErrorMessage(`You are not authorized to build 'Cookie Factory'\nNeed ${factoryCost} cookies. You have ${Math.floor(cookies)}.`);
+      setShowError(true);
+    }
+  };
+  
+  // Give cookies or upgrades as admin
+  const handleAdminGift = () => {
+    if (!isAdmin) return;
+    
+    switch (giftType) {
+      case "cookies":
+        setCookies(cookies + giftAmount);
+        break;
+      case "clickers":
+        setAutoClickers(autoClickers + Math.floor(giftAmount));
+        break;
+      case "power":
+        setClickPower(clickPower + Math.floor(giftAmount));
+        break;
+      case "grandmas":
+        setGrandmas(grandmas + Math.floor(giftAmount));
+        break;
+      case "factories":
+        setFactories(factories + Math.floor(giftAmount));
+        break;
+      default:
+        break;
     }
   };
   
@@ -77,23 +183,187 @@ export function CookieClicker() {
     }
   };
   
+  // Get background styles
+  const getBackgroundClass = () => {
+    const bg = backgrounds.find(b => b.id === background);
+    return bg?.color || "";
+  };
+  
   return (
-    <div className="flex flex-col items-center">
-      <h1 className="text-2xl font-bold mb-4">Cookie Clicker</h1>
+    <div className={`flex flex-col items-center p-4 rounded-lg ${getBackgroundClass()}`}>
+      <div className="flex justify-between items-center w-full max-w-3xl mb-4">
+        <h1 className="text-2xl font-bold">Cookie Clicker</h1>
+        
+        {isAdmin && (
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setAdminMode(!adminMode)}
+              className={adminMode ? "bg-amber-500 text-white hover:bg-amber-600" : ""}
+            >
+              <Crown className="h-4 w-4 mr-1" /> Admin
+            </Button>
+            
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Bug className="h-4 w-4 mr-1" /> Debug
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Game Debug Panel</DialogTitle>
+                  <DialogDescription>
+                    View and modify game state for debugging purposes.
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="grid gap-2 py-4">
+                  <div className="flex items-center gap-2">
+                    <Label>Current Cookies:</Label>
+                    <Input 
+                      type="number" 
+                      value={cookies} 
+                      onChange={(e) => setCookies(Number(e.target.value))}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Label>Click Power:</Label>
+                    <Input 
+                      type="number" 
+                      value={clickPower} 
+                      onChange={(e) => setClickPower(Number(e.target.value))}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Label>Auto Clickers:</Label>
+                    <Input 
+                      type="number" 
+                      value={autoClickers} 
+                      onChange={(e) => setAutoClickers(Number(e.target.value))}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Label>Grandmas:</Label>
+                    <Input 
+                      type="number" 
+                      value={grandmas} 
+                      onChange={(e) => setGrandmas(Number(e.target.value))}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Label>Factories:</Label>
+                    <Input 
+                      type="number" 
+                      value={factories} 
+                      onChange={(e) => setFactories(Number(e.target.value))}
+                    />
+                  </div>
+                </div>
+                
+                <DialogFooter>
+                  <Button type="submit" onClick={() => {}}>Save Changes</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
+      </div>
+      
+      {adminMode && isAdmin && (
+        <Card className="w-full max-w-3xl mb-4 p-4 bg-yellow-50 border-yellow-200">
+          <h3 className="font-bold flex items-center gap-2 mb-2">
+            <GiftIcon className="h-4 w-4" /> Admin Gift Panel
+          </h3>
+          <div className="flex flex-wrap gap-2 items-end">
+            <div>
+              <Label htmlFor="giftAmount">Amount:</Label>
+              <Input 
+                id="giftAmount"
+                type="number" 
+                value={giftAmount} 
+                onChange={(e) => setGiftAmount(Number(e.target.value))}
+                className="w-24"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="giftType">Gift Type:</Label>
+              <Select value={giftType} onValueChange={setGiftType}>
+                <SelectTrigger className="w-36">
+                  <SelectValue placeholder="Select a type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cookies">Cookies</SelectItem>
+                  <SelectItem value="clickers">Auto Clickers</SelectItem>
+                  <SelectItem value="power">Click Power</SelectItem>
+                  <SelectItem value="grandmas">Grandmas</SelectItem>
+                  <SelectItem value="factories">Factories</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <Button onClick={handleAdminGift}>
+              Give Gift
+            </Button>
+            
+            <div className="ml-auto">
+              <Label htmlFor="background">Background:</Label>
+              <Select value={background} onValueChange={setBackground}>
+                <SelectTrigger className="w-36">
+                  <SelectValue placeholder="Select a background" />
+                </SelectTrigger>
+                <SelectContent>
+                  {backgrounds.map(bg => (
+                    <SelectItem key={bg.id} value={bg.id}>{bg.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </Card>
+      )}
       
       <div className="stats mb-6 text-center">
         <div className="text-4xl font-bold">{formatNumber(cookies)} cookies</div>
-        <div className="text-gray-600">per second: {formatNumber(cookiesPerSecond)}</div>
-        <div className="text-gray-600">per click: {clickPower}</div>
+        <div className="text-gray-600 dark:text-gray-400">per second: {formatNumber(cookiesPerSecond)}</div>
+        <div className="text-gray-600 dark:text-gray-400">per click: {clickPower}</div>
       </div>
       
-      <div className="cookie-container mb-8">
+      {/* Secret cheat code input */}
+      <div className="mb-2 w-full max-w-xs">
+        <Input 
+          type="text" 
+          value={cheatCode} 
+          onChange={(e) => setCheatCode(e.target.value)} 
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              const success = checkCheatCode();
+              if (success) {
+                e.currentTarget.blur();
+              }
+            }
+          }}
+          placeholder="Enter cheat code..." 
+          className="text-sm opacity-50 focus:opacity-100 transition-opacity"
+        />
+      </div>
+      
+      <div className="cookie-container mb-8 relative group">
         <button 
-          className="cookie-button w-40 h-40 bg-amber-200 hover:bg-amber-300 rounded-full flex items-center justify-center transform transition-transform hover:scale-105 active:scale-95 border-4 border-amber-300"
+          className="cookie-button w-40 h-40 bg-amber-200 hover:bg-amber-300 rounded-full flex items-center justify-center transform transition-transform hover:scale-105 active:scale-95 border-4 border-amber-300 shadow-lg"
           onClick={handleCookieClick}
         >
-          <span role="img" aria-label="cookie" className="text-8xl">🍪</span>
+          <span role="img" aria-label="cookie" className="text-8xl group-hover:animate-pulse">🍪</span>
         </button>
+        <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Sparkles className="text-yellow-500 h-8 w-8 animate-bounce" />
+        </div>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-3xl">
@@ -182,8 +452,11 @@ export function CookieClicker() {
         </Card>
       </div>
       
-      <div className="mt-6 text-sm text-gray-600">
+      <div className="mt-6 text-sm text-gray-600 dark:text-gray-400">
         <p>Click the cookie to earn cookies. Use cookies to buy upgrades.</p>
+        {isAdmin && (
+          <p className="mt-1 italic">Admin tip: Try the cheat code "cookiemonster" for a surprise!</p>
+        )}
       </div>
     </div>
   );
