@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { WifiOff, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import offlineScreenImage from "@/assets/offline_screen.svg";
 import lockScreenImage from "@/assets/website_locked.png";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 
@@ -65,9 +66,9 @@ export function OfflineScreen() {
     <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-[100]">
       <div className="max-w-xl w-full px-4">
         <div className="flex flex-col items-center text-center">
-          {/* Display the lock screen image */}
+          {/* Display the offline screen image with WiFi icon */}
           <img 
-            src={lockScreenImage} 
+            src={offlineScreenImage} 
             alt="Offline" 
             className="w-full max-w-xl object-contain mb-8"
           />

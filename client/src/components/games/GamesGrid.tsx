@@ -6,6 +6,7 @@ import { Gamepad2, ArrowLeftRight, Home } from "lucide-react";
 // Import local games
 import { DinoDash } from "./local-games/DinoDash";
 import { MemoryMatch } from "./local-games/MemoryMatch";
+import { CookieClicker } from "./local-games/CookieClicker";
 
 interface Game {
   id: string;
@@ -125,6 +126,14 @@ export function GamesGrid() {
       component: MemoryMatch,
       category: "local",
       description: "Match pairs of cards in this memory game (works offline).",
+      isLocal: true
+    },
+    {
+      id: "cookie-clicker",
+      name: "Cookie Clicker",
+      component: CookieClicker,
+      category: "local",
+      description: "Click cookies, buy upgrades, and become a cookie millionaire!",
       isLocal: true
     }
   ];
