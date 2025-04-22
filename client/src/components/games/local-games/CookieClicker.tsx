@@ -35,7 +35,7 @@ export function CookieClicker() {
   const [adminMode, setAdminMode] = useState<boolean>(false);
   const [giftAmount, setGiftAmount] = useState<number>(100);
   const [giftType, setGiftType] = useState<string>("cookies");
-  const [targetUsername, setTargetUsername] = useState<string>("");
+  const [targetUsername, setTargetUsername] = useState<string>("self");
   const [cheatCode, setCheatCode] = useState<string>("");
   const [users, setUsers] = useState<any[]>([]);
   const [loadingUsers, setLoadingUsers] = useState<boolean>(false);
@@ -178,8 +178,8 @@ export function CookieClicker() {
   const handleAdminGift = async () => {
     if (!isAdmin) return;
     
-    // If no target username is specified or it's empty, apply to self
-    if (!targetUsername) {
+    // If target is self or not specified, apply to self
+    if (!targetUsername || targetUsername === "self") {
       // Apply to self
       switch (giftType) {
         case "cookies":
@@ -390,7 +390,7 @@ export function CookieClicker() {
                   <SelectValue placeholder="Select user" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Self</SelectItem>
+                  <SelectItem value="self">Self</SelectItem>
                   {users.map(user => (
                     <SelectItem key={user.id} value={user.username}>
                       {user.username}
