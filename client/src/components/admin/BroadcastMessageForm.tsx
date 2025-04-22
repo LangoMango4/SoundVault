@@ -5,6 +5,8 @@ import { useForm } from "react-hook-form";
 import { InsertBroadcastMessage } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { Switch } from "@/components/ui/switch";
 
 import {
   Dialog,
@@ -48,6 +50,7 @@ const formSchema = z.object({
     required_error: "Please select a priority level",
   }),
   expiresAt: z.date().nullable().optional(),
+  useWindowsStyle: z.boolean().default(true),
 });
 
 // Type for form values
@@ -60,6 +63,7 @@ interface BroadcastMessageFormProps {
 
 export function BroadcastMessageForm({ open, onOpenChange }: BroadcastMessageFormProps) {
   const { toast } = useToast();
+  const [showPreview, setShowPreview] = useState(false);
   
   // Initialize form with default values
   const form = useForm<FormValues>({
@@ -69,13 +73,16 @@ export function BroadcastMessageForm({ open, onOpenChange }: BroadcastMessageFor
       message: "",
       priority: "normal",
       expiresAt: null,
+      useWindowsStyle: true,
     },
   });
   
   // Mutation to create a broadcast message
   const createMessageMutation = useMutation({
     mutationFn: async (values: FormValues) => {
-      const res = await apiRequest("POST", "/api/messages", values as InsertBroadcastMessage);
+      // Create a new object without the useWindowsStyle property
+      const { useWindowsStyle, ...messageData } = values;
+      const res = await apiRequest("POST", "/api/messages", messageData as InsertBroadcastMessage);
       return res.json();
     },
     onSuccess: () => {
@@ -245,6 +252,86 @@ export function BroadcastMessageForm({ open, onOpenChange }: BroadcastMessageFor
                 </FormItem>
               )}
             />
+            
+            <FormField
+              control={form.control}
+              name="useWindowsStyle"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <FormLabel>Windows-Style Message</FormLabel>
+                    <FormDescription className="text-xs">
+                      Display as a Windows error message dialog
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            
+            <div className="flex items-center">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowPreview(!showPreview)}
+              >
+                {showPreview ? "Hide Preview" : "Show Preview"}
+              </Button>
+            </div>
+            
+            {showPreview && (
+              <div className="border rounded p-4 mt-2 bg-gray-50">
+                <h3 className="text-sm font-medium mb-2">Preview:</h3>
+                {form.watch("useWindowsStyle") ? (
+                  <div className="bg-[#f0f0f0] border border-gray-300 shadow-lg overflow-hidden rounded-md">
+                    {/* Title bar */}
+                    <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-1 flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">⮟</span>
+                        <span className="text-sm">{form.watch("title") || "System Administrator"}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button className="hover:bg-blue-500 px-2 text-lg leading-none">?</button>
+                        <button className="hover:bg-red-500 px-2 text-lg leading-none">×</button>
+                      </div>
+                    </div>
+                    
+                    {/* Content */}
+                    <div className="p-4 flex items-start gap-4">
+                      <div className="flex-shrink-0">
+                        <div className="bg-yellow-400 w-10 h-10 rounded-full flex items-center justify-center text-black font-bold text-2xl">
+                          !
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <p className="mb-4 whitespace-pre-line">{form.watch("message") || "Message content will appear here"}</p>
+                        <div className="flex justify-end">
+                          <button className="border border-gray-300 bg-gray-100 hover:bg-gray-200 px-6 py-1 text-sm">
+                            OK
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-white border border-gray-200 shadow-md rounded-md p-4">
+                    <div className="flex items-start gap-3">
+                      <img src={warningIcon} alt="Warning" className="h-5 w-5 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium text-base">{form.watch("title") || "Announcement Title"}</h4>
+                        <p className="text-sm text-gray-600">{form.watch("message") || "Message content will appear here"}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             
             <DialogFooter className="gap-2 sm:gap-0">
               <Button

@@ -35,7 +35,10 @@ export function CookieClicker() {
   const [adminMode, setAdminMode] = useState<boolean>(false);
   const [giftAmount, setGiftAmount] = useState<number>(100);
   const [giftType, setGiftType] = useState<string>("cookies");
+  const [targetUsername, setTargetUsername] = useState<string>("");
   const [cheatCode, setCheatCode] = useState<string>("");
+  const [users, setUsers] = useState<any[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState<boolean>(false);
   
   // Error Message
   const [showError, setShowError] = useState<boolean>(false);
@@ -76,6 +79,30 @@ export function CookieClicker() {
     
     checkAdminStatus();
   }, []);
+  
+  // Fetch users when admin mode is enabled
+  useEffect(() => {
+    if (adminMode && isAdmin) {
+      const fetchUsers = async () => {
+        setLoadingUsers(true);
+        try {
+          const response = await fetch('/api/users');
+          if (response.ok) {
+            const usersData = await response.json();
+            setUsers(usersData);
+          } else {
+            console.error('Failed to fetch users');
+          }
+        } catch (error) {
+          console.error('Error fetching users:', error);
+        } finally {
+          setLoadingUsers(false);
+        }
+      };
+      
+      fetchUsers();
+    }
+  }, [adminMode, isAdmin]);
   
   // Auto-clickers functionality
   useEffect(() => {
@@ -148,27 +175,62 @@ export function CookieClicker() {
   };
   
   // Give cookies or upgrades as admin
-  const handleAdminGift = () => {
+  const handleAdminGift = async () => {
     if (!isAdmin) return;
     
-    switch (giftType) {
-      case "cookies":
-        setCookies(cookies + giftAmount);
-        break;
-      case "clickers":
-        setAutoClickers(autoClickers + Math.floor(giftAmount));
-        break;
-      case "power":
-        setClickPower(clickPower + Math.floor(giftAmount));
-        break;
-      case "grandmas":
-        setGrandmas(grandmas + Math.floor(giftAmount));
-        break;
-      case "factories":
-        setFactories(factories + Math.floor(giftAmount));
-        break;
-      default:
-        break;
+    // If no target username is specified or it's empty, apply to self
+    if (!targetUsername) {
+      // Apply to self
+      switch (giftType) {
+        case "cookies":
+          setCookies(cookies + giftAmount);
+          break;
+        case "clickers":
+          setAutoClickers(autoClickers + Math.floor(giftAmount));
+          break;
+        case "power":
+          setClickPower(clickPower + Math.floor(giftAmount));
+          break;
+        case "grandmas":
+          setGrandmas(grandmas + Math.floor(giftAmount));
+          break;
+        case "factories":
+          setFactories(factories + Math.floor(giftAmount));
+          break;
+        default:
+          break;
+      }
+      setErrorMessage(`You gave yourself ${giftAmount} ${giftType}.`);
+      setShowError(true);
+      return;
+    }
+    
+    // Send gift to another user
+    try {
+      const response = await fetch('/api/games/cookie-clicker/gift', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: targetUsername,
+          giftType,
+          amount: giftAmount
+        }),
+      });
+      
+      if (response.ok) {
+        setErrorMessage(`Successfully gifted ${giftAmount} ${giftType} to ${targetUsername}!`);
+        setShowError(true);
+      } else {
+        const error = await response.json();
+        setErrorMessage(`Failed to gift to ${targetUsername}: ${error.message || 'Unknown error'}`);
+        setShowError(true);
+      }
+    } catch (error) {
+      console.error('Error sending gift:', error);
+      setErrorMessage(`Failed to send gift: Network error`);
+      setShowError(true);
     }
   };
   
@@ -191,6 +253,14 @@ export function CookieClicker() {
   
   return (
     <div className={`flex flex-col items-center p-4 rounded-lg ${getBackgroundClass()}`}>
+      {/* Windows-style Error Message */}
+      <ErrorMessage 
+        show={showError} 
+        onClose={() => setShowError(false)} 
+        title="System Administrator"
+        message={errorMessage}
+      />
+      
       <div className="flex justify-between items-center w-full max-w-3xl mb-4">
         <h1 className="text-2xl font-bold">Cookie Clicker</h1>
         
@@ -280,6 +350,7 @@ export function CookieClicker() {
           <h3 className="font-bold flex items-center gap-2 mb-2">
             <GiftIcon className="h-4 w-4" /> Admin Gift Panel
           </h3>
+          
           <div className="flex flex-wrap gap-2 items-end">
             <div>
               <Label htmlFor="giftAmount">Amount:</Label>
@@ -308,8 +379,32 @@ export function CookieClicker() {
               </Select>
             </div>
             
-            <Button onClick={handleAdminGift}>
-              Give Gift
+            <div>
+              <Label htmlFor="targetUser">Target User:</Label>
+              <Select 
+                value={targetUsername} 
+                onValueChange={setTargetUsername}
+                disabled={loadingUsers}
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Select user" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Self</SelectItem>
+                  {users.map(user => (
+                    <SelectItem key={user.id} value={user.username}>
+                      {user.username}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <Button 
+              onClick={handleAdminGift} 
+              disabled={loadingUsers}
+            >
+              {loadingUsers ? "Loading..." : "Give Gift"}
             </Button>
             
             <div className="ml-auto">
