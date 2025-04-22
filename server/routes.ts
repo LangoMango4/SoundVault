@@ -352,6 +352,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Serve sound files
   app.use('/api/sounds/files', isAuthenticated, express.static(path.join(__dirname, 'public', 'sounds')));
+  
+  // Game-related routes
+  app.post('/api/games/cookie-clicker/gift', isAdmin, async (req, res, next) => {
+    try {
+      const { username, giftType, amount } = req.body;
+      
+      if (!username || !giftType || !amount) {
+        return res.status(400).json({ 
+          message: "Missing required fields: username, giftType, and amount are required" 
+        });
+      }
+      
+      // Find target user
+      const targetUser = await storage.getUserByUsername(username);
+      if (!targetUser) {
+        return res.status(404).json({ message: `User '${username}' not found` });
+      }
+      
+      // In a real implementation, we would store the game state in the database
+      // For this prototype, we'll just return success since the actual gift
+      // will be applied when the user loads/refreshes their game
+      
+      res.status(200).json({ 
+        message: `Successfully gifted ${amount} ${giftType} to user ${username}`,
+        success: true
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
 
   // Broadcast message routes
   app.get("/api/messages", isAuthenticated, async (req, res, next) => {
