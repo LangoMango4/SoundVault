@@ -602,6 +602,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Reset cookie clicker data to initial state
+  app.post('/api/games/cookie-clicker/reset', isAuthenticated, async (req, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      // Reset the user's cookie clicker data to initial values
+      const resetData = await storage.updateCookieClickerData(req.user.id, {
+        cookies: 0,
+        clickPower: 1,
+        autoClickers: 0,
+        grandmas: 0,
+        factories: 0,
+        background: "none"
+      });
+      
+      if (!resetData) {
+        // If somehow no data exists, create initial data
+        const initialData = await storage.createCookieClickerData({
+          userId: req.user.id,
+          cookies: 0,
+          clickPower: 1,
+          autoClickers: 0,
+          grandmas: 0,
+          factories: 0,
+          background: "none"
+        });
+        return res.status(201).json(initialData);
+      }
+      
+      return res.json(resetData);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
   // High scores and leaderboard endpoint
   app.get('/api/games/cookie-clicker/leaderboard', async (req, res, next) => {
     try {

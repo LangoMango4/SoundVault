@@ -19,7 +19,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Crown, Bug, Sparkles, GiftIcon } from 'lucide-react';
+import { Crown, Bug, Sparkles, Gift as GiftIcon, RotateCcw } from 'lucide-react';
 import { ErrorMessage } from './ErrorMessage';
 
 export function CookieClicker() {
@@ -70,7 +70,11 @@ export function CookieClicker() {
         const response = await fetch('/api/games/cookie-clicker');
         if (response.ok) {
           const data = await response.json();
-          setCookies(data.cookies || 0);
+          // Check if this is a new game or an existing game
+          const isNewGame = !data.id; // If there's no id, it's a new game
+          
+          // For new players, start with 0 cookies, but load saved data for returning players
+          setCookies(isNewGame ? 0 : (data.cookies || 0));
           setClickPower(data.clickPower || 1);
           setAutoClickers(data.autoClickers || 0);
           setGrandmas(data.grandmas || 0);
@@ -79,9 +83,13 @@ export function CookieClicker() {
           console.log('Loaded game data:', data);
         } else {
           console.warn('Failed to load game data, starting with default values');
+          // Start with 0 cookies for new players
+          setCookies(0);
         }
       } catch (error) {
         console.error('Error loading game data:', error);
+        // Start with 0 cookies if there's an error
+        setCookies(0);
       }
     };
     
@@ -298,6 +306,40 @@ export function CookieClicker() {
     }
   };
   
+  // Reset the game to its initial state
+  const handleResetGame = async () => {
+    if (window.confirm("Are you sure you want to reset your game? This will set your cookies to 0 and remove all upgrades.")) {
+      try {
+        const response = await fetch('/api/games/cookie-clicker/reset', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        if (response.ok) {
+          const resetData = await response.json();
+          setCookies(0);
+          setClickPower(1);
+          setAutoClickers(0);
+          setGrandmas(0);
+          setFactories(0);
+          setBackground("none");
+          setErrorMessage("Game has been reset! Starting fresh with 0 cookies.");
+          setShowError(true);
+        } else {
+          console.error('Failed to reset game:', await response.text());
+          setErrorMessage("Failed to reset game. Please try again.");
+          setShowError(true);
+        }
+      } catch (error) {
+        console.error('Error resetting game:', error);
+        setErrorMessage("Error resetting game. Please try again.");
+        setShowError(true);
+      }
+    }
+  };
+  
   // Format large numbers
   const formatNumber = (num: number) => {
     if (num >= 1000000) {
@@ -328,85 +370,95 @@ export function CookieClicker() {
       <div className="flex justify-between items-center w-full max-w-3xl mb-4">
         <h1 className="text-2xl font-bold">Cookie Clicker</h1>
         
-        {isAdmin && (
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setAdminMode(!adminMode)}
-              className={adminMode ? "bg-amber-500 text-white hover:bg-amber-600" : ""}
-            >
-              <Crown className="h-4 w-4 mr-1" /> Admin
-            </Button>
-            
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Bug className="h-4 w-4 mr-1" /> Debug
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Game Debug Panel</DialogTitle>
-                  <DialogDescription>
-                    View and modify game state for debugging purposes.
-                  </DialogDescription>
-                </DialogHeader>
-                
-                <div className="grid gap-2 py-4">
-                  <div className="flex items-center gap-2">
-                    <Label>Current Cookies:</Label>
-                    <Input 
-                      type="number" 
-                      value={cookies} 
-                      onChange={(e) => setCookies(Number(e.target.value))}
-                    />
+        <div className="flex gap-2">
+          <Button 
+            variant="destructive" 
+            size="sm" 
+            onClick={handleResetGame}
+          >
+            <RotateCcw className="h-4 w-4 mr-1" /> Reset Game
+          </Button>
+          
+          {isAdmin && (
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setAdminMode(!adminMode)}
+                className={adminMode ? "bg-amber-500 text-white hover:bg-amber-600" : ""}
+              >
+                <Crown className="h-4 w-4 mr-1" /> Admin
+              </Button>
+              
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Bug className="h-4 w-4 mr-1" /> Debug
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Game Debug Panel</DialogTitle>
+                    <DialogDescription>
+                      View and modify game state for debugging purposes.
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <div className="grid gap-2 py-4">
+                    <div className="flex items-center gap-2">
+                      <Label>Current Cookies:</Label>
+                      <Input 
+                        type="number" 
+                        value={cookies} 
+                        onChange={(e) => setCookies(Number(e.target.value))}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Label>Click Power:</Label>
+                      <Input 
+                        type="number" 
+                        value={clickPower} 
+                        onChange={(e) => setClickPower(Number(e.target.value))}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Label>Auto Clickers:</Label>
+                      <Input 
+                        type="number" 
+                        value={autoClickers} 
+                        onChange={(e) => setAutoClickers(Number(e.target.value))}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Label>Grandmas:</Label>
+                      <Input 
+                        type="number" 
+                        value={grandmas} 
+                        onChange={(e) => setGrandmas(Number(e.target.value))}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Label>Factories:</Label>
+                      <Input 
+                        type="number" 
+                        value={factories} 
+                        onChange={(e) => setFactories(Number(e.target.value))}
+                      />
+                    </div>
                   </div>
                   
-                  <div className="flex items-center gap-2">
-                    <Label>Click Power:</Label>
-                    <Input 
-                      type="number" 
-                      value={clickPower} 
-                      onChange={(e) => setClickPower(Number(e.target.value))}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Label>Auto Clickers:</Label>
-                    <Input 
-                      type="number" 
-                      value={autoClickers} 
-                      onChange={(e) => setAutoClickers(Number(e.target.value))}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Label>Grandmas:</Label>
-                    <Input 
-                      type="number" 
-                      value={grandmas} 
-                      onChange={(e) => setGrandmas(Number(e.target.value))}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Label>Factories:</Label>
-                    <Input 
-                      type="number" 
-                      value={factories} 
-                      onChange={(e) => setFactories(Number(e.target.value))}
-                    />
-                  </div>
-                </div>
-                
-                <DialogFooter>
-                  <Button type="submit" onClick={() => {}}>Save Changes</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-        )}
+                  <DialogFooter>
+                    <Button type="submit" onClick={() => {}}>Save Changes</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+          )}
+        </div>
       </div>
       
       {adminMode && isAdmin && (
