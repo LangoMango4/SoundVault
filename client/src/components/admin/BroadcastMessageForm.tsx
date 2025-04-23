@@ -297,7 +297,7 @@ export function BroadcastMessageForm({ open, onOpenChange }: BroadcastMessageFor
                         <span className="text-sm">{form.watch("title") || "System Administrator"}</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <button className="hover:bg-blue-500 px-2 text-lg leading-none">?</button>
+                        <button className="hover:bg-gray-500 px-2 text-lg leading-none">?</button>
                         <button className="hover:bg-red-500 px-2 text-lg leading-none">×</button>
                       </div>
                     </div>

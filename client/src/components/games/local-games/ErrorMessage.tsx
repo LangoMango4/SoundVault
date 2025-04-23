@@ -21,7 +21,7 @@ export function ErrorMessage({ show, onClose, title = "System Administrator", me
             <span className="text-sm">{title}</span>
           </div>
           <div className="flex items-center gap-1">
-            <button className="hover:bg-blue-500 px-2 text-lg leading-none">?</button>
+            <button className="hover:bg-gray-500 px-2 text-lg leading-none">?</button>
             <button 
               onClick={onClose}
               className="hover:bg-red-500 px-2 text-lg leading-none"
