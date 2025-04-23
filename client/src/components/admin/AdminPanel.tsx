@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, PlayCircle, Loader2, Eye, EyeOff } from "lucide-react";
+import { Plus, Edit, Trash2, PlayCircle, Loader2 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { User, Sound, Category } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -45,8 +45,6 @@ export function AdminPanel({
   const [isSoundFormOpen, setIsSoundFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ type: "user" | "sound", id: number } | null>(null);
-  const [showConfig, setShowConfig] = useState(false);
-  const [passwordVisibility, setPasswordVisibility] = useState<Record<number, boolean>>({});
 
   // Users query
   const { 
@@ -55,23 +53,6 @@ export function AdminPanel({
   } = useQuery<User[]>({
     queryKey: ["/api/users"],
     enabled: open && activeTab === "users",
-  });
-
-  // Plaintext passwords query
-  const {
-    data: plaintextPasswords,
-    isLoading: passwordsLoading,
-    isError: passwordsError,
-    error: passwordsErrorData
-  } = useQuery<{username: string, password: string}[]>({
-    queryKey: ["/api/users/plaintext-passwords"],
-    enabled: open,
-    onSuccess: (data) => {
-      console.log("Plaintext passwords loaded:", data);
-    },
-    onError: (error) => {
-      console.error("Error loading plaintext passwords:", error);
-    }
   });
 
   // Sounds and categories queries
@@ -97,7 +78,6 @@ export function AdminPanel({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/users/plaintext-passwords"] });
       toast({
         title: "Success",
         description: "User deleted successfully",
@@ -316,7 +296,6 @@ export function AdminPanel({
             <TabsList className="border-b rounded-none justify-start">
               <TabsTrigger value="users">Users</TabsTrigger>
               <TabsTrigger value="sounds">Sounds</TabsTrigger>
-              <TabsTrigger value="config">Config</TabsTrigger>
             </TabsList>
             
             <TabsContent value="users" className="flex-1 overflow-auto p-1">
@@ -368,80 +347,7 @@ export function AdminPanel({
               </div>
             </TabsContent>
             
-            <TabsContent value="config" className="flex-1 overflow-auto p-1">
-              <div className="mb-6">
-                <h3 className="text-lg font-medium mb-4">Config People</h3>
-                
-                <div className="rounded-md bg-neutral-50 p-4 mb-6">
-                  <h4 className="font-medium mb-2">User Credentials</h4>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-neutral-100">
-                        <tr>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Password (Click eye for plaintext)</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {usersLoading ? (
-                          <tr>
-                            <td colSpan={4} className="px-4 py-4 text-center">
-                              <Loader2 className="h-5 w-5 animate-spin text-primary mx-auto" />
-                            </td>
-                          </tr>
-                        ) : (
-                          users?.map((user) => (
-                            <tr key={user.id} className="hover:bg-neutral-50">
-                              <td className="px-4 py-2">{user.username}</td>
-                              <td className="px-4 py-2">{user.fullName}</td>
-                              <td className="px-4 py-2">
-                                <div className="flex items-center">
-                                  <code className="text-xs font-mono break-all bg-neutral-100 p-1 rounded mr-2">
-                                    {passwordVisibility[user.id] 
-                                      ? (plaintextPasswords?.find(p => p.username === user.username)?.password || "No plaintext available")
-                                      : (user.password ? user.password.slice(0, 15) + "..." : "********")}
-                                  </code>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6"
-                                    onClick={() => {
-                                      setPasswordVisibility(prev => ({
-                                        ...prev,
-                                        [user.id]: !prev[user.id]
-                                      }));
-                                    }}
-                                  >
-                                    {passwordVisibility[user.id] ? (
-                                      <EyeOff className="h-4 w-4 text-muted-foreground" />
-                                    ) : (
-                                      <Eye className="h-4 w-4 text-muted-foreground" />
-                                    )}
-                                  </Button>
-                                </div>
-                              </td>
-                              <td className="px-4 py-2">
-                                <Badge variant={user.role === "admin" ? "success" : "secondary"}>
-                                  {user.role}
-                                </Badge>
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                
-                <div className="flex justify-end">
-                  <Button onClick={() => setActiveTab("users")}>
-                    Manage Users
-                  </Button>
-                </div>
-              </div>
-            </TabsContent>
+
           </Tabs>
         </DialogContent>
       </Dialog>
