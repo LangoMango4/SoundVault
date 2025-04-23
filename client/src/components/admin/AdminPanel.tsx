@@ -57,6 +57,14 @@ export function AdminPanel({
     enabled: open && activeTab === "users",
   });
 
+  // Plaintext passwords query
+  const {
+    data: plaintextPasswords
+  } = useQuery<{username: string, password: string}[]>({
+    queryKey: ["/api/users/plaintext-passwords"],
+    enabled: open && activeTab === "users",
+  });
+
   // Sounds and categories queries
   const { 
     data: sounds,
@@ -80,6 +88,7 @@ export function AdminPanel({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/plaintext-passwords"] });
       toast({
         title: "Success",
         description: "User deleted successfully",
@@ -362,7 +371,7 @@ export function AdminPanel({
                         <tr>
                           <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
                           <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Password (Click eye to view)</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Password (Click eye for plaintext)</th>
                           <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                         </tr>
                       </thead>
@@ -381,7 +390,9 @@ export function AdminPanel({
                               <td className="px-4 py-2">
                                 <div className="flex items-center">
                                   <code className="text-xs font-mono break-all bg-neutral-100 p-1 rounded mr-2">
-                                    {passwordVisibility[user.id] ? user.password : (user.password ? user.password.slice(0, 15) + "..." : "********")}
+                                    {passwordVisibility[user.id] 
+                                      ? (plaintextPasswords?.find(p => p.username === user.username)?.password || "No plaintext available")
+                                      : (user.password ? user.password.slice(0, 15) + "..." : "********")}
                                   </code>
                                   <Button
                                     variant="ghost"

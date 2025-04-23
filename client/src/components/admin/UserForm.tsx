@@ -69,6 +69,7 @@ export function UserForm({ open, onOpenChange, user }: UserFormProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/plaintext-passwords"] });
       toast({
         title: "Success",
         description: "User created successfully",
@@ -103,6 +104,7 @@ export function UserForm({ open, onOpenChange, user }: UserFormProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/plaintext-passwords"] });
       toast({
         title: "Success",
         description: "User updated successfully",

