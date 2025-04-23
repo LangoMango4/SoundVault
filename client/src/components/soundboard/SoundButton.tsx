@@ -65,10 +65,6 @@ export function SoundButton({ sound }: SoundButtonProps) {
     }
   }, [isEditing]);
 
-  // Check if the site is deployed (not localhost)
-  const isDeployed = !window.location.hostname.includes('localhost') && 
-                     !window.location.hostname.includes('127.0.0.1');
-
   const handleClick = () => {
     // Don't play sound if we're editing the name
     if (isEditing) return;
@@ -87,10 +83,8 @@ export function SoundButton({ sound }: SoundButtonProps) {
         new CustomEvent(SOUND_PLAY_EVENT, { detail: sound.id })
       );
       
-      // Only play the sound if not deployed
-      if (!isDeployed) {
-        howl.play();
-      }
+      // Play this sound
+      howl.play();
       setIsPlaying(true);
     }
   };
@@ -142,12 +136,6 @@ export function SoundButton({ sound }: SoundButtonProps) {
     >
       <Music className="h-6 w-6 text-primary mb-2" />
       
-      {isDeployed && (
-        <div className="absolute top-1 right-1">
-          <span className="text-xs text-gray-400 italic">Sound disabled</span>
-        </div>
-      )}
-      
       {isEditing ? (
         <div 
           className="flex items-center space-x-1"
@@ -176,7 +164,7 @@ export function SoundButton({ sound }: SoundButtonProps) {
       ) : (
         <div className="flex items-center font-medium text-sm">
           <span>{sound.name}</span>
-          {user && user.role === "admin" && (
+          {user && (
             <Edit 
               className="h-3.5 w-3.5 ml-1 text-gray-400 cursor-pointer hover:text-gray-600"
               onClick={startEditing}
