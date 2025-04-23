@@ -34,7 +34,7 @@ export const sounds = pgTable("sounds", {
   name: text("name").notNull(),
   filename: text("filename").notNull(),
   duration: text("duration").notNull(),
-  categoryId: integer("category_id").notNull(),
+  categoryId: integer("category_id").default(1), // Default to category 1 if not specified
   accessLevel: text("access_level").notNull().default("all"),
   // possible values: "all", "limited", "admin"
 });

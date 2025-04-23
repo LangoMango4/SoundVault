@@ -63,6 +63,31 @@ export function CookieClicker() {
   // Cookie production per second
   const cookiesPerSecond = autoClickers + (grandmas * 5) + (factories * 50);
   
+  // Load game data from the server
+  useEffect(() => {
+    const loadGameData = async () => {
+      try {
+        const response = await fetch('/api/games/cookie-clicker');
+        if (response.ok) {
+          const data = await response.json();
+          setCookies(data.cookies || 0);
+          setClickPower(data.clickPower || 1);
+          setAutoClickers(data.autoClickers || 0);
+          setGrandmas(data.grandmas || 0);
+          setFactories(data.factories || 0);
+          setBackground(data.background || "none");
+          console.log('Loaded game data:', data);
+        } else {
+          console.warn('Failed to load game data, starting with default values');
+        }
+      } catch (error) {
+        console.error('Error loading game data:', error);
+      }
+    };
+    
+    loadGameData();
+  }, []);
+  
   // Admin Verification - Check if the current user is admin
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -114,6 +139,44 @@ export function CookieClicker() {
     
     return () => clearInterval(timer);
   }, [autoClickers, grandmas, factories, cookiesPerSecond]);
+  
+  // Save game data to the server
+  useEffect(() => {
+    // Don't save on initial load, only when values change
+    if (cookies === 0 && clickPower === 1 && autoClickers === 0 && grandmas === 0 && factories === 0) {
+      return;
+    }
+    
+    // Save game data after a small delay to avoid too many requests
+    const saveTimeout = setTimeout(async () => {
+      try {
+        const response = await fetch('/api/games/cookie-clicker/save', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            cookies,
+            clickPower,
+            autoClickers,
+            grandmas,
+            factories,
+            background
+          }),
+        });
+        
+        if (!response.ok) {
+          console.error('Failed to save game data:', await response.text());
+        } else {
+          console.log('Saved game data successfully');
+        }
+      } catch (error) {
+        console.error('Error saving game data:', error);
+      }
+    }, 2000); // Save every 2 seconds when data changes
+    
+    return () => clearTimeout(saveTimeout);
+  }, [cookies, clickPower, autoClickers, grandmas, factories, background]);
   
   // Handle cookie click
   const handleCookieClick = () => {

@@ -309,7 +309,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: req.body.name,
         filename: req.file.filename,
         duration: req.body.duration || "0.0",
-        categoryId: parseInt(req.body.categoryId),
+        categoryId: req.body.categoryId ? parseInt(req.body.categoryId) : 1, // Default to category 1 if not provided
         accessLevel: req.body.accessLevel || "all"
       };
       
