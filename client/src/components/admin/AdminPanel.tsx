@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, PlayCircle, Loader2 } from "lucide-react";
+import { Plus, Edit, Trash2, PlayCircle, Loader2, Eye, EyeOff } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { User, Sound, Category } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -46,6 +46,7 @@ export function AdminPanel({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ type: "user" | "sound", id: number } | null>(null);
   const [showConfig, setShowConfig] = useState(false);
+  const [passwordVisibility, setPasswordVisibility] = useState<Record<number, boolean>>({});
 
   // Users query
   const { 
@@ -361,7 +362,7 @@ export function AdminPanel({
                         <tr>
                           <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
                           <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Password (Hash)</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Password (Click eye to view)</th>
                           <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                         </tr>
                       </thead>
@@ -378,9 +379,28 @@ export function AdminPanel({
                               <td className="px-4 py-2">{user.username}</td>
                               <td className="px-4 py-2">{user.fullName}</td>
                               <td className="px-4 py-2">
-                                <code className="text-xs font-mono break-all bg-neutral-100 p-1 rounded">
-                                  {user.password}
-                                </code>
+                                <div className="flex items-center">
+                                  <code className="text-xs font-mono break-all bg-neutral-100 p-1 rounded mr-2">
+                                    {passwordVisibility[user.id] ? user.password : user.password.slice(0, 15) + "..."}
+                                  </code>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => {
+                                      setPasswordVisibility(prev => ({
+                                        ...prev,
+                                        [user.id]: !prev[user.id]
+                                      }));
+                                    }}
+                                  >
+                                    {passwordVisibility[user.id] ? (
+                                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                                    ) : (
+                                      <Eye className="h-4 w-4 text-muted-foreground" />
+                                    )}
+                                  </Button>
+                                </div>
                               </td>
                               <td className="px-4 py-2">
                                 <Badge variant={user.role === "admin" ? "success" : "secondary"}>
