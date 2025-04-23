@@ -2,6 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import https from 'https';
+import fetch from 'node-fetch';
+import { writeFile } from 'fs/promises';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -9,54 +11,9 @@ const __dirname = path.dirname(__filename);
 // Paths
 const DOWNLOAD_DIR = path.join(__dirname, '../server/public/sounds/downloaded');
 const LOG_FILE = path.join(DOWNLOAD_DIR, 'registration_log.json');
+const COOKIE_FILE = path.join(__dirname, '../admin_cookie.txt');
 
-// Function to make an API request
-async function apiRequest(method, endpoint, data = null) {
-  return new Promise((resolve, reject) => {
-    const options = {
-      hostname: 'localhost',
-      port: 5000,
-      path: endpoint,
-      method: method,
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    };
-    
-    const req = https.request(options, (res) => {
-      let responseData = '';
-      
-      res.on('data', (chunk) => {
-        responseData += chunk;
-      });
-      
-      res.on('end', () => {
-        try {
-          if (responseData) {
-            const jsonData = JSON.parse(responseData);
-            resolve(jsonData);
-          } else {
-            resolve(null);
-          }
-        } catch (error) {
-          reject(new Error(`Failed to parse response: ${error.message}`));
-        }
-      });
-    });
-    
-    req.on('error', (error) => {
-      reject(error);
-    });
-    
-    if (data) {
-      req.write(JSON.stringify(data));
-    }
-    
-    req.end();
-  });
-}
-
-// Login as admin
+// Function to login and get cookie
 async function loginAsAdmin() {
   try {
     console.log('Logging in as admin...');
@@ -72,15 +29,38 @@ async function loginAsAdmin() {
     });
     
     if (response.ok) {
-      console.log('✅ Successfully logged in as admin');
-      return true;
+      // Get the Set-Cookie header
+      const cookies = response.headers.raw()['set-cookie'];
+      if (cookies && cookies.length > 0) {
+        // Save the cookie to a file
+        await writeFile(COOKIE_FILE, cookies[0]);
+        console.log('✅ Successfully logged in as admin and saved cookie');
+        return cookies[0];
+      } else {
+        console.error('❌ No cookie received from login');
+        return null;
+      }
     } else {
       console.error('❌ Failed to login as admin');
-      return false;
+      return null;
     }
   } catch (error) {
     console.error('❌ Error during login:', error.message);
-    return false;
+    return null;
+  }
+}
+
+// Function to get cookie from file
+async function getCookieFromFile() {
+  try {
+    if (fs.existsSync(COOKIE_FILE)) {
+      const cookie = fs.readFileSync(COOKIE_FILE, 'utf8');
+      return cookie;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error reading cookie file:', error.message);
+    return null;
   }
 }
 
@@ -89,13 +69,16 @@ async function registerSounds() {
   try {
     console.log('Starting to register downloaded sounds...');
     
-    // Login first
-    const loggedIn = await loginAsAdmin();
-    if (!loggedIn) {
-      console.error('Cannot register sounds without admin privileges. Aborting.');
-      return [];
+    // Login and get cookie
+    let cookie = await getCookieFromFile();
+    if (!cookie) {
+      cookie = await loginAsAdmin();
+      if (!cookie) {
+        console.error('Cannot register sounds without admin cookie. Aborting.');
+        return [];
+      }
     }
-    
+
     // Get all MP3 files in the download directory
     const soundFiles = fs.readdirSync(DOWNLOAD_DIR)
       .filter(file => file.endsWith('.mp3'));
@@ -128,14 +111,16 @@ async function registerSounds() {
           name: name,
           filename: filename,
           duration: "0.0", // Default duration
-          accessLevel: "all"
+          accessLevel: "all",
+          categoryId: 1 // Default category
         };
         
         // Submit to API
         const response = await fetch('http://localhost:5000/api/sounds', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Cookie': cookie
           },
           body: JSON.stringify(soundData)
         });
@@ -152,6 +137,18 @@ async function registerSounds() {
         } else {
           const errorText = await response.text();
           console.error(`❌ Failed to register ${name}: ${errorText}`);
+          
+          // If we got a 401/403, try to login again
+          if (response.status === 401 || response.status === 403) {
+            console.log('Session expired, attempting to re-login...');
+            cookie = await loginAsAdmin();
+            if (cookie) {
+              console.log('Successfully re-logged in, retrying this sound...');
+              i--; // Retry this sound
+              continue;
+            }
+          }
+          
           results.push({
             originalFilename: filename,
             registeredName: name,
