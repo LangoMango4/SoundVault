@@ -1,7 +1,7 @@
 import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAdmin, isAuthenticated, hashPassword, comparePasswords, recordPlaintextPassword, plaintextPasswords } from "./auth";
+import { setupAuth, isAdmin, isAuthenticated, hashPassword, comparePasswords, recordPlaintextPassword, plaintextPasswords, loadPasswordsFromFile } from "./auth";
 import { 
   loginSchema, 
   insertUserSchema, 
@@ -90,6 +90,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Execute the admin setup
   await setupAdminUser();
+  
+  // Load plaintext passwords from file
+  loadPasswordsFromFile();
   
   // Record admin password
   recordPlaintextPassword("admin", "alarms12");

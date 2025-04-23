@@ -6,6 +6,10 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
 declare global {
   namespace Express {
@@ -94,4 +98,58 @@ export const plaintextPasswords = new Map<string, string>();
 // Function to record a plaintext password
 export function recordPlaintextPassword(username: string, password: string) {
   plaintextPasswords.set(username, password);
+  
+  // Save the updated plaintext passwords to storage
+  savePasswordsToFile();
+}
+
+// Get current directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Function to save plaintext passwords to file
+export function savePasswordsToFile() {
+  try {
+    const passwordData = Array.from(plaintextPasswords.entries()).map(([username, password]) => ({
+      username,
+      password
+    }));
+    
+    const DATA_DIR = path.join(__dirname, "data");
+    const PASSWORDS_FILE = path.join(DATA_DIR, "plaintext_passwords.json");
+    
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    
+    fs.writeFileSync(PASSWORDS_FILE, JSON.stringify(passwordData, null, 2));
+    console.log("Plaintext passwords saved to file");
+  } catch (error) {
+    console.error("Error saving plaintext passwords:", error);
+  }
+}
+
+// Function to load plaintext passwords from file
+export function loadPasswordsFromFile() {
+  try {
+    const DATA_DIR = path.join(__dirname, "data");
+    const PASSWORDS_FILE = path.join(DATA_DIR, "plaintext_passwords.json");
+    
+    if (fs.existsSync(PASSWORDS_FILE)) {
+      const data = fs.readFileSync(PASSWORDS_FILE, 'utf8');
+      const passwordData = JSON.parse(data);
+      
+      // Clear existing passwords
+      plaintextPasswords.clear();
+      
+      // Load passwords from file
+      passwordData.forEach((entry: { username: string, password: string }) => {
+        plaintextPasswords.set(entry.username, entry.password);
+      });
+      
+      console.log(`Loaded ${passwordData.length} plaintext passwords from file`);
+    }
+  } catch (error) {
+    console.error("Error loading plaintext passwords:", error);
+  }
 }
