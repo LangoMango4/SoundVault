@@ -1170,6 +1170,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Edit sound name endpoint - accessible to any authenticated user
+  app.put('/api/sounds/:id/rename', isAuthenticated, async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid sound ID" });
+      }
+      
+      const { name } = req.body;
+      if (!name || typeof name !== 'string' || name.trim() === '') {
+        return res.status(400).json({ message: "Sound name is required" });
+      }
+      
+      const sound = await storage.updateSound(id, { name: name.trim() });
+      if (!sound) {
+        return res.status(404).json({ message: "Sound not found" });
+      }
+      
+      res.json(sound);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
