@@ -15,6 +15,8 @@ function Router() {
   return (
     <Switch>
       <ProtectedRoute path="/" component={HomePage} />
+      <ProtectedRoute path="/games" component={() => <HomePage initialTab="games" />} />
+      <ProtectedRoute path="/chat" component={() => <HomePage initialTab="chat" />} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>

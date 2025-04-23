@@ -8,13 +8,17 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Gamepad2 } from "lucide-react";
 
-export function ContentTabs() {
+type ContentTabsProps = {
+  initialTab?: string;
+};
+
+export function ContentTabs({ initialTab = "soundboard" }: ContentTabsProps) {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
 
   return (
-    <Tabs defaultValue="soundboard" className="w-full">
+    <Tabs defaultValue={initialTab} className="w-full">
       <TabsList className={`mb-4 grid ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'} w-full max-w-md mx-auto`}>
         <TabsTrigger value="soundboard">Soundboard</TabsTrigger>
         <TabsTrigger value="games">

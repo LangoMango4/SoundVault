@@ -7,7 +7,11 @@ import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 
-export default function HomePage() {
+type HomePageProps = {
+  initialTab?: string;
+};
+
+export default function HomePage({ initialTab }: HomePageProps = {}) {
   const { user } = useAuth();
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const [isScreenLocked, setIsScreenLocked] = useState(false);
@@ -51,7 +55,7 @@ export default function HomePage() {
       />
       
       <main className="flex-grow container mx-auto px-4 py-6">
-        <ContentTabs />
+        <ContentTabs initialTab={initialTab} />
       </main>
       
       <AdminPanel 
