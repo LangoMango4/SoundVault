@@ -289,33 +289,38 @@ export function BroadcastMessageForm({ open, onOpenChange }: BroadcastMessageFor
               <div className="border rounded p-4 mt-2 bg-gray-50">
                 <h3 className="text-sm font-medium mb-2">Preview:</h3>
                 {form.watch("useWindowsStyle") ? (
-                  <div className="bg-[#f0f0f0] border border-gray-300 shadow-lg w-96 rounded-md overflow-hidden">
+                  <div className="bg-white shadow-lg w-80 overflow-hidden rounded-sm">
                     {/* Title bar */}
-                    <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-1 flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">⮟</span>
-                        <span className="text-sm">{form.watch("title") || "System Administrator"}</span>
+                    <div className="bg-green-600 text-white px-3 py-1.5 flex justify-between items-center">
+                      <div className="flex items-center">
+                        <span className="text-sm font-medium">{form.watch("title") || "System Administrator"}</span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <button className="hover:bg-gray-500 px-2 text-lg leading-none">?</button>
-                        <button className="hover:bg-red-500 px-2 text-lg leading-none">×</button>
+                      <div className="flex items-center gap-2">
+                        <button className="text-white hover:text-gray-200 text-xl leading-none">?</button>
+                        <button className="text-white hover:text-gray-200 text-xl leading-none">×</button>
                       </div>
                     </div>
                     
                     {/* Content */}
-                    <div className="p-4 flex items-start gap-4">
-                      <div className="flex-shrink-0">
-                        <div className="bg-yellow-400 w-10 h-10 rounded-full flex items-center justify-center text-black font-bold text-2xl">
-                          !
+                    <div className="p-4">
+                      <div className="flex items-start gap-3 mb-4">
+                        <div className="flex-shrink-0">
+                          <svg className="text-yellow-400 h-8 w-8" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-2h2v2h-2zm0-10v6h2V7h-2z"/>
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm whitespace-pre-line">{form.watch("message") || "Message content will appear here"}</p>
                         </div>
                       </div>
-                      <div className="flex-1">
-                        <p className="mb-4 whitespace-pre-line">{form.watch("message") || "Message content will appear here"}</p>
-                        <div className="flex justify-end">
-                          <button className="border border-gray-300 bg-gray-100 hover:bg-gray-200 px-6 py-1 text-sm">
-                            OK
-                          </button>
-                        </div>
+                      
+                      <div className="flex justify-end space-x-2">
+                        <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 text-sm rounded-sm">
+                          Delete
+                        </button>
+                        <button className="bg-gray-100 hover:bg-gray-200 px-4 py-1 text-sm rounded-sm">
+                          OK
+                        </button>
                       </div>
                     </div>
                   </div>
