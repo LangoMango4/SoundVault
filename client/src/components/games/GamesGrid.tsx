@@ -68,6 +68,20 @@ export function GamesGrid() {
       category: "google",
       description: "Clear the board without detonating any mines in this classic puzzle game."
     },
+    {
+      id: "google-gnome",
+      name: "Google Gnome",
+      url: "https://experiments.withgoogle.com/collection/digitalwellbeing/experiment/google-gnome",
+      category: "google",
+      description: "Experience Google's April Fools Day outdoor smart speaker for your yard."
+    },
+    {
+      id: "google-quick-draw",
+      name: "Quick, Draw!",
+      url: "https://quickdraw.withgoogle.com/",
+      category: "google",
+      description: "Google's AI will try to guess what you're drawing in this fun drawing game."
+    },
     
     // Local games (no URL issues - will always work, even with school filters)
     {

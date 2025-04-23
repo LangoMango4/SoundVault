@@ -13,7 +13,6 @@ type ContentTabsProps = {
 };
 
 export function ContentTabs({ initialTab = "soundboard" }: ContentTabsProps) {
-  const [selectedCategory, setSelectedCategory] = useState("all");
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
 
@@ -30,11 +29,7 @@ export function ContentTabs({ initialTab = "soundboard" }: ContentTabsProps) {
       </TabsList>
       
       <TabsContent value="soundboard" className="mt-0">
-        <CategoryTabs 
-          selectedCategory={selectedCategory}
-          onSelectCategory={setSelectedCategory}
-        />
-        <SoundGrid categorySlug={selectedCategory} />
+        <SoundGrid categorySlug="all" />
       </TabsContent>
       
       <TabsContent value="games" className="mt-0">
