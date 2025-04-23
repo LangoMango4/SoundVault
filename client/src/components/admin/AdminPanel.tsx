@@ -363,7 +363,6 @@ export function AdminPanel({
       <SoundForm 
         open={isSoundFormOpen} 
         onOpenChange={setIsSoundFormOpen}
-        categories={categories || []}
       />
       
       {/* Delete Confirmation Dialog */}

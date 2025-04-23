@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { insertSoundSchema, Category } from "@shared/schema";
+import { insertSoundSchema } from "@shared/schema";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -43,10 +43,9 @@ type FormValues = z.infer<typeof formSchema>;
 interface SoundFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  categories: Category[];
 }
 
-export function SoundForm({ open, onOpenChange, categories }: SoundFormProps) {
+export function SoundForm({ open, onOpenChange }: SoundFormProps) {
   const { toast } = useToast();
   const [audioPreview, setAudioPreview] = useState<string | null>(null);
   
@@ -175,36 +174,7 @@ export function SoundForm({ open, onOpenChange, categories }: SoundFormProps) {
               )}
             />
             
-            <FormField
-              control={form.control}
-              name="categoryId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <Select 
-                    value={field.value} 
-                    onValueChange={field.onChange}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem 
-                          key={category.id} 
-                          value={category.id.toString()}
-                        >
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
             
             <FormField
               control={form.control}
