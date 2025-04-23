@@ -399,6 +399,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Endpoint to delete a sound directly (no auth required, for scripts)
+  app.delete('/api/sounds/delete-direct/:id', async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid sound ID" });
+      }
+      
+      const sound = await storage.getSound(id);
+      if (!sound) {
+        return res.status(404).json({ message: "Sound not found" });
+      }
+      
+      // Delete the file if it exists
+      try {
+        const filePath = path.join(__dirname, 'public', 'sounds', sound.filename);
+        if (fs.existsSync(filePath)) {
+          await unlink(filePath);
+        }
+      } catch (fileError) {
+        console.error(`Error deleting sound file for ID ${id}:`, fileError);
+        // Continue with database deletion even if file deletion fails
+      }
+      
+      const success = await storage.deleteSound(id);
+      if (!success) {
+        return res.status(500).json({ message: "Failed to delete sound from database" });
+      }
+      
+      res.status(200).json({ success: true, message: "Sound deleted successfully" });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   // Endpoint to update a sound's category (no auth required, for scripts)
   app.put('/api/sounds/update-category/:id', async (req, res, next) => {
     try {
