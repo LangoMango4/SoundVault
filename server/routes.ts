@@ -365,6 +365,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Serve sound files
   app.use('/api/sounds/files', isAuthenticated, express.static(path.join(__dirname, 'public', 'sounds')));
   
+  // Endpoint to get list of downloaded sounds
+  app.get('/api/sounds/downloaded', isAdmin, async (req, res, next) => {
+    try {
+      const downloadDir = path.join(__dirname, 'public', 'sounds', 'downloaded');
+      
+      // Ensure directory exists
+      if (!fs.existsSync(downloadDir)) {
+        fs.mkdirSync(downloadDir, { recursive: true });
+        return res.json({ sounds: [] });
+      }
+      
+      // Get all MP3 files in download directory
+      const files = fs.readdirSync(downloadDir).filter(file => file.endsWith('.mp3'));
+      
+      // Get all registered sounds to check which downloads are already registered
+      const registeredSounds = await storage.getSounds();
+      
+      // Format results
+      const sounds = files.map(filename => {
+        // Clean up name from filename (remove timestamp, etc.)
+        const filenameWithoutTimestamp = filename.replace(/_\d+\.mp3$/, '');
+        const name = filenameWithoutTimestamp
+          .split('_')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+        
+        // Check if sound is already registered
+        const isRegistered = registeredSounds.some(sound => sound.filename === filename);
+        const registeredSound = registeredSounds.find(sound => sound.filename === filename);
+        
+        return {
+          filename,
+          name,
+          registered: isRegistered,
+          id: registeredSound?.id
+        };
+      });
+      
+      res.json({ sounds });
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Import downloaded sound endpoint
+  app.post('/api/sounds/import', isAdmin, async (req, res, next) => {
+    try {
+      const { filename, name, duration, categoryId, accessLevel } = req.body;
+      
+      if (!filename || !name) {
+        return res.status(400).json({ message: "Filename and name are required" });
+      }
+      
+      // Validate that the file exists in downloaded directory
+      const downloadedPath = path.join(__dirname, 'public', 'sounds', 'downloaded', filename);
+      if (!fs.existsSync(downloadedPath)) {
+        return res.status(404).json({ message: "Sound file not found in downloaded directory" });
+      }
+      
+      // Copy file to main sounds directory
+      const destPath = path.join(__dirname, 'public', 'sounds', filename);
+      fs.copyFileSync(downloadedPath, destPath);
+      
+      // Create sound in database
+      const soundData = {
+        name,
+        filename,
+        duration: duration || "0.0",
+        categoryId: categoryId ? parseInt(categoryId) : 1, // Default to category 1 if not provided
+        accessLevel: accessLevel || "all"
+      };
+      
+      const validation = insertSoundSchema.safeParse(soundData);
+      if (!validation.success) {
+        // Delete copied file if validation fails
+        if (fs.existsSync(destPath)) {
+          await unlink(destPath);
+        }
+        return res.status(400).json({ message: "Invalid sound data", errors: validation.error.errors });
+      }
+      
+      const sound = await storage.createSound(soundData);
+      res.status(201).json(sound);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
   // Game-related routes
 
   // Cookie Clicker data endpoints

@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { UserForm } from "./UserForm";
 import { SoundForm } from "./SoundForm";
 import { ScreenLockControl } from "./ScreenLockControl";
+import { BatchSoundImport } from "./BatchSoundImport";
 import { Howl } from "howler";
 import {
   AlertDialog,
@@ -331,13 +332,21 @@ export function AdminPanel({
                 </Button>
               </div>
               
-              {soundsLoading ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                </div>
-              ) : (
-                <DataTable columns={soundColumns} data={sounds || []} />
-              )}
+              {/* Batch Sound Import Component */}
+              <div className="mb-6">
+                <BatchSoundImport />
+              </div>
+              
+              <div className="mt-8">
+                <h3 className="text-lg font-medium mb-4">Sound Library</h3>
+                {soundsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <DataTable columns={soundColumns} data={sounds || []} />
+                )}
+              </div>
             </TabsContent>
             
             <TabsContent value="config" className="flex-1 overflow-auto p-1">
