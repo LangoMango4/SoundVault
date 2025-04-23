@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -25,90 +25,48 @@ export function GamesGrid() {
   
   // Game library
   const games: Game[] = [
-    // Online games
+    // Google games (high reliability)
     {
-      id: "subway-surfers",
-      name: "Subway Surfers",
-      url: "https://subway-surfers.io/",
-      category: "arcade",
-      description: "Run as fast as you can through the subway while avoiding obstacles!"
-    },
-    {
-      id: "fnaf",
-      name: "Five Nights at Freddy's",
-      url: "https://wellgames.com/html5/fnaf/",
-      category: "horror",
-      description: "Can you survive five nights as a security guard at Freddy Fazbear's Pizza?"
-    },
-    {
-      id: "slope",
-      name: "Slope",
-      url: "https://slope-game.io/",
-      category: "arcade",
-      description: "Roll down a randomized slope in this fast-paced arcade game."
-    },
-    {
-      id: "minecraft",
-      name: "Minecraft Classic",
-      url: "https://classic.minecraft.net/",
-      category: "sandbox",
-      description: "Play the classic version of the popular sandbox game."
-    },
-    {
-      id: "krunker",
-      name: "Krunker",
-      url: "https://krunker.io/",
-      category: "multiplayer",
-      description: "Fast-paced multiplayer action game with customizable characters."
-    },
-    {
-      id: "basketball",
-      name: "Basketball Stars",
-      url: "https://www.silvergames.com/en/basketball-stars",
-      category: "sports",
-      description: "Play basketball in this multiplayer sports game."
-    },
-    {
-      id: "tetris",
-      name: "Tetris",
-      url: "https://www.silvergames.com/en/tetrix",
-      category: "puzzle",
-      description: "The classic puzzle game - arrange falling blocks to create and clear lines."
-    },
-    {
-      id: "2048",
-      name: "2048",
-      url: "https://play2048.co/",
-      category: "puzzle",
-      description: "Combine the numbers to reach the 2048 tile in this addictive puzzle game."
-    },
-    {
-      id: "flappy-bird",
-      name: "Flappy Bird",
-      url: "https://flappybird.ee/",
-      category: "arcade",
-      description: "Navigate a bird through pipes without touching them in this addictive arcade game."
-    },
-    {
-      id: "snake",
-      name: "Snake",
+      id: "google-snake",
+      name: "Google Snake",
       url: "https://www.google.com/fbx?fbx=snake_arcade",
-      category: "arcade",
+      category: "google",
       description: "Control a snake, eat food and grow longer without hitting walls or yourself."
     },
     {
-      id: "geometry-dash",
-      name: "Geometry Dash",
-      url: "https://geometrydash.io/",
-      category: "arcade",
-      description: "Jump and fly your way through danger in this rhythm-based platformer."
+      id: "google-pacman",
+      name: "Google Pac-Man",
+      url: "https://www.google.com/logos/2010/pacman10-i.html",
+      category: "google",
+      description: "Play the classic Pac-Man game from Google's interactive doodle."
     },
     {
-      id: "wordle",
-      name: "Wordle",
-      url: "https://wordlegame.org/",
-      category: "puzzle",
-      description: "Guess the five-letter word in six tries with color-coded hints."
+      id: "google-dino",
+      name: "Chrome Dino Game",
+      url: "https://chromedino.com/",
+      category: "google", 
+      description: "Jump over cacti and dodge pterodactyls in Chrome's offline dinosaur game."
+    },
+    {
+      id: "google-solitaire",
+      name: "Google Solitaire",
+      url: "https://www.google.com/logos/2016/solitaire/solitaire16.html",
+      category: "google",
+      description: "Play classic Solitaire card game right in your browser."
+    },
+    {
+      id: "google-tic-tac-toe",
+      name: "Google Tic-Tac-Toe",
+      url: "https://www.google.com/search?q=tic+tac+toe",
+      category: "google",
+      description: "Play Tic-Tac-Toe against the computer with multiple difficulty levels."
+    },
+    {
+      id: "google-minesweeper",
+      name: "Google Minesweeper",
+      url: "https://www.google.com/fbx?fbx=minesweeper",
+      category: "google",
+      description: "Clear the board without detonating any mines in this classic puzzle game."
     },
     
     // Local games (no URL issues - will always work, even with school filters)
@@ -159,6 +117,18 @@ export function GamesGrid() {
   const toggleFullscreen = () => {
     setFullscreen(!fullscreen);
   };
+  
+  // Change document title when playing Google games
+  useEffect(() => {
+    if (activeGame && !activeGame.isLocal) {
+      const originalTitle = document.title;
+      document.title = "Maths - student@notmymathhomework.com - Outlook";
+      
+      return () => {
+        document.title = originalTitle;
+      };
+    }
+  }, [activeGame]);
 
   return (
     <div className="w-full">

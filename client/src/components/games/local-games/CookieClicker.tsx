@@ -340,7 +340,7 @@ export function CookieClicker() {
   
   // Reset the game to its initial state
   const handleResetGame = async () => {
-    if (window.confirm("Are you sure you want to reset your game? This will set your cookies to 0 and remove all upgrades.")) {
+    if (window.confirm("An embedded page at notmymathhomework.com says\n\nAre you sure you want to reset your game? This will set your cookies to 0 and remove all upgrades.")) {
       try {
         const response = await fetch('/api/games/cookie-clicker/reset', {
           method: 'POST',
