@@ -341,6 +341,15 @@ export class MemStorage implements IStorage {
   async getCategories(): Promise<Category[]> {
     return Array.from(this.categories.values());
   }
+  
+  async deleteCategory(id: number): Promise<boolean> {
+    const exists = this.categories.has(id);
+    if (exists) {
+      this.categories.delete(id);
+      this.saveDataToFiles(); // Save after modification
+    }
+    return exists;
+  }
 
   // Sound CRUD operations
   async getSound(id: number): Promise<Sound | undefined> {
@@ -729,6 +738,11 @@ export class DatabaseStorage implements IStorage {
 
   async getCategories(): Promise<Category[]> {
     return db.select().from(categories);
+  }
+  
+  async deleteCategory(id: number): Promise<boolean> {
+    const result = await db.delete(categories).where(eq(categories.id, id));
+    return !!result;
   }
 
   // Sound operations

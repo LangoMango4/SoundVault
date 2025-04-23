@@ -365,6 +365,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Serve sound files
   app.use('/api/sounds/files', isAuthenticated, express.static(path.join(__dirname, 'public', 'sounds')));
   
+  // Endpoint to delete all categories (no auth required, for scripts)
+  app.delete('/api/categories/delete-all', async (req, res, next) => {
+    try {
+      // Get all categories
+      const categories = await storage.getCategories();
+      
+      // Update all sounds to have no category
+      const sounds = await storage.getSounds();
+      for (const sound of sounds) {
+        await storage.updateSound(sound.id, { categoryId: null });
+      }
+      
+      console.log(`Updated ${sounds.length} sounds to have no category`);
+      
+      // Delete all categories
+      let deletedCount = 0;
+      for (const category of categories) {
+        await storage.deleteCategory(category.id);
+        deletedCount++;
+      }
+      
+      res.status(200).json({
+        success: true,
+        message: `All ${deletedCount} categories deleted successfully`,
+        soundsUpdated: sounds.length
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   // Special endpoint for direct category creation from scripts (no auth required)
   app.post('/api/categories/create-direct', async (req, res, next) => {
     try {
