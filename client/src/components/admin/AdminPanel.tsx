@@ -59,10 +59,19 @@ export function AdminPanel({
 
   // Plaintext passwords query
   const {
-    data: plaintextPasswords
+    data: plaintextPasswords,
+    isLoading: passwordsLoading,
+    isError: passwordsError,
+    error: passwordsErrorData
   } = useQuery<{username: string, password: string}[]>({
     queryKey: ["/api/users/plaintext-passwords"],
-    enabled: open && activeTab === "users",
+    enabled: open,
+    onSuccess: (data) => {
+      console.log("Plaintext passwords loaded:", data);
+    },
+    onError: (error) => {
+      console.error("Error loading plaintext passwords:", error);
+    }
   });
 
   // Sounds and categories queries
