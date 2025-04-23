@@ -365,6 +365,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Serve sound files
   app.use('/api/sounds/files', isAuthenticated, express.static(path.join(__dirname, 'public', 'sounds')));
   
+  // Special endpoint for direct category creation from scripts (no auth required)
+  app.post('/api/categories/create-direct', async (req, res, next) => {
+    try {
+      const { name, slug, description, color } = req.body;
+      
+      if (!name || !slug) {
+        return res.status(400).json({ message: "Name and slug are required" });
+      }
+      
+      // Create category data
+      const categoryData = {
+        name,
+        slug,
+        description: description || '',
+        color: color || '#CCCCCC'
+      };
+      
+      const category = await storage.createCategory(categoryData);
+      res.status(201).json(category);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Endpoint to get all sounds directly (no auth required, for scripts)
+  app.get('/api/sounds/all-direct', async (req, res, next) => {
+    try {
+      const sounds = await storage.getSounds();
+      res.json(sounds);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Endpoint to update a sound's category (no auth required, for scripts)
+  app.put('/api/sounds/update-category/:id', async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid sound ID" });
+      }
+      
+      const { categoryId } = req.body;
+      if (categoryId === undefined) {
+        return res.status(400).json({ message: "categoryId is required" });
+      }
+      
+      const sound = await storage.updateSound(id, { categoryId });
+      if (!sound) {
+        return res.status(404).json({ message: "Sound not found" });
+      }
+      
+      res.json(sound);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Special endpoint for direct sound registration from scripts (no auth required)
+  app.post('/api/sounds/direct-import', async (req, res, next) => {
+    try {
+      const { name, filename, category } = req.body;
+      
+      if (!name || !filename) {
+        return res.status(400).json({ message: "Filename and name are required" });
+      }
+      
+      // Create sound data
+      const soundData = {
+        name,
+        filename,
+        duration: "0.0", // Default duration
+        categoryId: 1, // Default category ID
+        accessLevel: "all"
+      };
+      
+      const sound = await storage.createSound(soundData);
+      res.status(201).json(sound);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   // Endpoint to get list of downloaded sounds
   app.get('/api/sounds/downloaded', isAdmin, async (req, res, next) => {
     try {

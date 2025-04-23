@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { db } from '../server/db.js';
+import { db } from '../server/db.js'; // Import from db.js location that matches the actual file
 import { sounds } from '../shared/schema.js';
 
 const __filename = fileURLToPath(import.meta.url);
