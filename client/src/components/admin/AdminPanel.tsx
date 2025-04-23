@@ -381,7 +381,7 @@ export function AdminPanel({
                               <td className="px-4 py-2">
                                 <div className="flex items-center">
                                   <code className="text-xs font-mono break-all bg-neutral-100 p-1 rounded mr-2">
-                                    {passwordVisibility[user.id] ? user.password : user.password.slice(0, 15) + "..."}
+                                    {passwordVisibility[user.id] ? user.password : (user.password ? user.password.slice(0, 15) + "..." : "********")}
                                   </code>
                                   <Button
                                     variant="ghost"
