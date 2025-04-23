@@ -3,7 +3,9 @@ import {
   categories, Category, InsertCategory,
   sounds, Sound, InsertSound,
   broadcastMessages, BroadcastMessage, InsertBroadcastMessage,
-  chatMessages, ChatMessage, InsertChatMessage
+  chatMessages, ChatMessage, InsertChatMessage,
+  cookieClickerData, CookieClickerData, InsertCookieClickerData,
+  gameData, GameData, InsertGameData
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";

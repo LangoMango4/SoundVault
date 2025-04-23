@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, jsonb, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, jsonb, timestamp, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -99,3 +99,42 @@ export const loginSchema = z.object({
 });
 
 export type LoginData = z.infer<typeof loginSchema>;
+
+// Game data models
+export const cookieClickerData = pgTable("cookie_clicker_data", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(), // User ID who owns this game data
+  cookies: real("cookies").notNull().default(0),
+  clickPower: integer("click_power").notNull().default(1),
+  autoClickers: integer("auto_clickers").notNull().default(0),
+  grandmas: integer("grandmas").notNull().default(0),
+  factories: integer("factories").notNull().default(0),
+  background: text("background").notNull().default("none"),
+  lastUpdated: timestamp("last_updated").defaultNow().notNull(),
+});
+
+export const insertCookieClickerDataSchema = createInsertSchema(cookieClickerData).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type CookieClickerData = typeof cookieClickerData.$inferSelect;
+export type InsertCookieClickerData = z.infer<typeof insertCookieClickerDataSchema>;
+
+// General game data model to track various game states and achievements
+export const gameData = pgTable("game_data", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  gameType: text("game_type").notNull(), // e.g., "cookie_clicker", "snake", etc.
+  data: jsonb("data").notNull(), // Flexible JSON data for different game types
+  highScore: integer("high_score"), // Optional high score field
+  lastPlayed: timestamp("last_played").defaultNow().notNull(),
+});
+
+export const insertGameDataSchema = createInsertSchema(gameData).omit({
+  id: true,
+  lastPlayed: true,
+});
+
+export type GameData = typeof gameData.$inferSelect;
+export type InsertGameData = z.infer<typeof insertGameDataSchema>;
