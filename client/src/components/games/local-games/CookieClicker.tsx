@@ -187,9 +187,36 @@ export function CookieClicker() {
   }, [cookies, clickPower, autoClickers, grandmas, factories, background]);
   
   // Handle cookie click
-  const handleCookieClick = () => {
+  const handleCookieClick = async () => {
     // Using functional update to ensure we always use the latest state
-    setCookies(prevCookies => prevCookies + clickPower);
+    const newCookieValue = cookies + clickPower;
+    setCookies(newCookieValue);
+    
+    // Save immediately on click to prevent loss of clicks
+    try {
+      const response = await fetch('/api/games/cookie-clicker/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cookies: newCookieValue,
+          clickPower,
+          autoClickers,
+          grandmas,
+          factories,
+          background
+        }),
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to save game data during click:', await response.text());
+      } else {
+        console.log('Click saved successfully, new total:', newCookieValue);
+      }
+    } catch (error) {
+      console.error('Error saving click data:', error);
+    }
   };
   
   // Check cheat code
