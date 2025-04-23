@@ -15,7 +15,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
 
@@ -983,8 +983,12 @@ export class DatabaseStorage implements IStorage {
     const [data] = await db
       .select()
       .from(gameData)
-      .where(eq(gameData.userId, userId))
-      .where(eq(gameData.gameType, gameType));
+      .where(
+        and(
+          eq(gameData.userId, userId),
+          eq(gameData.gameType, gameType)
+        )
+      );
     return data;
   }
 

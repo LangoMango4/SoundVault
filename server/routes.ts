@@ -58,26 +58,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(200).json({ status: "ok", message: "Data saved successfully" });
   });
   
-  // Update admin password to "alarms12" and ensure role is "admin" if the user exists
-  const updateAdminPassword = async () => {
+  // Create or update admin user with password "alarms12"
+  const setupAdminUser = async () => {
     try {
       const admin = await storage.getUserByUsername("admin");
+      const hashedPassword = await hashPassword("alarms12");
+      
       if (admin) {
-        const hashedPassword = await hashPassword("alarms12");
+        // Update existing admin user
         await storage.updateUser(admin.id, { 
           password: hashedPassword,
           role: "admin",
           accessLevel: "full" 
         });
         console.log("Admin password updated to 'alarms12' and role set to 'admin'");
+      } else {
+        // Create admin user if it doesn't exist
+        await storage.createUser({
+          username: "admin",
+          password: hashedPassword,
+          fullName: "Administrator",
+          role: "admin",
+          accessLevel: "full"
+        });
+        console.log("Admin user created with password 'alarms12'");
       }
     } catch (error) {
-      console.error("Failed to update admin password:", error);
+      console.error("Failed to setup admin user:", error);
     }
   };
   
-  // Execute the admin password update
-  await updateAdminPassword();
+  // Execute the admin setup
+  await setupAdminUser();
   
   // Configure multer for audio file uploads
   const audioStorage = multer.diskStorage({
@@ -354,6 +366,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/sounds/files', isAuthenticated, express.static(path.join(__dirname, 'public', 'sounds')));
   
   // Game-related routes
+
+  // Cookie Clicker data endpoints
+  app.get('/api/games/cookie-clicker', isAuthenticated, async (req, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      // Get cookie clicker data for current user
+      const cookieData = await storage.getCookieClickerData(req.user.id);
+      
+      if (!cookieData) {
+        // If no data exists, create initial data
+        const initialData = await storage.createCookieClickerData({
+          userId: req.user.id,
+          cookies: 0,
+          clickPower: 1,
+          autoClickers: 0,
+          grandmas: 0,
+          factories: 0,
+          background: "none"
+        });
+        return res.json(initialData);
+      }
+      
+      return res.json(cookieData);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.post('/api/games/cookie-clicker/save', isAuthenticated, async (req, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const { cookies, clickPower, autoClickers, grandmas, factories, background } = req.body;
+      
+      // Update cookie clicker data
+      const updatedData = await storage.updateCookieClickerData(req.user.id, {
+        cookies: cookies !== undefined ? cookies : undefined,
+        clickPower: clickPower !== undefined ? clickPower : undefined,
+        autoClickers: autoClickers !== undefined ? autoClickers : undefined,
+        grandmas: grandmas !== undefined ? grandmas : undefined,
+        factories: factories !== undefined ? factories : undefined,
+        background: background !== undefined ? background : undefined
+      });
+      
+      if (!updatedData) {
+        // If no existing data, create new data
+        const newData = await storage.createCookieClickerData({
+          userId: req.user.id,
+          cookies: cookies || 0,
+          clickPower: clickPower || 1,
+          autoClickers: autoClickers || 0,
+          grandmas: grandmas || 0,
+          factories: factories || 0,
+          background: background || "none"
+        });
+        return res.status(201).json(newData);
+      }
+      
+      return res.json(updatedData);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Admin can gift cookies or resources to users
   app.post('/api/games/cookie-clicker/gift', isAdmin, async (req, res, next) => {
     try {
       const { username, giftType, amount } = req.body;
@@ -370,14 +452,182 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: `User '${username}' not found` });
       }
       
-      // In a real implementation, we would store the game state in the database
-      // For this prototype, we'll just return success since the actual gift
-      // will be applied when the user loads/refreshes their game
+      // Process the gift based on gift type
+      let updatedData;
+      
+      if (giftType === 'cookies') {
+        // Grant cookies to the user
+        updatedData = await storage.grantCookies(targetUser.id, parseFloat(amount));
+      } else {
+        // For other resource types, get current data first
+        const userData = await storage.getCookieClickerData(targetUser.id);
+        
+        if (!userData) {
+          // Create new data if none exists
+          const initialData = {
+            userId: targetUser.id,
+            cookies: 0,
+            clickPower: 1,
+            autoClickers: 0,
+            grandmas: 0,
+            factories: 0,
+            background: "none"
+          };
+          
+          // Add the gifted resource
+          if (giftType === 'clickPower') {
+            initialData.clickPower = parseInt(amount);
+          } else if (giftType === 'autoClickers') {
+            initialData.autoClickers = parseInt(amount);
+          } else if (giftType === 'grandmas') {
+            initialData.grandmas = parseInt(amount);
+          } else if (giftType === 'factories') {
+            initialData.factories = parseInt(amount);
+          }
+          
+          updatedData = await storage.createCookieClickerData(initialData);
+        } else {
+          // Update existing data with the gifted resource
+          const updateObj: any = {};
+          
+          if (giftType === 'clickPower') {
+            updateObj.clickPower = userData.clickPower + parseInt(amount);
+          } else if (giftType === 'autoClickers') {
+            updateObj.autoClickers = userData.autoClickers + parseInt(amount);
+          } else if (giftType === 'grandmas') {
+            updateObj.grandmas = userData.grandmas + parseInt(amount);
+          } else if (giftType === 'factories') {
+            updateObj.factories = userData.factories + parseInt(amount);
+          }
+          
+          updatedData = await storage.updateCookieClickerData(targetUser.id, updateObj);
+        }
+      }
       
       res.status(200).json({ 
         message: `Successfully gifted ${amount} ${giftType} to user ${username}`,
-        success: true
+        success: true,
+        data: updatedData
       });
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // High scores and leaderboard endpoint
+  app.get('/api/games/cookie-clicker/leaderboard', async (req, res, next) => {
+    try {
+      // Get all cookie clicker data
+      const allData = await storage.getAllCookieClickerData();
+      
+      // Sort by cookies in descending order
+      const leaderboard = allData
+        .sort((a, b) => b.cookies - a.cookies)
+        .slice(0, 10); // Get top 10
+      
+      // Enhance with user information
+      const enhancedLeaderboard = await Promise.all(
+        leaderboard.map(async (entry) => {
+          const user = await storage.getUser(entry.userId);
+          if (user) {
+            const { password, ...safeUser } = user;
+            return {
+              ...entry,
+              user: safeUser
+            };
+          }
+          return entry;
+        })
+      );
+      
+      res.json(enhancedLeaderboard);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // General game data endpoints
+  app.get('/api/games/:gameType/data', isAuthenticated, async (req, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const gameType = req.params.gameType;
+      
+      // Get game data for current user and game type
+      const gameData = await storage.getGameData(req.user.id, gameType);
+      
+      if (!gameData) {
+        return res.status(404).json({ message: "No game data found" });
+      }
+      
+      return res.json(gameData);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.post('/api/games/:gameType/save', isAuthenticated, async (req, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const gameType = req.params.gameType;
+      const { data, highScore } = req.body;
+      
+      // Check if data already exists
+      const existingData = await storage.getGameData(req.user.id, gameType);
+      
+      if (existingData) {
+        // Update existing data
+        const updatedData = await storage.updateGameData(existingData.id, {
+          data,
+          highScore: highScore !== undefined ? highScore : existingData.highScore
+        });
+        
+        return res.json(updatedData);
+      } else {
+        // Create new game data
+        const newData = await storage.saveGameData({
+          userId: req.user.id,
+          gameType,
+          data,
+          highScore: highScore || null
+        });
+        
+        return res.status(201).json(newData);
+      }
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.get('/api/games/:gameType/highscores', async (req, res, next) => {
+    try {
+      const gameType = req.params.gameType;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+      
+      // Get high scores for the game type
+      const highScores = await storage.getHighScores(gameType, limit);
+      
+      // Enhance with user information
+      const enhancedHighScores = await Promise.all(
+        highScores.map(async (entry) => {
+          const user = await storage.getUser(entry.userId);
+          if (user) {
+            const { password, ...safeUser } = user;
+            return {
+              ...entry,
+              user: safeUser
+            };
+          }
+          return entry;
+        })
+      );
+      
+      res.json(enhancedHighScores);
     } catch (error) {
       next(error);
     }
