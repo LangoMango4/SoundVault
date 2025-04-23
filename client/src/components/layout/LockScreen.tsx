@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Lock, ShieldCheck, Key } from "lucide-react";
+import { Lock, ShieldCheck, Key, Wifi, WifiOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import lockScreenImage from "@/assets/website_locked.png";
+import lockScreenImage from "@/assets/website_locked_wifi.svg";
 import { useAuth } from "@/hooks/use-auth";
 
 // PIN for unlocking the screen (only admins can unlock)
@@ -140,7 +140,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
                   onClick={() => setShowUnlockOptions(true)}
                   className="mt-4"
                 >
-                  <Lock className="mr-2 h-4 w-4" />
+                  <Wifi className="mr-2 h-4 w-4" />
                   Admin Unlock Options
                 </Button>
               ) : (
@@ -163,7 +163,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
                   }}
                   className="mt-2"
                 >
-                  <Lock className="mr-2 h-4 w-4" />
+                  <WifiOff className="mr-2 h-4 w-4" />
                   Logout (Change User)
                 </Button>
               )}
@@ -202,7 +202,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
             >
               <TabsList className="grid grid-cols-2 mb-4">
                 <TabsTrigger value="pin">
-                  <Lock className="mr-2 h-4 w-4" />
+                  <Wifi className="mr-2 h-4 w-4" />
                   Unlock for Everyone
                 </TabsTrigger>
                 <TabsTrigger value="password">

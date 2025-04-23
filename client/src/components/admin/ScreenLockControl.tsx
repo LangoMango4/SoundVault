@@ -9,12 +9,12 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Lock, Unlock, ShieldCheck, Users } from "lucide-react";
+import { Lock, Unlock, ShieldCheck, Users, Wifi, WifiOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import lockScreenImage from "@/assets/website_locked.png";
+import lockScreenImage from "@/assets/website_locked_wifi.svg";
 
 // PIN for unlocking the screen (only admins can lock/unlock)
 const UNLOCK_PIN = "2012";
@@ -140,8 +140,8 @@ export function ScreenLockControl({ isLocked, onLockChange }: ScreenLockControlP
           className="flex items-center gap-2 w-full justify-between"
         >
           <div className="flex items-center gap-2">
-            {isLocked ? <Lock className="h-4 w-4" /> : 
-             (adminOnlyUnlock ? <ShieldCheck className="h-4 w-4" /> : <Unlock className="h-4 w-4" />)}
+            {isLocked ? <WifiOff className="h-4 w-4" /> : 
+             (adminOnlyUnlock ? <ShieldCheck className="h-4 w-4" /> : <Wifi className="h-4 w-4" />)}
             <span>Screen Lock</span>
           </div>
           <span className={`text-xs ${adminOnlyUnlock ? "bg-blue-100 text-blue-800" : "bg-neutral-100"} px-2 py-1 rounded`}>
@@ -205,14 +205,14 @@ export function ScreenLockControl({ isLocked, onLockChange }: ScreenLockControlP
                 onClick={handleAdminOnlyUnlock}
                 className="w-full sm:w-auto"
               >
-                <ShieldCheck className="mr-2 h-4 w-4" />
+                <Wifi className="mr-2 h-4 w-4" />
                 Unlock for Admin Only
               </Button>
               <Button 
                 onClick={handleUnlockAttempt}
                 className="w-full sm:w-auto"
               >
-                <Users className="mr-2 h-4 w-4" />
+                <Wifi className="mr-2 h-4 w-4" />
                 Unlock for Everyone
               </Button>
             </DialogFooter>
@@ -249,6 +249,7 @@ export function ScreenLockControl({ isLocked, onLockChange }: ScreenLockControlP
                 Cancel
               </Button>
               <Button variant="destructive" onClick={handleLockScreen}>
+                <WifiOff className="mr-2 h-4 w-4" />
                 Lock Screen
               </Button>
             </DialogFooter>
