@@ -34,7 +34,6 @@ import { useState } from "react";
 // Extended schema with validation
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  categoryId: z.string().min(1, "Category is required"),
   accessLevel: z.string().min(1, "Access level is required"),
   file: z.instanceof(FileList).refine(files => files.length > 0, "Sound file is required"),
 });
@@ -56,7 +55,6 @@ export function SoundForm({ open, onOpenChange, categories }: SoundFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      categoryId: "",
       accessLevel: "all",
       file: undefined,
     },
@@ -67,7 +65,6 @@ export function SoundForm({ open, onOpenChange, categories }: SoundFormProps) {
     mutationFn: async (values: FormValues) => {
       const formData = new FormData();
       formData.append("name", values.name);
-      formData.append("categoryId", values.categoryId);
       formData.append("accessLevel", values.accessLevel);
       
       // Get duration of audio file
