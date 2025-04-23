@@ -180,13 +180,14 @@ export function CookieClicker() {
   
   // Handle cookie click
   const handleCookieClick = () => {
-    setCookies(cookies + clickPower);
+    // Using functional update to ensure we always use the latest state
+    setCookies(prevCookies => prevCookies + clickPower);
   };
   
   // Check cheat code
   const checkCheatCode = () => {
     if (cheatCode === "cookiemonster") {
-      setCookies(cookies + 1000);
+      setCookies(prevCookies => prevCookies + 1000);
       setCheatCode("");
       return true;
     }
@@ -196,8 +197,8 @@ export function CookieClicker() {
   // Purchase auto clicker
   const buyAutoClicker = () => {
     if (cookies >= autoClickerCost) {
-      setCookies(cookies - autoClickerCost);
-      setAutoClickers(autoClickers + 1);
+      setCookies(prevCookies => prevCookies - autoClickerCost);
+      setAutoClickers(prevAutoClickers => prevAutoClickers + 1);
     } else {
       setErrorMessage(`You are not authorized to purchase 'Auto Clicker'\nNeed ${autoClickerCost} cookies. You have ${Math.floor(cookies)}.`);
       setShowError(true);
@@ -207,8 +208,8 @@ export function CookieClicker() {
   // Upgrade click power
   const upgradeClickPower = () => {
     if (cookies >= clickPowerCost) {
-      setCookies(cookies - clickPowerCost);
-      setClickPower(clickPower + 1);
+      setCookies(prevCookies => prevCookies - clickPowerCost);
+      setClickPower(prevClickPower => prevClickPower + 1);
     } else {
       setErrorMessage(`You are not authorized to purchase 'Click Power'\nNeed ${clickPowerCost} cookies. You have ${Math.floor(cookies)}.`);
       setShowError(true);
@@ -218,8 +219,8 @@ export function CookieClicker() {
   // Purchase grandma
   const buyGrandma = () => {
     if (cookies >= grandmaCost) {
-      setCookies(cookies - grandmaCost);
-      setGrandmas(grandmas + 1);
+      setCookies(prevCookies => prevCookies - grandmaCost);
+      setGrandmas(prevGrandmas => prevGrandmas + 1);
     } else {
       setErrorMessage(`You are not authorized to hire 'Cookie Grandma'\nNeed ${grandmaCost} cookies. You have ${Math.floor(cookies)}.`);
       setShowError(true);
@@ -229,8 +230,8 @@ export function CookieClicker() {
   // Purchase factory
   const buyFactory = () => {
     if (cookies >= factoryCost) {
-      setCookies(cookies - factoryCost);
-      setFactories(factories + 1);
+      setCookies(prevCookies => prevCookies - factoryCost);
+      setFactories(prevFactories => prevFactories + 1);
     } else {
       setErrorMessage(`You are not authorized to build 'Cookie Factory'\nNeed ${factoryCost} cookies. You have ${Math.floor(cookies)}.`);
       setShowError(true);
@@ -246,19 +247,19 @@ export function CookieClicker() {
       // Apply to self
       switch (giftType) {
         case "cookies":
-          setCookies(cookies + giftAmount);
+          setCookies(prevCookies => prevCookies + giftAmount);
           break;
         case "clickers":
-          setAutoClickers(autoClickers + Math.floor(giftAmount));
+          setAutoClickers(prevAutoClickers => prevAutoClickers + Math.floor(giftAmount));
           break;
         case "power":
-          setClickPower(clickPower + Math.floor(giftAmount));
+          setClickPower(prevClickPower => prevClickPower + Math.floor(giftAmount));
           break;
         case "grandmas":
-          setGrandmas(grandmas + Math.floor(giftAmount));
+          setGrandmas(prevGrandmas => prevGrandmas + Math.floor(giftAmount));
           break;
         case "factories":
-          setFactories(factories + Math.floor(giftAmount));
+          setFactories(prevFactories => prevFactories + Math.floor(giftAmount));
           break;
         default:
           break;
