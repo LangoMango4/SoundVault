@@ -69,6 +69,13 @@ export function GamesGrid() {
       description: "Clear the board without detonating any mines in this classic puzzle game."
     },
     {
+      id: "google-gnome",
+      name: "Google Gnome",
+      url: "https://www.google.com/search?q=google+gnome",
+      category: "google",
+      description: "Play with Google's smart garden gnome - an interactive Easter egg on Google Search."
+    },
+    {
       id: "google-pong",
       name: "Google Pong",
       url: "https://www.google.com/logos/2010/pong10-i.html",

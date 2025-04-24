@@ -57,17 +57,19 @@ function ConnectivityChecker() {
   useEffect(() => {
     // Alternates between heartbeat and keepalive to maintain connection
     const sendKeepAliveSignals = async () => {
+      // Alternate between endpoints for redundancy
+      const endpoint = Math.random() > 0.5 ? '/api/heartbeat' : '/api/keepalive';
+      
       try {
-        // Alternate between endpoints for redundancy
-        const endpoint = Math.random() > 0.5 ? '/api/heartbeat' : '/api/keepalive';
         await fetch(endpoint);
         console.log(`Connection maintenance ping sent to ${endpoint}`, new Date().toLocaleTimeString());
       } catch (error) {
         console.error("Failed to send keep-alive signal:", error);
         
         // If first attempt fails, try the other endpoint as backup
+        const primaryEndpoint = endpoint;
         try {
-          const backupEndpoint = endpoint === '/api/heartbeat' ? '/api/keepalive' : '/api/heartbeat';
+          const backupEndpoint = primaryEndpoint === '/api/heartbeat' ? '/api/keepalive' : '/api/heartbeat';
           await fetch(backupEndpoint);
           console.log(`Backup ping sent to ${backupEndpoint}`, new Date().toLocaleTimeString());
         } catch (backupError) {
