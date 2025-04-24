@@ -7,6 +7,7 @@ import { Gamepad2, ArrowLeftRight, Home } from "lucide-react";
 import { DinoDash } from "./local-games/DinoDash";
 import { MemoryMatch } from "./local-games/MemoryMatch";
 import { CookieClicker } from "./local-games/CookieClicker";
+import { GoogleGnome } from "./local-games/GoogleGnome";
 
 interface Game {
   id: string;
@@ -71,9 +72,10 @@ export function GamesGrid() {
     {
       id: "google-gnome",
       name: "Google Gnome",
-      url: "https://elgoog.im/gnome/",
-      category: "google",
-      description: "Play with Google's smart garden gnome - an interactive Easter egg, now available through a mirror site."
+      component: GoogleGnome,
+      category: "local",
+      description: "Interact with Google's garden assistant that brings nature's wisdom to your backyard.",
+      isLocal: true
     },
     {
       id: "google-pong",
@@ -224,8 +226,9 @@ export function GamesGrid() {
               className="w-full h-full border-0"
               allowFullScreen
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
+              sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation allow-popups-to-escape-sandbox"
               referrerPolicy="no-referrer"
+              loading="eager"
             ></iframe>
           )}
         </div>
