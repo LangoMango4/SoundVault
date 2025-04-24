@@ -7,7 +7,8 @@ import { Gamepad2, ArrowLeftRight, Home } from "lucide-react";
 import { DinoDash } from "./local-games/DinoDash";
 import { MemoryMatch } from "./local-games/MemoryMatch";
 import { CookieClicker } from "./local-games/CookieClicker";
-import { GoogleGnome } from "./local-games/GoogleGnome";
+import { QuizGame } from "./local-games/QuizGame";
+import { WordScramble } from "./local-games/WordScramble";
 
 interface Game {
   id: string;
@@ -24,80 +25,13 @@ export function GamesGrid() {
   const [fullscreen, setFullscreen] = useState<boolean>(false);
   const [activeGame, setActiveGame] = useState<Game | null>(null);
   
-  // Game library
+  // Game library - all local games that will work even with strict school filters
   const games: Game[] = [
-    // Google games (high reliability)
-    {
-      id: "google-snake",
-      name: "Google Snake",
-      url: "https://www.google.com/fbx?fbx=snake_arcade",
-      category: "google",
-      description: "Control a snake, eat food and grow longer without hitting walls or yourself."
-    },
-    {
-      id: "google-pacman",
-      name: "Google Pac-Man",
-      url: "https://www.google.com/logos/2010/pacman10-i.html",
-      category: "google",
-      description: "Play the classic Pac-Man game from Google's interactive doodle."
-    },
-    {
-      id: "google-dino",
-      name: "Chrome Dino Game",
-      url: "https://chromedino.com/",
-      category: "google", 
-      description: "Jump over cacti and dodge pterodactyls in Chrome's offline dinosaur game."
-    },
-    {
-      id: "google-solitaire",
-      name: "Google Solitaire",
-      url: "https://www.google.com/logos/2016/solitaire/solitaire16.html",
-      category: "google",
-      description: "Play classic Solitaire card game right in your browser."
-    },
-    {
-      id: "google-tic-tac-toe",
-      name: "Google Tic-Tac-Toe",
-      url: "https://www.google.com/search?q=tic+tac+toe",
-      category: "google",
-      description: "Play Tic-Tac-Toe against the computer with multiple difficulty levels."
-    },
-    {
-      id: "google-minesweeper",
-      name: "Google Minesweeper",
-      url: "https://www.google.com/fbx?fbx=minesweeper",
-      category: "google",
-      description: "Clear the board without detonating any mines in this classic puzzle game."
-    },
-    {
-      id: "google-gnome",
-      name: "Google Gnome",
-      component: GoogleGnome,
-      category: "local",
-      description: "Interact with Google's garden assistant that brings nature's wisdom to your backyard.",
-      isLocal: true
-    },
-    {
-      id: "google-pong",
-      name: "Google Pong",
-      url: "https://www.google.com/logos/2010/pong10-i.html",
-      category: "google",
-      description: "Play the classic Pong game from Google's interactive doodle."
-    },
-    {
-      id: "google-piano",
-      name: "Google Piano",
-      url: "https://www.google.com/logos/2019/bach/r3/bach19.html",
-      category: "google",
-      description: "Play a virtual piano and learn about Bach with Google's interactive doodle."
-    },
-    
-    // Local games (no URL issues - will always work, even with school filters)
     {
       id: "dino-dash",
       name: "Dino Dash",
       component: DinoDash,
-      category: "local",
+      category: "arcade",
       description: "Jump over obstacles in this endless runner game (works offline).",
       isLocal: true
     },
@@ -105,7 +39,7 @@ export function GamesGrid() {
       id: "memory-match",
       name: "Memory Match",
       component: MemoryMatch,
-      category: "local",
+      category: "puzzle",
       description: "Match pairs of cards in this memory game (works offline).",
       isLocal: true
     },
@@ -113,15 +47,15 @@ export function GamesGrid() {
       id: "cookie-clicker",
       name: "Cookie Clicker",
       component: CookieClicker,
-      category: "local",
+      category: "idle",
       description: "Click cookies, buy upgrades, and become a cookie millionaire!",
       isLocal: true
     }
   ];
 
-  // Extract unique categories and add the "local" category first
+  // Extract unique categories for our filter tabs
   const uniqueCategories = Array.from(new Set(games.map(game => game.category)));
-  const categories = ["all", "local", ...uniqueCategories.filter(cat => cat !== "local")];
+  const categories = ["all", ...uniqueCategories];
   
   // Filter games by selected category
   const filteredGames = selectedCategory === "all" 
@@ -170,12 +104,10 @@ export function GamesGrid() {
                 </TabsTrigger>
               ))}
             </TabsList>
-            {selectedCategory === "local" && (
-              <div className="p-3 mb-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm">
-                <p className="font-medium">Local games</p>
-                <p>These games work directly from our server and will function even when school internet filters block external game sites.</p>
-              </div>
-            )}
+            <div className="p-3 mb-3 bg-green-50 border border-green-200 rounded-md text-sm">
+              <p className="font-medium">School-safe Games</p>
+              <p>All games work directly from our server and will function even when school internet filters block external game sites.</p>
+            </div>
           </Tabs>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -184,15 +116,15 @@ export function GamesGrid() {
                 <CardContent className="p-4 flex flex-col h-full">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-lg font-bold">{game.name}</h3>
-                    <span className={`text-xs px-2 py-1 ${game.isLocal ? 'bg-green-100 text-green-800' : 'bg-primary/10'} rounded-full capitalize`}>
-                      {game.isLocal ? 'Local' : game.category}
+                    <span className="text-xs px-2 py-1 bg-primary/10 rounded-full capitalize">
+                      {game.category}
                     </span>
                   </div>
                   <p className="text-sm mb-4 flex-grow">{game.description}</p>
                   <Button 
                     onClick={() => playGame(game)} 
                     className="w-full"
-                    variant={game.isLocal ? "secondary" : "default"}
+                    variant="default"
                   >
                     <Gamepad2 className="w-4 h-4 mr-2" /> Play Game
                   </Button>
