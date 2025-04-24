@@ -71,9 +71,9 @@ export function GamesGrid() {
     {
       id: "google-gnome",
       name: "Google Gnome",
-      url: "https://www.google.com/search?q=google+gnome",
+      url: "https://elgoog.im/gnome/",
       category: "google",
-      description: "Play with Google's smart garden gnome - an interactive Easter egg on Google Search."
+      description: "Play with Google's smart garden gnome - an interactive Easter egg, now available through a mirror site."
     },
     {
       id: "google-pong",
@@ -224,7 +224,8 @@ export function GamesGrid() {
               className="w-full h-full border-0"
               allowFullScreen
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+              sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
+              referrerPolicy="no-referrer"
             ></iframe>
           )}
         </div>
