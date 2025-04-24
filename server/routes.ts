@@ -33,6 +33,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(200).json({ status: "online" });
   });
   
+  // Dedicated keepalive endpoint for preventing Replit from sleeping
+  app.get("/api/keepalive", (req, res) => {
+    res.status(200).json({ 
+      status: "active",
+      message: "Application is being kept alive",
+      timestamp: new Date().toISOString()
+    });
+  });
+  
   // Heartbeat endpoint for 24/7 uptime monitoring
   const startTime = new Date();
   app.get("/api/heartbeat", (req, res) => {

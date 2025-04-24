@@ -25,7 +25,7 @@ function Router() {
   );
 }
 
-// Component to check internet connectivity
+// Component to check internet connectivity and keep the connection alive
 function ConnectivityChecker() {
   const { isOnline, checkRealConnectivity } = useOnlineStatus();
   const [forceOffline, setForceOffline] = useState(false);
@@ -47,11 +47,48 @@ function ConnectivityChecker() {
     checkConnection();
     
     // Then set up an interval for periodic checks (every 5 seconds)
-    const interval = setInterval(checkConnection, 5000);
+    const connectionInterval = setInterval(checkConnection, 5000);
     
     // Cleanup on unmount
-    return () => clearInterval(interval);
+    return () => clearInterval(connectionInterval);
   }, [checkRealConnectivity]);
+  
+  // This effect sends heartbeats and keepalive signals to keep the server connection alive
+  useEffect(() => {
+    // Alternates between heartbeat and keepalive to maintain connection
+    const sendKeepAliveSignals = async () => {
+      try {
+        // Alternate between endpoints for redundancy
+        const endpoint = Math.random() > 0.5 ? '/api/heartbeat' : '/api/keepalive';
+        await fetch(endpoint);
+        console.log(`Connection maintenance ping sent to ${endpoint}`, new Date().toLocaleTimeString());
+      } catch (error) {
+        console.error("Failed to send keep-alive signal:", error);
+        
+        // If first attempt fails, try the other endpoint as backup
+        try {
+          const backupEndpoint = endpoint === '/api/heartbeat' ? '/api/keepalive' : '/api/heartbeat';
+          await fetch(backupEndpoint);
+          console.log(`Backup ping sent to ${backupEndpoint}`, new Date().toLocaleTimeString());
+        } catch (backupError) {
+          console.error("Both keep-alive attempts failed:", backupError);
+        }
+      }
+    };
+    
+    // Initial keepalive
+    sendKeepAliveSignals();
+    
+    // Set up multiple intervals at different times for redundancy
+    const primaryInterval = setInterval(sendKeepAliveSignals, 2 * 60 * 1000); // Every 2 minutes
+    const secondaryInterval = setInterval(sendKeepAliveSignals, 5 * 60 * 1000); // Every 5 minutes
+    
+    // Cleanup on unmount
+    return () => {
+      clearInterval(primaryInterval);
+      clearInterval(secondaryInterval);
+    };
+  }, []);
   
   // Return the offline screen if we're not online
   if (!isOnline || forceOffline) {

@@ -182,14 +182,19 @@ async function startServer() {
       const now = new Date();
       const timeSinceLastHeartbeat = now.getTime() - lastHeartbeat.getTime();
       
-      // If no heartbeat received in 15 minutes, restart server
-      if (timeSinceLastHeartbeat > 15 * 60 * 1000) {
-        log("No heartbeat detected for 15 minutes, restarting server...", "system");
+      // Ping self to keep the application alive
+      fetch(`http://localhost:${mainPort}/api/heartbeat`)
+        .then(() => log("Self-ping to keep server alive", "system"))
+        .catch(err => log(`Self-ping failed: ${err.message}`, "error"));
+      
+      // If no heartbeat received in 10 minutes, restart server (reduced from 15)
+      if (timeSinceLastHeartbeat > 10 * 60 * 1000) {
+        log("No heartbeat detected for 10 minutes, restarting server...", "system");
         clearInterval(healthCheckInterval);
         clearInterval(autoSaveInterval);
         gracefulShutdown();
       }
-    }, 5 * 60 * 1000); // Check every 5 minutes
+    }, 3 * 60 * 1000); // Check every 3 minutes (reduced from 5)
 
     // Heartbeat logger to track continuous operation
     const uptimeLoggerInterval = setInterval(() => {
