@@ -136,7 +136,7 @@ export function GamesGrid() {
   useEffect(() => {
     if (activeGame && !activeGame.isLocal) {
       const originalTitle = document.title;
-      document.title = "Maths - student@notmymathhomework.com - Outlook";
+      document.title = "Maths - student@outlook.com - Outlook";
       
       return () => {
         document.title = originalTitle;
