@@ -50,6 +50,22 @@ export function GamesGrid() {
       category: "idle",
       description: "Click cookies, buy upgrades, and become a cookie millionaire!",
       isLocal: true
+    },
+    {
+      id: "quiz-game",
+      name: "Math Quiz",
+      component: QuizGame,
+      category: "educational",
+      description: "Test your math knowledge with timed questions and track your score.",
+      isLocal: true
+    },
+    {
+      id: "word-scramble",
+      name: "Word Scramble",
+      component: WordScramble,
+      category: "educational",
+      description: "Unscramble math and school related words against the clock.",
+      isLocal: true
     }
   ];
 
