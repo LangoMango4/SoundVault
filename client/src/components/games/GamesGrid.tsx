@@ -7,7 +7,6 @@ import { Gamepad2, ArrowLeftRight, Home } from "lucide-react";
 import { DinoDash } from "./local-games/DinoDash";
 import { MemoryMatch } from "./local-games/MemoryMatch";
 import { CookieClicker } from "./local-games/CookieClicker";
-import { QuizGame } from "./local-games/QuizGame";
 import { WordScramble } from "./local-games/WordScramble";
 
 interface Game {
@@ -52,19 +51,11 @@ export function GamesGrid() {
       isLocal: true
     },
     {
-      id: "quiz-game",
-      name: "Math Quiz",
-      component: QuizGame,
-      category: "educational",
-      description: "Test your math knowledge with timed questions and track your score.",
-      isLocal: true
-    },
-    {
       id: "word-scramble",
       name: "Word Scramble",
       component: WordScramble,
-      category: "educational",
-      description: "Unscramble math and school related words against the clock.",
+      category: "puzzle",
+      description: "Unscramble school-related words against the clock.",
       isLocal: true
     }
   ];
