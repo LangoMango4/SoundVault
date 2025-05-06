@@ -821,7 +821,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // High scores and leaderboard endpoint
+  // Generic leaderboard endpoint for all game types
+  app.get('/api/leaderboard/:gameType', async (req, res, next) => {
+    try {
+      const gameType = req.params.gameType;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+      
+      // Get leaderboard data with user details
+      const leaderboard = await storage.getLeaderboardWithUserDetails(gameType, limit);
+      
+      res.json(leaderboard);
+    } catch (error) {
+      console.error('Leaderboard error:', error);
+      next(error);
+    }
+  });
+
+  // High scores and leaderboard endpoint (legacy - kept for backward compatibility)
   app.get('/api/games/cookie-clicker/leaderboard', async (req, res, next) => {
     try {
       // Get all cookie clicker data
