@@ -123,13 +123,13 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
             {/* Windows-style error dialog */}
             <div className="bg-white border border-gray-300 shadow-xl w-full max-w-xl overflow-hidden rounded-sm">
               {/* Title bar */}
-              <div className="bg-red-700 text-white px-2 py-1 flex justify-between items-center">
+              <div className="bg-white text-black px-2 py-1 flex justify-between items-center border-t-[3px] border-t-red-600">
                 <div className="flex items-center gap-1">
                   <span className="text-xs font-normal">System Administrator</span>
                 </div>
                 <div className="flex items-center">
-                  <button className="text-white text-xs px-1 hover:bg-red-600">?</button>
-                  <button className="text-white text-xs px-1 hover:bg-red-600">×</button>
+                  <button className="text-black text-xs px-1 hover:bg-gray-100">?</button>
+                  <button className="text-black text-xs px-1 hover:bg-gray-100">×</button>
                 </div>
               </div>
               
@@ -198,14 +198,14 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
         <div className="flex flex-col items-center text-center">
           <div className="bg-white border border-gray-300 shadow-xl w-full max-w-xl overflow-hidden rounded-sm">
             {/* Title bar */}
-            <div className="bg-red-700 text-white px-2 py-1 flex justify-between items-center">
+            <div className="bg-white text-black px-2 py-1 flex justify-between items-center border-t-[3px] border-t-red-600">
               <div className="flex items-center gap-1">
                 <span className="text-xs font-normal">System Administrator - Unlock Options</span>
               </div>
               <div className="flex items-center">
-                <button className="text-white text-xs px-1 hover:bg-red-600">?</button>
+                <button className="text-black text-xs px-1 hover:bg-gray-100">?</button>
                 <button 
-                  className="text-white text-xs px-1 hover:bg-red-600"
+                  className="text-black text-xs px-1 hover:bg-gray-100"
                   onClick={() => setShowUnlockOptions(false)}
                 >×</button>
               </div>

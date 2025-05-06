@@ -291,13 +291,13 @@ export function BroadcastMessageForm({ open, onOpenChange }: BroadcastMessageFor
                 {form.watch("useWindowsStyle") ? (
                   <div className="bg-white shadow-lg w-80 overflow-hidden rounded-sm">
                     {/* Title bar */}
-                    <div className="bg-green-600 text-white px-3 py-1.5 flex justify-between items-center">
+                    <div className="bg-white text-black px-3 py-1.5 flex justify-between items-center border-t-[3px] border-t-red-600">
                       <div className="flex items-center">
                         <span className="text-sm font-medium">{form.watch("title") || "System Administrator"}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <button className="text-white hover:text-gray-200 text-xl leading-none">?</button>
-                        <button className="text-white hover:text-gray-200 text-xl leading-none">×</button>
+                        <button className="text-black hover:bg-gray-100 text-xl leading-none">?</button>
+                        <button className="text-black hover:bg-gray-100 text-xl leading-none">×</button>
                       </div>
                     </div>
                     
