@@ -30,6 +30,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+
+
 interface AdminPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -195,42 +197,7 @@ export function AdminPanel({
     },
   });
 
-  // Update Notification Tester component
-function UpdateNotificationTester() {
-  const { testShowUpdateNotification } = useUpdateNotification();
-  const [showSuccess, setShowSuccess] = useState(false);
-  
-  const handleTest = () => {
-    testShowUpdateNotification();
-    setShowSuccess(true);
-    
-    // Hide success message after 3 seconds
-    setTimeout(() => {
-      setShowSuccess(false);
-    }, 3000);
-  };
-  
-  return (
-    <div className="space-y-4">
-      <Button
-        onClick={handleTest}
-        className="bg-primary hover:bg-primary/90"
-      >
-        <Bell className="mr-2 h-4 w-4" />
-        Test Update Notification
-      </Button>
-      
-      {showSuccess && (
-        <div className="bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300 p-3 rounded-md text-sm flex items-center">
-          <CheckCircle className="h-4 w-4 mr-2" />
-          Update notification triggered successfully!
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Close forms when panel closes
+  // Close forms when panel closes
   useEffect(() => {
     if (!open) {
       setIsUserFormOpen(false);
@@ -689,7 +656,9 @@ function UpdateNotificationTester() {
                     For testing purposes, you can manually trigger the notification here.
                   </p>
                   
-                  <UpdateNotificationTester />
+                  <div className="space-y-4">
+                    <UpdateNotificationTester />
+                  </div>
                 </div>
                 
                 {/* System Information */}
