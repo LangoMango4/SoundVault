@@ -16,7 +16,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import { db } from "./db";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, like, gte, lt } from "drizzle-orm";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
 
@@ -105,6 +105,7 @@ export interface IStorage {
   getTermsAcceptanceLogs(limit?: number): Promise<TermsAcceptanceLog[]>;
   getTermsAcceptanceLogsByUser(userId: number): Promise<TermsAcceptanceLog[]>;
   getLatestTermsAcceptance(userId: number): Promise<TermsAcceptanceLog | undefined>;
+  deleteTermsAcceptanceLog(id: number): Promise<boolean>;
 }
 
 // In-memory storage implementation
@@ -1238,6 +1239,19 @@ export class DatabaseStorage implements IStorage {
       .limit(1);
     
     return latestLog;
+  }
+  
+  async deleteTermsAcceptanceLog(id: number): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(termsAcceptanceLogs)
+        .where(eq(termsAcceptanceLogs.id, id));
+      
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error(`Error deleting terms acceptance log with ID ${id}:`, error);
+      return false;
+    }
   }
 }
 

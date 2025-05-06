@@ -341,6 +341,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Delete a terms acceptance log entry
+  app.delete("/api/terms/logs/:id", isAdmin, async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid log ID" });
+      }
+      
+      const success = await storage.deleteTermsAcceptanceLog(id);
+      if (!success) {
+        return res.status(404).json({ message: "Log not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Search terms acceptance logs
+  app.get("/api/terms/logs/search", isAdmin, async (req, res, next) => {
+    try {
+      const { username, version, method, fromDate, toDate, limit } = req.query;
+      const searchParams = {
+        username: username as string,
+        version: version as string,
+        acceptanceMethod: method as string,
+        fromDate: fromDate ? new Date(fromDate as string) : undefined,
+        toDate: toDate ? new Date(toDate as string) : undefined,
+        limit: limit ? parseInt(limit as string) : 100
+      };
+      
+      const logs = await storage.searchTermsAcceptanceLogs(searchParams);
+      res.json(logs);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
   // Category routes
   app.get("/api/categories", async (req, res, next) => {
     try {
