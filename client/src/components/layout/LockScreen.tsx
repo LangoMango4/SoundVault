@@ -7,6 +7,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import lockScreenImage from "@/assets/website_locked.svg";
 import { useAuth } from "@/hooks/use-auth";
+import warningTriangle from "@/assets/warning-triangle.svg";
 
 // PIN for unlocking the screen (only admins can unlock)
 const ADMIN_PIN = "2012";
@@ -120,52 +121,49 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
         <div className="max-w-xl w-full px-4"> 
           <div className="flex flex-col items-center text-center">
             {/* Windows-style error dialog */}
-            <div className="bg-white border border-gray-300 shadow-md w-full max-w-xl">
+            <div className="bg-white border border-gray-400 shadow-lg w-full max-w-xl overflow-hidden">
               {/* Title bar */}
-              <div className="bg-red-600 text-white p-1.5 flex justify-between items-center">
-                <div>
-                  <span className="text-sm font-medium">System Administrator</span>
+              <div className="bg-red-700 text-white px-2 py-1 flex justify-between items-center">
+                <div className="flex items-center gap-1">
+                  <span className="w-4 h-4 flex items-center justify-center border border-white/60 text-xs">🖥️</span>
+                  <span className="text-xs font-normal">System Administrator</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-lg leading-none">?</span>
-                  <span className="text-lg leading-none">×</span>
+                <div className="flex items-center">
+                  <button className="text-white text-xs px-1 hover:bg-red-600">?</button>
+                  <button className="text-white text-xs px-1 hover:bg-red-600">×</button>
                 </div>
               </div>
               
               {/* Content */}
-              <div className="p-6">
-                <div className="flex items-start gap-4 mb-6">
+              <div className="p-3 pb-2">
+                <div className="flex items-start gap-3">
                   <div className="flex-shrink-0">
-                    <svg className="text-yellow-500 h-14 w-14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" fill="currentColor"/>
-                      <path d="M13 8L13 13" stroke="black" strokeWidth="3" strokeLinecap="round"/>
-                      <path d="M13 16L13 17" stroke="black" strokeWidth="3" strokeLinecap="round"/>
-                    </svg>
+                    <img src={warningTriangle} alt="Warning" className="h-8 w-8" />
                   </div>
                   <div className="flex-1 text-left">
-                    <p className="text-base mb-2">You are not authorized to access this website</p>
-                    <p className="text-base mb-4">This website has been locked by the administrator</p>
+                    <p className="text-sm mb-2">You are not authorized to access this website</p>
+                    <p className="text-sm mb-4">This website has been locked by the administrator</p>
                     
                     {lockReason && (
-                      <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mb-4">
-                        <p className="text-amber-800 font-medium text-sm">Reason for lock:</p>
-                        <p className="text-amber-900">{lockReason}</p>
+                      <div className="bg-amber-50 border border-amber-200 rounded-md p-2 mb-3">
+                        <p className="text-amber-800 font-medium text-xs">Reason for lock:</p>
+                        <p className="text-amber-900 text-sm">{lockReason}</p>
                       </div>
                     )}
                   </div>
                 </div>
                 
-                <div className="flex justify-end gap-2">
+                <div className="flex justify-end mt-6">
                   {isAdmin ? (
                     <Button 
-                      className="bg-blue-100 border border-blue-300 px-4 py-1 text-sm hover:bg-blue-200 rounded-none"
+                      className="min-w-[75px] bg-white border border-gray-400 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
                       onClick={() => setShowUnlockOptions(true)}
                     >
                       Admin Unlock
                     </Button>
                   ) : (
                     <Button 
-                      className="bg-blue-100 border border-blue-300 px-4 py-1 text-sm hover:bg-blue-200 rounded-none"
+                      className="min-w-[75px] bg-white border border-gray-400 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
                       onClick={() => {
                         // Logout the current user
                         apiRequest("POST", "/api/logout")
@@ -199,24 +197,25 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
     <div className="fixed inset-0 bg-slate-200 flex flex-col items-center justify-center z-50">
       <div className="max-w-xl w-full px-4">
         <div className="flex flex-col items-center text-center">
-          <div className="bg-white border border-gray-300 shadow-md w-full max-w-xl">
+          <div className="bg-white border border-gray-400 shadow-lg w-full max-w-xl overflow-hidden">
             {/* Title bar */}
-            <div className="bg-red-600 text-white p-1.5 flex justify-between items-center">
-              <div>
-                <span className="text-sm font-medium">System Administrator - Unlock Options</span>
+            <div className="bg-red-700 text-white px-2 py-1 flex justify-between items-center">
+              <div className="flex items-center gap-1">
+                <span className="w-4 h-4 flex items-center justify-center border border-white/60 text-xs">🖥️</span>
+                <span className="text-xs font-normal">System Administrator - Unlock Options</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg leading-none">?</span>
-                <span 
-                  className="text-lg leading-none cursor-pointer"
+              <div className="flex items-center">
+                <button className="text-white text-xs px-1 hover:bg-red-600">?</button>
+                <button 
+                  className="text-white text-xs px-1 hover:bg-red-600"
                   onClick={() => setShowUnlockOptions(false)}
-                >×</span>
+                >×</button>
               </div>
             </div>
             
             {/* Content */}
-            <div className="p-6">
-              <div className="mb-4">
+            <div className="p-3 pb-2">
+              <div className="mb-2">
                 <Tabs defaultValue="pin" className="w-full">
                   <TabsList className="grid grid-cols-2 mb-4">
                     <TabsTrigger value="pin" className="rounded-none">
@@ -230,25 +229,21 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
                   </TabsList>
                   
                   <TabsContent value="pin" className="space-y-4">
-                    <div className="flex items-start gap-4">
+                    <div className="flex items-start gap-3">
                       <div className="flex-shrink-0">
-                        <svg className="text-yellow-500 h-12 w-12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" fill="currentColor"/>
-                          <path d="M13 8L13 13" stroke="black" strokeWidth="3" strokeLinecap="round"/>
-                          <path d="M13 16L13 17" stroke="black" strokeWidth="3" strokeLinecap="round"/>
-                        </svg>
+                        <img src={warningTriangle} alt="Warning" className="h-8 w-8" />
                       </div>
                       <div className="flex-1 text-left">
-                        <p className="text-base mb-2">Global Unlock - Admin Access Required</p>
-                        <p className="text-sm mb-4 text-gray-700">
+                        <p className="text-sm mb-2">Global Unlock - Admin Access Required</p>
+                        <p className="text-xs mb-3 text-gray-700">
                           Enter the admin PIN to permanently unlock the website for ALL users.
                           This will remove the lock for everyone.
                         </p>
                         
                         {lockReason && (
-                          <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mb-4">
-                            <p className="text-amber-800 font-medium text-sm">Reason for lock:</p>
-                            <p className="text-amber-900">{lockReason}</p>
+                          <div className="bg-amber-50 border border-amber-200 rounded-md p-2 mb-3">
+                            <p className="text-amber-800 font-medium text-xs">Reason for lock:</p>
+                            <p className="text-amber-900 text-sm">{lockReason}</p>
                           </div>
                         )}
                       </div>
@@ -269,13 +264,13 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
                       
                       <div className="flex justify-end gap-2 pt-2">
                         <Button 
-                          className="bg-blue-100 border border-blue-300 px-4 py-1 text-sm hover:bg-blue-200 rounded-none"
+                          className="min-w-[75px] bg-white border border-gray-400 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
                           onClick={() => setShowUnlockOptions(false)}
                         >
                           Cancel
                         </Button>
                         <Button 
-                          className="bg-blue-100 border border-blue-300 px-4 py-1 text-sm hover:bg-blue-200 rounded-none"
+                          className="min-w-[75px] bg-white border border-gray-400 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
                           onClick={handleAdminUnlockAttempt}
                         >
                           Unlock
@@ -285,13 +280,17 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
                   </TabsContent>
                   
                   <TabsContent value="password" className="space-y-4">
-                    <div className="flex items-start gap-4">
+                    <div className="flex items-start gap-3">
                       <div className="flex-shrink-0">
-                        <ShieldCheck className="h-12 w-12 text-blue-500" />
+                        <svg className="text-blue-500 h-10 w-10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" fill="currentColor"/>
+                          <path d="M12 12C14.2091 12 16 10.2091 16 8C16 5.79086 14.2091 4 12 4C9.79086 4 8 5.79086 8 8C8 10.2091 9.79086 12 12 12Z" fill="white"/>
+                          <path d="M18 19C18 19 18 16 12 16C6 16 6 19 6 19" stroke="white" strokeWidth="2"/>
+                        </svg>
                       </div>
                       <div className="flex-1 text-left">
-                        <p className="text-base mb-2">Admin Only Access</p>
-                        <p className="text-sm mb-4 text-gray-700">
+                        <p className="text-sm mb-2">Admin Only Access</p>
+                        <p className="text-xs mb-3 text-gray-700">
                           Enter the admin PIN to unlock the screen for your session only. 
                           The website will remain locked for other users.
                         </p>
@@ -313,7 +312,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
                       
                       <div className="flex justify-end gap-2 pt-2">
                         <Button 
-                          className="bg-blue-100 border border-blue-300 px-4 py-1 text-sm hover:bg-blue-200 rounded-none"
+                          className="min-w-[75px] bg-white border border-gray-400 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
                           onClick={() => {
                             setShowUnlockOptions(false);
                             setError("");
@@ -323,7 +322,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
                           Cancel
                         </Button>
                         <Button 
-                          className="bg-blue-100 border border-blue-300 px-4 py-1 text-sm hover:bg-blue-200 rounded-none"
+                          className="min-w-[75px] bg-white border border-gray-400 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
                           onClick={handleAdminOnlyUnlock}
                         >
                           Unlock

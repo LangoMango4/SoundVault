@@ -7,22 +7,25 @@ interface ErrorMessageProps {
   message: string;
 }
 
+import warningTriangle from '@/assets/warning-triangle.svg';
+
 export function ErrorMessage({ show, onClose, title = "System Administrator", message }: ErrorMessageProps) {
   if (!show) return null;
   
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white shadow-lg w-96 max-w-md overflow-hidden rounded-sm border border-gray-300">
+      <div className="bg-white shadow-lg w-[400px] max-w-md overflow-hidden border border-gray-400">
         {/* Title bar */}
-        <div className="bg-red-600 text-white px-3 py-1.5 flex justify-between items-center">
-          <div className="flex items-center">
-            <span className="text-sm font-medium">{title}</span>
+        <div className="bg-red-700 text-white px-2 py-1 flex justify-between items-center">
+          <div className="flex items-center gap-1">
+            <span className="w-4 h-4 flex items-center justify-center border border-white/60 text-xs">🖥️</span>
+            <span className="text-xs font-normal">{title}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <button className="text-white hover:text-gray-200 text-xl leading-none">?</button>
+          <div className="flex items-center">
+            <button className="text-white text-xs px-1 hover:bg-red-600">?</button>
             <button 
               onClick={onClose}
-              className="text-white hover:text-gray-200 text-xl leading-none"
+              className="text-white text-xs px-1 hover:bg-red-600"
             >
               ×
             </button>
@@ -30,24 +33,20 @@ export function ErrorMessage({ show, onClose, title = "System Administrator", me
         </div>
         
         {/* Content */}
-        <div className="p-4">
-          <div className="flex items-start gap-3 mb-4">
+        <div className="p-4 pb-3">
+          <div className="flex items-start gap-4">
             <div className="flex-shrink-0">
-              <svg className="text-yellow-500 h-10 w-10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" fill="currentColor"/>
-                <path d="M13 8L13 13" stroke="black" strokeWidth="3" strokeLinecap="round"/>
-                <path d="M13 16L13 17" stroke="black" strokeWidth="3" strokeLinecap="round"/>
-              </svg>
+              <img src={warningTriangle} alt="Warning" className="h-8 w-8" />
             </div>
             <div className="flex-1">
-              <p className="text-base whitespace-pre-wrap">{message}</p>
+              <p className="text-sm whitespace-pre-wrap font-normal">{message}</p>
             </div>
           </div>
           
-          <div className="flex justify-end space-x-2">
+          <div className="flex justify-end mt-6 mr-1">
             <button 
               onClick={onClose}
-              className="bg-blue-100 border border-blue-300 px-4 py-1 text-sm hover:bg-blue-200"
+              className="min-w-[75px] bg-white border border-gray-400 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
             >
               OK
             </button>

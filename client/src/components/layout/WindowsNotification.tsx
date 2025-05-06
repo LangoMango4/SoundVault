@@ -1,8 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import warningIcon from '@/assets/warning-icon.png';
-import windowsIcon from '@/assets/windows-notification.png';
+import warningTriangle from '@/assets/warning-triangle.svg';
 
 interface WindowsNotificationProps {
   title: string;
@@ -25,29 +24,28 @@ export function WindowsNotification({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/25">
-      <div className="flex flex-col w-full max-w-md bg-white border border-gray-200 shadow-lg rounded-sm overflow-hidden">
+      <div className="flex flex-col w-full max-w-md bg-white border border-gray-400 shadow-lg overflow-hidden">
         {/* Header bar */}
-        <div className="flex items-center justify-between px-2 py-1 bg-gradient-to-r from-[#009900] to-[#006600] text-white">
-          <div className="flex items-center">
-            <span className="text-sm font-medium">{title}</span>
+        <div className="flex items-center justify-between px-2 py-1 bg-red-700 text-white">
+          <div className="flex items-center gap-1">
+            <span className="w-4 h-4 flex items-center justify-center border border-white/60 text-xs">🖥️</span>
+            <span className="text-xs font-normal">{title}</span>
           </div>
-          <div className="flex items-center space-x-1">
-            <span className="px-2">?</span>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-5 w-5 p-0 text-white hover:bg-white/20"
+          <div className="flex items-center">
+            <button className="text-white text-xs px-1 hover:bg-red-600">?</button>
+            <button 
               onClick={onClose}
+              className="text-white text-xs px-1 hover:bg-red-600"
             >
-              <X className="h-3 w-3" />
-            </Button>
+              ×
+            </button>
           </div>
         </div>
         
         {/* Message content */}
-        <div className="flex px-4 py-3">
+        <div className="flex px-4 py-3 pb-2">
           <div className="mr-4 flex-shrink-0">
-            <img src={warningIcon} alt="Warning" className="h-8 w-8" />
+            <img src={warningTriangle} alt="Warning" className="h-8 w-8" />
           </div>
           <div className="flex-1">
             {sender && <p className="font-medium text-sm mb-1">{sender}</p>}
@@ -56,22 +54,18 @@ export function WindowsNotification({
         </div>
         
         {/* Footer */}
-        <div className="flex justify-end gap-2 p-2 bg-gray-100 border-t border-gray-200">
+        <div className="flex justify-end mt-3 px-3 pb-3">
           {onDelete && (
             <Button 
-              variant="destructive"
-              size="sm"
               onClick={onDelete}
-              className="px-4 py-0 h-7 text-xs"
+              className="min-w-[75px] bg-white border border-gray-400 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 mr-2 rounded-none"
             >
               Delete
             </Button>
           )}
           <Button 
-            variant="outline"
-            size="sm"
             onClick={onClose}
-            className="px-6 py-0 h-7 text-xs bg-gray-100 border-gray-300"
+            className="min-w-[75px] bg-white border border-gray-400 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
           >
             OK
           </Button>
