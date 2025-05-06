@@ -5,7 +5,8 @@ import {
   broadcastMessages, BroadcastMessage, InsertBroadcastMessage,
   chatMessages, ChatMessage, InsertChatMessage,
   cookieClickerData, CookieClickerData, InsertCookieClickerData,
-  gameData, GameData, InsertGameData
+  gameData, GameData, InsertGameData,
+  termsAcceptanceLogs, TermsAcceptanceLog, InsertTermsAcceptanceLog
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -98,6 +99,12 @@ export interface IStorage {
   getAllGameData(gameType?: string): Promise<GameData[]>;
   getHighScores(gameType: string, limit?: number): Promise<GameData[]>;
   getLeaderboardWithUserDetails(gameType: string, limit?: number): Promise<any[]>;
+  
+  // Terms and Conditions acceptance log operations
+  logTermsAcceptance(data: InsertTermsAcceptanceLog): Promise<TermsAcceptanceLog>;
+  getTermsAcceptanceLogs(limit?: number): Promise<TermsAcceptanceLog[]>;
+  getTermsAcceptanceLogsByUser(userId: number): Promise<TermsAcceptanceLog[]>;
+  getLatestTermsAcceptance(userId: number): Promise<TermsAcceptanceLog | undefined>;
 }
 
 // In-memory storage implementation
@@ -109,6 +116,7 @@ export class MemStorage implements IStorage {
   private chatMessages: Map<number, ChatMessage>;
   private cookieClickerData: Map<number, CookieClickerData>;
   private gameData: Map<number, GameData>;
+  private termsAcceptanceLogs: Map<number, TermsAcceptanceLog>;
   sessionStore: session.Store;
   
   private userIdCounter: number;
@@ -119,6 +127,8 @@ export class MemStorage implements IStorage {
   private cookieClickerIdCounter: number;
   private gameDataIdCounter: number;
 
+  private termsAcceptanceLogIdCounter: number;
+
   constructor() {
     this.users = new Map();
     this.categories = new Map();
@@ -127,6 +137,7 @@ export class MemStorage implements IStorage {
     this.chatMessages = new Map();
     this.cookieClickerData = new Map();
     this.gameData = new Map();
+    this.termsAcceptanceLogs = new Map();
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // Prune expired entries every 24h
     });
@@ -138,6 +149,7 @@ export class MemStorage implements IStorage {
     this.chatMessageIdCounter = 1;
     this.cookieClickerIdCounter = 1;
     this.gameDataIdCounter = 1;
+    this.termsAcceptanceLogIdCounter = 1;
     
     // Initialize with admin account and load saved data
     this.initializeData();
