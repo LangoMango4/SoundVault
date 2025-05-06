@@ -1475,6 +1475,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "You can only delete your own messages" });
       }
 
+      // Check if this is an auto-delete (showNotification flag is used to indicate this)
+      const isAutoDelete = req.query.autoDelete === 'true';
+      const showNotification = req.query.showNotification !== 'false';
+      
       // Do a soft delete to keep the message in the history but mark it as deleted
       const updatedMessage = await storage.softDeleteChatMessage(id);
       if (!updatedMessage) {
@@ -1483,6 +1487,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Add user information to the response
       const messageUser = await storage.getUser(updatedMessage.userId);
+      let username = messageUser ? messageUser.username : `User ${updatedMessage.userId}`;
+      
+      // For auto-deleted messages, add a system message in the chat
+      if (isAutoDelete) {
+        // Create a system message indicating the auto-deletion
+        await storage.createSystemMessage(`Message from ${username} was automatically deleted after 5 seconds.`);
+      }
+      
       if (messageUser) {
         const { password, ...safeUser } = messageUser;
         const enhancedMessage = {

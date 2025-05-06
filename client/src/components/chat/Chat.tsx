@@ -93,7 +93,7 @@ export function Chat() {
       
       // Auto-delete the message after 5 seconds
       setTimeout(() => {
-        deleteMessageMutation.mutate({ id: newMessage.id, showNotification: false });
+        deleteMessageMutation.mutate({ id: newMessage.id, autoDelete: true, showNotification: false });
       }, 5000);
     },
     onError: (error: Error) => {
@@ -107,8 +107,8 @@ export function Chat() {
 
   // Delete a chat message (soft delete)
   const deleteMessageMutation = useMutation({
-    mutationFn: async ({ id, showNotification = true }: { id: number, showNotification?: boolean }) => {
-      const res = await apiRequest("DELETE", `/api/chat/${id}`);
+    mutationFn: async ({ id, autoDelete = false, showNotification = true }: { id: number, autoDelete?: boolean, showNotification?: boolean }) => {
+      const res = await apiRequest("DELETE", `/api/chat/${id}?autoDelete=${autoDelete}`);
       return { data: await res.json(), showNotification };
     },
     onSuccess: (result) => {
@@ -204,6 +204,18 @@ export function Chat() {
               </div>
             ) : (
               chatMessages.map((msg) => {
+                // Handle system messages differently
+                if (msg.isSystem) {
+                  return (
+                    <div key={msg.id} className="flex justify-center">
+                      <div className="bg-gray-100 px-3 py-1 rounded-md text-xs text-gray-600 max-w-[80%] text-center">
+                        <InfoIcon className="h-3 w-3 inline-block mr-1" />
+                        {msg.content}
+                      </div>
+                    </div>
+                  );
+                }
+                
                 const isCurrentUser = msg.userId === user?.id;
                 const userInfo = getUserInfo(msg.userId);
                 
