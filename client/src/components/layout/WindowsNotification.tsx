@@ -26,15 +26,15 @@ export function WindowsNotification({
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/25">
       <div className="flex flex-col w-full max-w-md bg-white border border-gray-300 shadow-xl overflow-hidden rounded-sm">
         {/* Header bar */}
-        <div className="flex items-center justify-between px-2 py-1 bg-red-700 text-white">
+        <div className="flex items-center justify-between px-2 py-1 bg-white text-black border-t-[3px] border-t-red-600">
           <div className="flex items-center gap-1">
             <span className="text-xs font-normal">{title}</span>
           </div>
           <div className="flex items-center">
-            <button className="text-white text-xs px-1 hover:bg-red-600">?</button>
+            <button className="text-black text-xs px-1 hover:bg-gray-100">?</button>
             <button 
               onClick={onClose}
-              className="text-white text-xs px-1 hover:bg-red-600"
+              className="text-black text-xs px-1 hover:bg-gray-100"
             >
               ×
             </button>

@@ -16,15 +16,15 @@ export function ErrorMessage({ show, onClose, title = "System Administrator", me
     <div className="fixed inset-0 bg-black/25 flex items-center justify-center z-50">
       <div className="bg-white shadow-xl w-[400px] max-w-md overflow-hidden border border-gray-300 rounded-sm">
         {/* Title bar */}
-        <div className="bg-red-700 text-white px-2 py-1 flex justify-between items-center">
+        <div className="bg-white text-black px-2 py-1 flex justify-between items-center border-t-[3px] border-t-red-600">
           <div className="flex items-center gap-1">
             <span className="text-xs font-normal">{title}</span>
           </div>
           <div className="flex items-center">
-            <button className="text-white text-xs px-1 hover:bg-red-600">?</button>
+            <button className="text-black text-xs px-1 hover:bg-gray-100">?</button>
             <button 
               onClick={onClose}
-              className="text-white text-xs px-1 hover:bg-red-600"
+              className="text-black text-xs px-1 hover:bg-gray-100"
             >
               ×
             </button>
