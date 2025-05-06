@@ -52,10 +52,7 @@ export default function AuthPage() {
     loginMutation.mutate(values);
   };
   
-  // Quick login function for admin
-  const quickAdminLogin = () => {
-    loginMutation.mutate({ username: "admin", password: "alarms12" });
-  };
+  // Admin login function removed as requested
   
   // Redirect to home if already logged in
   if (user) {
@@ -73,17 +70,6 @@ export default function AuthPage() {
         </CardHeader>
         
         <CardContent>
-          <div className="mb-4">
-            <Button 
-              onClick={quickAdminLogin} 
-              className="w-full bg-green-600 hover:bg-green-700"
-              type="button"
-              disabled={loginMutation.isPending}
-            >
-              <ShieldCheck className="mr-2 h-4 w-4" />
-              Quick Admin Login
-            </Button>
-          </div>
           
           <Tabs 
             defaultValue="user" 
