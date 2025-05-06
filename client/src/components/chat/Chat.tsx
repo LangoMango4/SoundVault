@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trash2, AlertCircle } from "lucide-react";
+import { Trash2, AlertCircle, Info } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
@@ -209,7 +209,7 @@ export function Chat() {
                   return (
                     <div key={msg.id} className="flex justify-center">
                       <div className="bg-gray-100 px-3 py-1 rounded-md text-xs text-gray-600 max-w-[80%] text-center">
-                        <InfoIcon className="h-3 w-3 inline-block mr-1" />
+                        <Info className="h-3 w-3 inline-block mr-1" />
                         {msg.content}
                       </div>
                     </div>
