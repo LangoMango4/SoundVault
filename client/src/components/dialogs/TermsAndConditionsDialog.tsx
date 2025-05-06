@@ -11,6 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Shield } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { useUpdateNotification } from "@/hooks/use-update-notification";
 
 interface TermsAndConditionsDialogProps {
   open: boolean;
@@ -19,9 +22,44 @@ interface TermsAndConditionsDialogProps {
 
 export function TermsAndConditionsDialog({ open, onAccept }: TermsAndConditionsDialogProps) {
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [isLogging, setIsLogging] = useState(false);
+  const { toast } = useToast();
+  const { currentVersionDetails } = useUpdateNotification();
+  
+  const handleAccept = async () => {
+    if (!acceptTerms) return;
+    
+    setIsLogging(true);
+    
+    try {
+      // Log acceptance of terms & conditions
+      await apiRequest('POST', '/api/terms/accept', {
+        version: currentVersionDetails.title
+      });
+      
+      // Call the original onAccept function
+      onAccept();
+    } catch (error) {
+      console.error('Failed to log terms acceptance:', error);
+      toast({
+        title: 'Warning',
+        description: 'Continued with a problem logging your terms acceptance.',
+        variant: 'default',
+      });
+      // Still allow the user to continue despite logging error
+      onAccept();
+    } finally {
+      setIsLogging(false);
+    }
+  };
   
   return (
-    <Dialog open={open} onOpenChange={(open) => !open && acceptTerms && onAccept()}>
+    <Dialog open={open} onOpenChange={(open) => {
+      // Only allow closing after accepting terms
+      if (!open && acceptTerms) {
+        handleAccept();
+      }
+    }}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-primary">
@@ -74,11 +112,11 @@ export function TermsAndConditionsDialog({ open, onAccept }: TermsAndConditionsD
         
         <DialogFooter>
           <Button 
-            onClick={onAccept} 
-            disabled={!acceptTerms}
+            onClick={handleAccept} 
+            disabled={!acceptTerms || isLogging}
             className="w-full"
           >
-            Accept and Continue
+            {isLogging ? 'Logging Acceptance...' : 'Accept and Continue'}
           </Button>
         </DialogFooter>
       </DialogContent>

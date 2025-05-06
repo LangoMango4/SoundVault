@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, PlayCircle, Loader2 } from "lucide-react";
+import { Plus, Edit, Trash2, PlayCircle, Loader2, Calendar, Clock, UserCircle, Tag, Monitor } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { User, Sound, Category } from "@shared/schema";
+import { User, Sound, Category, TermsAcceptanceLog } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +40,7 @@ export function AdminPanel({
 }: AdminPanelProps) {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("users");
+  const [termsLogsLimit, setTermsLogsLimit] = useState(100);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isUserFormOpen, setIsUserFormOpen] = useState(false);
   const [isSoundFormOpen, setIsSoundFormOpen] = useState(false);
@@ -69,6 +70,16 @@ export function AdminPanel({
   } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
     enabled: open,
+  });
+  
+  // Terms & Conditions logs query
+  const {
+    data: termsLogs,
+    isLoading: termsLogsLoading,
+    refetch: refetchTermsLogs
+  } = useQuery<TermsAcceptanceLog[]>({
+    queryKey: ["/api/terms/logs", termsLogsLimit],
+    enabled: open && activeTab === "termslogs",
   });
 
   // Delete mutations
@@ -205,6 +216,66 @@ export function AdminPanel({
     },
   ];
 
+  // Terms & Conditions logs columns for data table
+  const termsLogsColumns = [
+    {
+      accessorKey: "username",
+      header: "Username",
+      cell: (log: TermsAcceptanceLog) => (
+        <div className="flex items-center gap-1.5">
+          <UserCircle className="h-4 w-4 text-muted-foreground" />
+          {log.username}
+        </div>
+      )
+    },
+    {
+      accessorKey: "version",
+      header: "Version",
+      cell: (log: TermsAcceptanceLog) => (
+        <div className="flex items-center gap-1.5">
+          <Tag className="h-4 w-4 text-muted-foreground" />
+          {log.version}
+        </div>
+      )
+    },
+    {
+      accessorKey: "acceptanceTime",
+      header: "Date",
+      cell: (log: TermsAcceptanceLog) => {
+        const date = new Date(log.acceptanceTime);
+        return (
+          <div className="flex items-center gap-1.5">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            {date.toLocaleDateString()}
+          </div>
+        );
+      }
+    },
+    {
+      accessorKey: "acceptanceTime",
+      header: "Time",
+      cell: (log: TermsAcceptanceLog) => {
+        const date = new Date(log.acceptanceTime);
+        return (
+          <div className="flex items-center gap-1.5">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            {date.toLocaleTimeString()}
+          </div>
+        );
+      }
+    },
+    {
+      accessorKey: "userAgent",
+      header: "Browser",
+      cell: (log: TermsAcceptanceLog) => (
+        <div className="flex items-center gap-1.5 max-w-[200px] truncate" title={log.userAgent || ""}>
+          <Monitor className="h-4 w-4 text-muted-foreground" />
+          {log.userAgent ? log.userAgent.split(" ").slice(0, 2).join(" ") : "Unknown"}
+        </div>
+      )
+    },
+  ];
+
   // Sound columns for data table
   const soundColumns = [
     {
@@ -296,6 +367,7 @@ export function AdminPanel({
             <TabsList className="border-b rounded-none justify-start">
               <TabsTrigger value="users">Users</TabsTrigger>
               <TabsTrigger value="sounds">Sounds</TabsTrigger>
+              <TabsTrigger value="termslogs">Terms & Conditions Logs</TabsTrigger>
             </TabsList>
             
             <TabsContent value="users" className="flex-1 overflow-auto p-1">
@@ -343,6 +415,58 @@ export function AdminPanel({
                   </div>
                 ) : (
                   <DataTable columns={soundColumns} data={sounds || []} />
+                )}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="termslogs" className="flex-1 overflow-auto p-1">
+              <div className="flex justify-between mb-6">
+                <h3 className="text-lg font-medium">Terms & Conditions Acceptance Logs</h3>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      refetchTermsLogs();
+                    }}
+                  >
+                    <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                      <path d="M21 3v5h-5"/>
+                      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                      <path d="M8 16H3v5"/>
+                    </svg>
+                    Refresh
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  This table shows all instances where users have accepted the Terms & Conditions. Logs are sorted by the most recent acceptance first.
+                </p>
+                
+                {termsLogsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : termsLogs && termsLogs.length > 0 ? (
+                  <DataTable columns={termsLogsColumns} data={termsLogs} />
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="mb-2 rounded-full bg-muted p-3">
+                      <svg className="h-6 w-6 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15V6" />
+                        <path d="M18.5 18a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
+                        <path d="M12 12H3" />
+                        <path d="M16 6H3" />
+                        <path d="M12 18H3" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium">No logs found</h3>
+                    <p className="text-sm text-muted-foreground">
+                      No Terms & Conditions acceptance logs have been recorded yet.
+                    </p>
+                  </div>
                 )}
               </div>
             </TabsContent>

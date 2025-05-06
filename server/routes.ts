@@ -274,6 +274,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Terms and Conditions acceptance logging routes
+  app.post("/api/terms/accept", isAuthenticated, async (req, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "User must be authenticated" });
+      }
+      
+      const validation = insertTermsAcceptanceLogSchema.safeParse({
+        userId: req.user.id,
+        username: req.user.username,
+        version: req.body.version || "1.0.0",
+        userAgent: req.headers["user-agent"] || null,
+        ipAddress: req.ip || null
+      });
+      
+      if (!validation.success) {
+        return res.status(400).json({ message: "Invalid data", errors: validation.error.errors });
+      }
+      
+      const log = await storage.logTermsAcceptance(validation.data);
+      res.status(201).json(log);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.get("/api/terms/logs", isAdmin, async (req, res, next) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 100;
+      const logs = await storage.getTermsAcceptanceLogs(limit);
+      res.json(logs);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.get("/api/terms/logs/user/:userId", isAdmin, async (req, res, next) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const logs = await storage.getTermsAcceptanceLogsByUser(userId);
+      res.json(logs);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.get("/api/terms/latest", isAuthenticated, async (req, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "User must be authenticated" });
+      }
+      
+      const latestLog = await storage.getLatestTermsAcceptance(req.user.id);
+      if (!latestLog) {
+        return res.status(404).json({ message: "No acceptance logs found for this user" });
+      }
+      
+      res.json(latestLog);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
   // Category routes
   app.get("/api/categories", async (req, res, next) => {
     try {
