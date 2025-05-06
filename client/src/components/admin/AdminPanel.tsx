@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, PlayCircle, Loader2, Calendar, Clock, UserCircle, Tag, Monitor, Globe, Smartphone, CheckCircle, Search, Bell } from "lucide-react";
+import { Plus, Edit, Trash2, PlayCircle, Loader2, Calendar, Clock, UserCircle, Tag, Monitor, Globe, Smartphone, CheckCircle, Search, Bell, AlertTriangle, Shield, AlertCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { User, Sound, Category, TermsAcceptanceLog } from "@shared/schema";
+import { User, Sound, Category, TermsAcceptanceLog, ChatModerationLog, UserStrike } from "@shared/schema";
 import { CURRENT_VERSION, VERSION_HISTORY } from "@/hooks/use-update-notification";
 import { useUpdateNotification } from "@/hooks/use-update-notification";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -56,6 +56,9 @@ export function AdminPanel({
   const [itemToDelete, setItemToDelete] = useState<{ type: "user" | "sound" | "termslog", id: number } | null>(null);
   const [searchParams, setSearchParams] = useState<{username?: string; version?: string; method?: string}>({});
   const [isSearching, setIsSearching] = useState(false);
+  
+  // Moderation state
+  const [moderationLogsLimit, setModerationLogsLimit] = useState(100);
 
   // Users query
   const { 
@@ -90,6 +93,26 @@ export function AdminPanel({
   } = useQuery<TermsAcceptanceLog[]>({
     queryKey: ["/api/terms/logs", termsLogsLimit],
     enabled: open && activeTab === "termslogs",
+  });
+  
+  // Chat moderation logs query
+  const {
+    data: moderationLogs,
+    isLoading: moderationLogsLoading,
+    refetch: refetchModerationLogs
+  } = useQuery<ChatModerationLog[]>({
+    queryKey: ["/api/moderation/logs", moderationLogsLimit],
+    enabled: open && activeTab === "moderation",
+  });
+  
+  // User strikes query
+  const {
+    data: userStrikes,
+    isLoading: userStrikesLoading,
+    refetch: refetchUserStrikes
+  } = useQuery<UserStrike[]>({
+    queryKey: ["/api/moderation/strikes"],
+    enabled: open && activeTab === "moderation",
   });
   
   // Search Terms & Conditions logs
@@ -193,6 +216,47 @@ export function AdminPanel({
       toast({
         title: "Error",
         description: `Failed to delete sound: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Chat moderation mutations
+  const toggleChatRestrictionMutation = useMutation({
+    mutationFn: async ({ userId, restrict }: { userId: number; restrict: boolean }) => {
+      return await apiRequest("POST", `/api/moderation/strikes/user/${userId}/restrict`, { restrict });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/moderation/strikes"] });
+      toast({
+        title: "Success",
+        description: "User chat restriction status updated",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to update chat restriction: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  const clearStrikesMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      return await apiRequest("POST", `/api/moderation/strikes/user/${userId}/clear`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/moderation/strikes"] });
+      toast({
+        title: "Success",
+        description: "User strikes cleared successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to clear strikes: ${error.message}`,
         variant: "destructive",
       });
     },
@@ -382,6 +446,163 @@ export function AdminPanel({
     },
   ];
 
+  // Chat moderation logs columns for data table
+  const moderationLogsColumns = [
+    {
+      accessorKey: "username",
+      header: "Username",
+      cell: (log: ChatModerationLog) => (
+        <div className="flex items-center gap-1.5">
+          <UserCircle className="h-4 w-4 text-muted-foreground" />
+          {log.username}
+        </div>
+      )
+    },
+    {
+      accessorKey: "originalMessage",
+      header: "Original Message",
+      cell: (log: ChatModerationLog) => (
+        <div className="max-w-[280px] truncate">
+          <span className="font-medium text-yellow-500">{log.originalMessage}</span>
+        </div>
+      )
+    },
+    {
+      accessorKey: "moderationType",
+      header: "Type",
+      cell: (log: ChatModerationLog) => {
+        const variant = 
+          log.moderationType === "profanity" ? "warning" :
+          log.moderationType === "hate_speech" ? "destructive" : "default";
+        
+        const label = 
+          log.moderationType === "profanity" ? "Profanity" :
+          log.moderationType === "hate_speech" ? "Hate Speech" : 
+          log.moderationType === "inappropriate" ? "Inappropriate" : log.moderationType;
+          
+        return <Badge variant={variant}>{label}</Badge>;
+      },
+    },
+    {
+      accessorKey: "reason",
+      header: "Reason",
+      cell: (log: ChatModerationLog) => (
+        <div className="max-w-[200px] truncate">
+          {log.reason}
+        </div>
+      )
+    },
+    {
+      accessorKey: "moderatedAt",
+      header: "Date",
+      cell: (log: ChatModerationLog) => {
+        const date = new Date(log.moderatedAt);
+        return (
+          <div className="flex items-center gap-1.5">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            {date.toLocaleDateString()}
+          </div>
+        );
+      }
+    },
+    {
+      accessorKey: "moderatedAt",
+      header: "Time",
+      cell: (log: ChatModerationLog) => {
+        const date = new Date(log.moderatedAt);
+        return (
+          <div className="flex items-center gap-1.5">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            {date.toLocaleTimeString()}
+          </div>
+        );
+      }
+    },
+  ];
+
+  // User strikes columns for data table
+  const userStrikesColumns = [
+    {
+      accessorKey: "username",
+      header: "Username",
+      cell: (strike: UserStrike) => (
+        <div className="flex items-center gap-1.5">
+          <UserCircle className="h-4 w-4 text-muted-foreground" />
+          {strike.username}
+        </div>
+      )
+    },
+    {
+      accessorKey: "strikesCount",
+      header: "Strikes",
+      cell: (strike: UserStrike) => {
+        let variant = "default";
+        if (strike.strikesCount >= 5) {
+          variant = "destructive";
+        } else if (strike.strikesCount >= 3) {
+          variant = "warning";
+        }
+        
+        return <Badge variant={variant}>{strike.strikesCount}</Badge>;
+      }
+    },
+    {
+      accessorKey: "isChatRestricted",
+      header: "Chat Status",
+      cell: (strike: UserStrike) => {
+        return strike.isChatRestricted ? 
+          <Badge variant="destructive">Restricted</Badge> : 
+          <Badge variant="success">Active</Badge>;
+      }
+    },
+    {
+      accessorKey: "lastStrikeAt",
+      header: "Last Strike",
+      cell: (strike: UserStrike) => {
+        if (!strike.lastStrikeAt) return "Never";
+        
+        const date = new Date(strike.lastStrikeAt);
+        return (
+          <div className="flex flex-col">
+            <span>{date.toLocaleDateString()}</span>
+            <span className="text-xs text-muted-foreground">{date.toLocaleTimeString()}</span>
+          </div>
+        );
+      }
+    },
+    {
+      header: "Actions",
+      cell: (strike: UserStrike) => (
+        <div className="flex space-x-2">
+          <Button
+            variant={strike.isChatRestricted ? "outline" : "ghost"}
+            size="sm"
+            className={strike.isChatRestricted ? "border-green-500 text-green-500 hover:bg-green-50" : ""}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleChatRestrictionMutation.mutate({
+                userId: strike.userId,
+                restrict: !strike.isChatRestricted
+              });
+            }}
+          >
+            {strike.isChatRestricted ? "Restore Chat" : "Restrict Chat"}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              clearStrikesMutation.mutate(strike.userId);
+            }}
+          >
+            Clear Strikes
+          </Button>
+        </div>
+      )
+    },
+  ];
+
   // Sound columns for data table
   const soundColumns = [
     {
@@ -474,6 +695,7 @@ export function AdminPanel({
               <TabsTrigger value="users">Users</TabsTrigger>
               <TabsTrigger value="sounds">Sounds</TabsTrigger>
               <TabsTrigger value="termslogs">Terms & Conditions Logs</TabsTrigger>
+              <TabsTrigger value="moderation">Moderation</TabsTrigger>
               <TabsTrigger value="system">System</TabsTrigger>
             </TabsList>
             
@@ -640,6 +862,92 @@ export function AdminPanel({
                     </p>
                   </div>
                 )}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="moderation" className="flex-1 overflow-auto p-1">
+              <div className="flex justify-between mb-6">
+                <h3 className="text-lg font-medium">Chat Moderation</h3>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      refetchModerationLogs();
+                      refetchUserStrikes();
+                    }}
+                  >
+                    <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                      <path d="M21 3v5h-5"/>
+                      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                      <path d="M8 16H3v5"/>
+                    </svg>
+                    Refresh
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="space-y-8">
+                {/* User Strikes */}
+                <div>
+                  <h4 className="text-lg font-medium mb-4">User Strikes</h4>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    This table shows users who have received strikes for chat violations. 
+                    Users with 5 or more strikes have limited chat privileges.
+                  </p>
+                  
+                  {userStrikesLoading ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </div>
+                  ) : userStrikes && userStrikes.length > 0 ? (
+                    <DataTable columns={userStrikesColumns} data={userStrikes} />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 text-center border rounded-md">
+                      <div className="mb-2 rounded-full bg-muted p-3">
+                        <svg className="h-6 w-6 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                          <path d="m9 11 3 3L22 4" />
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-medium">No strikes yet</h3>
+                      <p className="text-sm text-muted-foreground">
+                        No users have received strikes for chat violations.
+                      </p>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Moderation Logs */}
+                <div>
+                  <h4 className="text-lg font-medium mb-4">Moderation Logs</h4>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    This table shows all instances where chat messages were moderated.
+                    Messages highlighted in yellow contain the original, unfiltered content.
+                  </p>
+                  
+                  {moderationLogsLoading ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </div>
+                  ) : moderationLogs && moderationLogs.length > 0 ? (
+                    <DataTable columns={moderationLogsColumns} data={moderationLogs} />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 text-center border rounded-md">
+                      <div className="mb-2 rounded-full bg-muted p-3">
+                        <svg className="h-6 w-6 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h1" />
+                          <path d="M15 3h1a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-1" />
+                          <path d="M8 11v5a4 4 0 0 0 8 0v-5" />
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-medium">No moderation logs</h3>
+                      <p className="text-sm text-muted-foreground">
+                        No chat messages have been moderated yet.
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </TabsContent>
             
