@@ -34,7 +34,7 @@ export function ErrorMessage({ show, onClose, title = "System Administrator", me
         <div className="p-4">
           <div className="flex items-start gap-3 mb-4">
             <div className="flex-shrink-0">
-              <svg className="text-yellow-400 h-12 w-12" viewBox="0 0 24 24" fill="currentColor">
+              <svg className="text-yellow-400 h-8 w-8" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-2h2v2h-2zm0-10v6h2V7h-2z"/>
               </svg>
             </div>

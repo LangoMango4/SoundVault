@@ -48,7 +48,7 @@ export function WindowsNotification({
         {/* Message content */}
         <div className="flex px-4 py-3">
           <div className="mr-4 flex-shrink-0">
-            <img src={warningIcon} alt="Warning" className="h-12 w-12" />
+            <img src={warningIcon} alt="Warning" className="h-8 w-8" />
           </div>
           <div className="flex-1">
             {sender && <p className="font-medium text-sm mb-1">{sender}</p>}
