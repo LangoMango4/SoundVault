@@ -9,7 +9,8 @@ import {
   insertSoundSchema,
   insertBroadcastMessageSchema,
   insertChatMessageSchema,
-  insertGameDataSchema
+  insertGameDataSchema,
+  insertTermsAcceptanceLogSchema
 } from "@shared/schema";
 import passport from "passport";
 import multer from "multer";
