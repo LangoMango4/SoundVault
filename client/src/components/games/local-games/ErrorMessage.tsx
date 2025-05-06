@@ -12,9 +12,9 @@ export function ErrorMessage({ show, onClose, title = "System Administrator", me
   
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white shadow-lg w-80 overflow-hidden rounded-sm">
+      <div className="bg-white shadow-lg w-96 max-w-md overflow-hidden rounded-sm border border-gray-300">
         {/* Title bar */}
-        <div className="bg-green-600 text-white px-3 py-1.5 flex justify-between items-center">
+        <div className="bg-red-600 text-white px-3 py-1.5 flex justify-between items-center">
           <div className="flex items-center">
             <span className="text-sm font-medium">{title}</span>
           </div>
@@ -33,25 +33,21 @@ export function ErrorMessage({ show, onClose, title = "System Administrator", me
         <div className="p-4">
           <div className="flex items-start gap-3 mb-4">
             <div className="flex-shrink-0">
-              <svg className="text-yellow-400 h-8 w-8" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-2h2v2h-2zm0-10v6h2V7h-2z"/>
+              <svg className="text-yellow-500 h-10 w-10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" fill="currentColor"/>
+                <path d="M13 8L13 13" stroke="black" strokeWidth="3" strokeLinecap="round"/>
+                <path d="M13 16L13 17" stroke="black" strokeWidth="3" strokeLinecap="round"/>
               </svg>
             </div>
             <div className="flex-1">
-              <p className="text-sm">{message}</p>
+              <p className="text-base whitespace-pre-wrap">{message}</p>
             </div>
           </div>
           
           <div className="flex justify-end space-x-2">
             <button 
               onClick={onClose}
-              className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 text-sm rounded-sm"
-            >
-              Delete
-            </button>
-            <button 
-              onClick={onClose}
-              className="bg-gray-100 hover:bg-gray-200 px-4 py-1 text-sm rounded-sm"
+              className="bg-blue-100 border border-blue-300 px-4 py-1 text-sm hover:bg-blue-200"
             >
               OK
             </button>

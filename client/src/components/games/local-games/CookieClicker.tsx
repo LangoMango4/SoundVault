@@ -19,8 +19,17 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Crown, Bug, Sparkles, Gift as GiftIcon, RotateCcw } from 'lucide-react';
+import { 
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger
+} from '@/components/ui/sheet';
+import { Crown, Bug, Sparkles, Gift as GiftIcon, RotateCcw, Trophy } from 'lucide-react';
 import { ErrorMessage } from './ErrorMessage';
+import { LeaderboardComponent } from '../LeaderboardComponent';
+import { useAuth } from '@/hooks/use-auth';
 
 export function CookieClicker() {
   // Game state
@@ -40,12 +49,17 @@ export function CookieClicker() {
   const [users, setUsers] = useState<any[]>([]);
   const [loadingUsers, setLoadingUsers] = useState<boolean>(false);
   
+  // Leaderboard
+  const [showLeaderboard, setShowLeaderboard] = useState<boolean>(false);
+  const [leaderboardRank, setLeaderboardRank] = useState<number | undefined>(undefined);
+  
   // Error Message
   const [showError, setShowError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   
   // Styling
   const [background, setBackground] = useState<string>("none");
+  const { user } = useAuth();
   const backgrounds = [
     { id: "none", name: "None" },
     { id: "bakery", name: "Bakery", color: "bg-amber-50" },
@@ -403,6 +417,29 @@ export function CookieClicker() {
         <h1 className="text-2xl font-bold">Cookie Clicker</h1>
         
         <div className="flex gap-2">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1">
+                <Trophy className="h-4 w-4" />
+                Leaderboard
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-full sm:w-[500px] overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-yellow-500" />
+                  Cookie Clicker Leaderboard
+                </SheetTitle>
+              </SheetHeader>
+              <div className="mt-4">
+                <LeaderboardComponent 
+                  gameId="cookie-clicker"
+                  currentScore={cookies}
+                  currentRank={leaderboardRank}
+                />
+              </div>
+            </SheetContent>
+          </Sheet>
           <Button 
             variant="destructive" 
             size="sm" 
