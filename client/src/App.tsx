@@ -2,6 +2,7 @@ import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
+import { Button } from "@/components/ui/button";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
@@ -11,8 +12,11 @@ import { AuthProvider } from "./hooks/use-auth";
 import { useOnlineStatus } from "./hooks/use-online-status";
 import { OfflineScreen } from "./components/layout/OfflineScreen";
 import { UpdateNotificationDialog } from "./components/dialogs/UpdateNotificationDialog";
+import { TermsAndConditionsDialog } from "./components/dialogs/TermsAndConditionsDialog";
 import { useUpdateNotification } from "./hooks/use-update-notification";
+import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
+import { Bell } from "lucide-react";
 
 function Router() {
   return (
@@ -103,15 +107,48 @@ function ConnectivityChecker() {
   return null;
 }
 
-// Component to show update notification
-function UpdateNotifier() {
-  const { showUpdateNotification, hideUpdateNotification } = useUpdateNotification();
+// Component to show dialogs and notifications
+function NotificationManager() {
+  const { 
+    showUpdateNotification, 
+    showTermsAndConditions,
+    hideUpdateNotification, 
+    hideTermsAndConditions,
+    refreshPage
+  } = useUpdateNotification();
+  
+  const { toast } = useToast();
+  
+  // Show update notification toast when there's a new version
+  useEffect(() => {
+    if (showUpdateNotification) {
+      toast({
+        title: 'New Update Available!',
+        description: 'Click to refresh and see the latest changes',
+        action: (
+          <Button 
+            onClick={refreshPage} 
+            variant="outline" 
+            size="sm" 
+            className="gap-1 text-primary"
+          >
+            <Bell className="h-4 w-4" />
+            Update
+          </Button>
+        ),
+        duration: 0 // Don't auto-dismiss
+      });
+    }
+  }, [showUpdateNotification, toast, refreshPage]);
   
   return (
-    <UpdateNotificationDialog 
-      open={showUpdateNotification} 
-      onAccept={hideUpdateNotification} 
-    />
+    <>
+      {/* Terms & Conditions dialog shown on every login */}
+      <TermsAndConditionsDialog 
+        open={showTermsAndConditions} 
+        onAccept={hideTermsAndConditions}
+      />
+    </>
   );
 }
 
@@ -120,7 +157,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ConnectivityChecker />
-        <UpdateNotifier />
+        <NotificationManager />
         <Router />
         <Toaster />
       </AuthProvider>
