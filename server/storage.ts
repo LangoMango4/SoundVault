@@ -18,7 +18,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import { db } from "./db";
-import { eq, desc, and, like, gte, lt } from "drizzle-orm";
+import { eq, desc, and, like, gte, lt, lte } from "drizzle-orm";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
 
@@ -847,7 +847,7 @@ export class MemStorage implements IStorage {
     }
     
     if (params.toDate) {
-      logs = logs.filter(log => new Date(log.acceptanceTime) <= params.toDate!);
+      logs = logs.filter(log => new Date(log.acceptanceTime) < params.toDate!);
     }
     
     // Sort by most recent first
@@ -859,6 +859,145 @@ export class MemStorage implements IStorage {
     }
     
     return logs;
+  }
+
+  // Chat moderation operations
+  async moderateMessage(content: string, userId: number, username: string): Promise<{ isAllowed: boolean; moderatedMessage: string; reason?: string; moderationType?: string; }> {
+    // Simple list of banned words/phrases for moderation
+    const moderationRules = [
+      { pattern: /\b(fuck|shit|ass|bitch|cunt|dick|cock|pussy|whore)\b/gi, type: 'profanity', reason: 'Profanity detected' },
+      { pattern: /\b(nigger|nigga|faggot|retard|spastic)\b/gi, type: 'hate_speech', reason: 'Hate speech detected' },
+      { pattern: /\b(porn|pornhub|xvideos|onlyfans|sex|sexy)\b/gi, type: 'inappropriate', reason: 'Inappropriate content detected' },
+      { pattern: /\b(suicide|kill myself|hang myself|jump off)\b/gi, type: 'concerning', reason: 'Concerning content detected' },
+      { pattern: /\b(address|phone number|credit card|password|SSN|social security)\b/gi, type: 'personal_info', reason: 'Potential personal information sharing detected' },
+    ];
+
+    let moderatedMessage = content;
+    let hasViolation = false;
+    let moderationType = '';
+    let reason = '';
+
+    // Check each rule against the message
+    for (const rule of moderationRules) {
+      if (rule.pattern.test(content)) {
+        // Replace the matched content with asterisks
+        moderatedMessage = moderatedMessage.replace(rule.pattern, (match) => '*'.repeat(match.length));
+        hasViolation = true;
+        moderationType = rule.type;
+        reason = rule.reason;
+        
+        // Log the moderation action
+        await this.logModerationAction({
+          userId,
+          username,
+          originalMessage: content,
+          reason: rule.reason,
+          moderationType: rule.type
+        });
+        
+        // Increment user strikes
+        await this.incrementUserStrikes(userId, username);
+        
+        break; // Stop at the first violation for simplicity
+      }
+    }
+
+    return {
+      isAllowed: !hasViolation,
+      moderatedMessage,
+      moderationType: hasViolation ? moderationType : undefined,
+      reason: hasViolation ? reason : undefined,
+    };
+  }
+
+  async logModerationAction(log: InsertChatModerationLog): Promise<ChatModerationLog> {
+    const id = this.chatModerationLogIdCounter++;
+    const moderationLog: ChatModerationLog = {
+      ...log,
+      id,
+      moderatedAt: new Date()
+    };
+    this.chatModerationLogs.set(id, moderationLog);
+    return moderationLog;
+  }
+
+  async getModerationLogs(limit: number = 100): Promise<ChatModerationLog[]> {
+    const logs = Array.from(this.chatModerationLogs.values());
+    return logs
+      .sort((a, b) => b.moderatedAt.getTime() - a.moderatedAt.getTime())
+      .slice(0, limit);
+  }
+
+  async getModerationLogsByUser(userId: number): Promise<ChatModerationLog[]> {
+    const logs = Array.from(this.chatModerationLogs.values());
+    return logs
+      .filter(log => log.userId === userId)
+      .sort((a, b) => b.moderatedAt.getTime() - a.moderatedAt.getTime());
+  }
+
+  // User strikes operations
+  async getUserStrikes(userId: number): Promise<UserStrike | undefined> {
+    return Array.from(this.userStrikes.values()).find(strike => strike.userId === userId);
+  }
+
+  async incrementUserStrikes(userId: number, username: string): Promise<UserStrike> {
+    // Get existing strikes or create new record
+    const existingStrikes = await this.getUserStrikes(userId);
+    
+    if (existingStrikes) {
+      // Increment existing strikes
+      const newStrikeCount = existingStrikes.strikesCount + 1;
+      const isChatRestricted = newStrikeCount >= 5; // Restrict chat after 5+ strikes
+      
+      const updatedStrike: UserStrike = {
+        ...existingStrikes,
+        strikesCount: newStrikeCount,
+        isChatRestricted,
+        lastStrikeAt: new Date()
+      };
+      
+      this.userStrikes.set(existingStrikes.id, updatedStrike);
+      return updatedStrike;
+    } else {
+      // Create new strike record
+      const id = this.userStrikeIdCounter++;
+      const newStrike: UserStrike = {
+        id,
+        userId,
+        username,
+        strikesCount: 1,
+        isChatRestricted: false, // First strike doesn't restrict chat
+        lastStrikeAt: new Date()
+      };
+      
+      this.userStrikes.set(id, newStrike);
+      return newStrike;
+    }
+  }
+
+  async resetUserStrikes(userId: number): Promise<UserStrike | undefined> {
+    const existingStrikes = await this.getUserStrikes(userId);
+    if (!existingStrikes) return undefined;
+    
+    const updatedStrike: UserStrike = {
+      ...existingStrikes,
+      strikesCount: 0,
+      isChatRestricted: false,
+      lastStrikeAt: new Date()
+    };
+    
+    this.userStrikes.set(existingStrikes.id, updatedStrike);
+    return updatedStrike;
+  }
+
+  async getUsersWithStrikes(): Promise<UserStrike[]> {
+    return Array.from(this.userStrikes.values())
+      .sort((a, b) => b.strikesCount - a.strikesCount);
+  }
+
+  async isUserChatRestricted(userId: number): Promise<boolean> {
+    const userStrike = await this.getUserStrikes(userId);
+    return userStrike ? userStrike.isChatRestricted : false;
   }
 }
 
@@ -1346,7 +1485,7 @@ export class DatabaseStorage implements IStorage {
       }
       
       if (params.toDate) {
-        query = query.where(lte(termsAcceptanceLogs.acceptanceTime, params.toDate));
+        query = query.where(lt(termsAcceptanceLogs.acceptanceTime, params.toDate));
       }
       
       // Order by most recent first
