@@ -148,7 +148,13 @@ function NotificationManager() {
         open={showTermsAndConditions} 
         onAccept={hideTermsAndConditions}
       />
-    </>
+      {/* Update notification dialog */}
+      <UpdateNotificationDialog 
+        open={showUpdateNotification} 
+        onAccept={hideUpdateNotification}
+        onRefresh={refreshPage}
+      />
+    </>  
   );
 }
 

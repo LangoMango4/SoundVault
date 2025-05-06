@@ -15,9 +15,10 @@ import { AlertTriangle } from "lucide-react";
 interface UpdateNotificationDialogProps {
   open: boolean;
   onAccept: () => void;
+  onRefresh?: () => void;
 }
 
-export function UpdateNotificationDialog({ open, onAccept }: UpdateNotificationDialogProps) {
+export function UpdateNotificationDialog({ open, onAccept, onRefresh }: UpdateNotificationDialogProps) {
   const [acceptTerms, setAcceptTerms] = useState(false);
   
   return (
@@ -74,11 +75,25 @@ export function UpdateNotificationDialog({ open, onAccept }: UpdateNotificationD
           </Label>
         </div>
         
-        <DialogFooter>
+        <DialogFooter className="flex flex-col gap-2 sm:flex-row">
+          {onRefresh && (
+            <Button 
+              onClick={() => {
+                onAccept();
+                onRefresh();
+              }} 
+              disabled={!acceptTerms}
+              className="w-full bg-primary hover:bg-primary/90"
+              variant="default"
+            >
+              Refresh Now
+            </Button>
+          )}
           <Button 
             onClick={onAccept} 
             disabled={!acceptTerms}
             className="w-full"
+            variant="outline"
           >
             Accept and Continue
           </Button>
