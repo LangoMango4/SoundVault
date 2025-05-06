@@ -862,11 +862,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const cookieData = await storage.getAllCookieClickerData();
       const firstUser = cookieData.length > 0 ? await storage.getUser(cookieData[0].userId) : null;
       
+      // Try to directly create a leaderboard entry for testing
+      let manualLeaderboardEntry = null;
+      if (firstUser) {
+        manualLeaderboardEntry = {
+          id: cookieData[0].id,
+          userId: cookieData[0].userId,
+          username: firstUser.username,
+          fullName: firstUser.fullName || 'Unknown',
+          score: cookieData[0].cookies || 0,
+          gameType: 'cookie-clicker',
+          lastPlayed: cookieData[0].lastUpdated
+        };
+      }
+      
+      // Try to manually get the leaderboard
+      let directLeaderboard = [];
+      try {
+        directLeaderboard = await storage.getLeaderboardWithUserDetails('cookie-clicker', 10);
+      } catch (leaderboardError) {
+        console.error('Error getting leaderboard:', leaderboardError);
+      }
+      
       // Return debug info
       res.json({
         rawCookieData: cookieData,
         cookieDataCount: cookieData.length,
-        firstUser: firstUser ? { id: firstUser.id, username: firstUser.username } : null,
+        firstUser: firstUser ? { id: firstUser.id, username: firstUser.username, fullName: firstUser.fullName } : null,
+        manualLeaderboardEntry,
+        directLeaderboard,
         message: "Use this endpoint to debug the cookie clicker leaderboard"
       });
     } catch (error) {
@@ -1255,11 +1279,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { gameType } = req.params;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
       
-      // Get leaderboard data with user details
-      const leaderboard = await storage.getLeaderboardWithUserDetails(gameType, limit);
+      console.log(`DEBUG: leaderboard request for gameType=${gameType}, limit=${limit}`);
       
-      res.status(200).json(leaderboard);
+      // Special handling for cookie-clicker with direct approach
+      if (gameType === 'cookie-clicker') {
+        try {
+          // Get cookie clicker data directly
+          const cookieData = await storage.getAllCookieClickerData();
+          console.log(`DEBUG: cookie-clicker data count: ${cookieData.length}`);
+          
+          // Sort by cookies in descending order
+          const sortedData = cookieData
+            .sort((a, b) => b.cookies - a.cookies)
+            .slice(0, limit);
+          
+          // Enhance with user information
+          const leaderboardData = await Promise.all(
+            sortedData.map(async (entry) => {
+              try {
+                const user = await storage.getUser(entry.userId);
+                if (!user) return null; // Skip if user not found
+                
+                return {
+                  id: entry.id,
+                  userId: entry.userId,
+                  username: user.username,
+                  fullName: user.fullName || "", // Handle cases where fullName might be missing
+                  score: entry.cookies || 0,
+                  gameType: 'cookie-clicker',
+                  lastPlayed: entry.lastUpdated
+                };
+              } catch (error) {
+                console.error(`Error processing leaderboard entry for userId=${entry.userId}:`, error);
+                return null; // Skip this entry if there was an error
+              }
+            })
+          );
+          
+          // Filter out null entries and return
+          const result = leaderboardData.filter(entry => entry !== null);
+          console.log(`DEBUG: returning ${result.length} cookie-clicker leaderboard entries`);
+          return res.status(200).json(result);
+        } catch (cookieError) {
+          console.error('Cookie-clicker leaderboard error:', cookieError);
+          return res.status(500).json({ error: 'Error generating cookie-clicker leaderboard' });
+        }
+      } else if (gameType === 'word-scramble') {
+        try {
+          // Get all game data for word-scramble
+          const allGameData = await storage.getAllGameData(gameType);
+          console.log(`DEBUG: word-scramble data count: ${allGameData.length}`);
+          
+          // Sort by high score in descending order and take top entries
+          const sortedData = allGameData
+            .sort((a, b) => (b.highScore || 0) - (a.highScore || 0))
+            .slice(0, limit);
+          
+          // Enhance with user information
+          const leaderboardData = await Promise.all(
+            sortedData.map(async (entry) => {
+              try {
+                const user = await storage.getUser(entry.userId);
+                if (!user) return null; // Skip if user not found
+                
+                return {
+                  id: entry.id,
+                  userId: entry.userId,
+                  username: user.username,
+                  fullName: user.fullName || "", // Handle cases where fullName might be missing
+                  score: entry.highScore || 0,
+                  gameType: 'word-scramble',
+                  lastPlayed: entry.lastPlayed
+                };
+              } catch (error) {
+                console.error(`Error processing word-scramble leaderboard entry for userId=${entry.userId}:`, error);
+                return null; // Skip this entry on error
+              }
+            })
+          );
+          
+          // Filter out null entries and return
+          const result = leaderboardData.filter(entry => entry !== null);
+          console.log(`DEBUG: returning ${result.length} word-scramble leaderboard entries`);
+          return res.status(200).json(result);
+        } catch (wordScrambleError) {
+          console.error('Word-scramble leaderboard error:', wordScrambleError);
+          return res.status(500).json({ error: 'Error generating word-scramble leaderboard' });
+        }
+      } else {
+        // For other game types, use the standard storage method
+        try {
+          const leaderboard = await storage.getLeaderboardWithUserDetails(gameType, limit);
+          return res.status(200).json(leaderboard);
+        } catch (otherGameError) {
+          console.error(`Leaderboard error for ${gameType}:`, otherGameError);
+          return res.status(500).json({ error: `Error generating ${gameType} leaderboard` });
+        }
+      }
     } catch (error) {
+      console.error('Leaderboard endpoint error:', error);
       next(error);
     }
   });
