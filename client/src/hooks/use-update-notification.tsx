@@ -21,12 +21,11 @@ export function useUpdateNotification(): UseUpdateNotificationResult {
   const [showTermsAndConditions, setShowTermsAndConditions] = useState(false);
   const { user, logoutMutation } = useAuth();
   
-  // Terms and conditions are no longer shown automatically
+  // Show terms and conditions every time user logs in
   useEffect(() => {
     if (user) {
-      // Terms are permanently hidden
-      setShowTermsAndConditions(false);
-      sessionStorage.setItem(TERMS_SHOWN_KEY, 'true');
+      // Always show Terms & Conditions on login
+      setShowTermsAndConditions(true);
     }
   }, [user]);
   
@@ -89,7 +88,7 @@ export function useUpdateNotification(): UseUpdateNotificationResult {
   
   const hideTermsAndConditions = () => {
     setShowTermsAndConditions(false);
-    sessionStorage.setItem(TERMS_SHOWN_KEY, 'true');
+    // Don't store in session storage since we want it to show every login
   };
   
   const refreshPage = () => {
