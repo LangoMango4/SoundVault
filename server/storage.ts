@@ -655,29 +655,77 @@ export class MemStorage implements IStorage {
   }
   
   async getLeaderboardWithUserDetails(gameType: string, limit: number = 10): Promise<any[]> {
-    // Get high scores first
-    const highScores = await this.getHighScores(gameType, limit);
+    console.log(`DEBUG: getLeaderboardWithUserDetails called with gameType=${gameType}, limit=${limit}`);
     
-    // For each high score, get the user details
-    const leaderboardData = await Promise.all(
-      highScores.map(async (score) => {
-        const user = await this.getUser(score.userId);
-        if (!user) return null; // Skip if user not found
-        
-        return {
-          id: score.id,
-          userId: score.userId,
-          username: user.username,
-          fullName: user.fullName,
-          score: score.highScore || 0,
-          gameType: score.gameType,
-          lastPlayed: score.lastPlayed
-        };
-      })
-    );
-    
-    // Filter out null entries (users not found) and return
-    return leaderboardData.filter(entry => entry !== null);
+    // Special case for cookie-clicker because it uses a different table
+    if (gameType === 'cookie-clicker') {
+      // Get cookie clicker data directly
+      const cookieData = await this.getAllCookieClickerData();
+      console.log(`DEBUG: cookie-clicker data count: ${cookieData.length}`);
+      
+      // Sort by cookies in descending order
+      const sortedData = cookieData
+        .sort((a, b) => b.cookies - a.cookies)
+        .slice(0, limit);
+      
+      console.log(`DEBUG: cookie-clicker sorted data: ${JSON.stringify(sortedData.map(d => ({ id: d.id, userId: d.userId, cookies: d.cookies })))}`);
+      
+      // Enhance with user information
+      const leaderboardData = await Promise.all(
+        sortedData.map(async (entry) => {
+          const user = await this.getUser(entry.userId);
+          console.log(`DEBUG: user lookup for userId=${entry.userId}: ${user ? 'found' : 'not found'}`);
+          
+          if (!user) return null; // Skip if user not found
+          
+          return {
+            id: entry.id,
+            userId: entry.userId,
+            username: user.username,
+            fullName: user.fullName,
+            score: entry.cookies || 0,
+            gameType: 'cookie-clicker',
+            lastPlayed: entry.lastUpdated
+          };
+        })
+      );
+      
+      // Filter out null entries (users not found) and return
+      const result = leaderboardData.filter(entry => entry !== null);
+      console.log(`DEBUG: final cookie-clicker leaderboard entries: ${result.length}`);
+      return result;
+    } else {
+      // Regular game data handling for other game types
+      const highScores = await this.getHighScores(gameType, limit);
+      console.log(`DEBUG: ${gameType} highScores count: ${highScores.length}`);
+      
+      // For each high score, get the user details
+      const leaderboardData = await Promise.all(
+        highScores.map(async (score) => {
+          const user = await this.getUser(score.userId);
+          if (!user) {
+            console.log(`DEBUG: user lookup for userId=${score.userId}: not found`);
+            return null; // Skip if user not found
+          }
+          
+          console.log(`DEBUG: user lookup for userId=${score.userId}: found (${user.username})`);
+          return {
+            id: score.id,
+            userId: score.userId,
+            username: user.username,
+            fullName: user.fullName,
+            score: score.highScore || 0,
+            gameType: score.gameType,
+            lastPlayed: score.lastPlayed
+          };
+        })
+      );
+      
+      // Filter out null entries (users not found) and return
+      const result = leaderboardData.filter(entry => entry !== null);
+      console.log(`DEBUG: final ${gameType} leaderboard entries: ${result.length}`);
+      return result;
+    }
   }
 }
 

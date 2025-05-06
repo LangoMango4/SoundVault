@@ -821,21 +821,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Generic leaderboard endpoint for all game types
-  app.get('/api/leaderboard/:gameType', async (req, res, next) => {
-    try {
-      const gameType = req.params.gameType;
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
-      
-      // Get leaderboard data with user details
-      const leaderboard = await storage.getLeaderboardWithUserDetails(gameType, limit);
-      
-      res.json(leaderboard);
-    } catch (error) {
-      console.error('Leaderboard error:', error);
-      next(error);
-    }
-  });
+  // Generic leaderboard endpoint moved to the end of the file
 
   // High scores and leaderboard endpoint (legacy - kept for backward compatibility)
   app.get('/api/games/cookie-clicker/leaderboard', async (req, res, next) => {
@@ -866,6 +852,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(enhancedLeaderboard);
     } catch (error) {
       next(error);
+    }
+  });
+  
+  // Debug endpoint for cookie clicker leaderboard
+  app.get('/api/debug/cookie-clicker-leaderboard', async (req, res, next) => {
+    try {
+      // Get raw cookie clicker data
+      const cookieData = await storage.getAllCookieClickerData();
+      const firstUser = cookieData.length > 0 ? await storage.getUser(cookieData[0].userId) : null;
+      
+      // Return debug info
+      res.json({
+        rawCookieData: cookieData,
+        cookieDataCount: cookieData.length,
+        firstUser: firstUser ? { id: firstUser.id, username: firstUser.username } : null,
+        message: "Use this endpoint to debug the cookie clicker leaderboard"
+      });
+    } catch (error) {
+      console.error('Debug endpoint error:', error);
+      res.status(500).json({ error: String(error) });
     }
   });
   
