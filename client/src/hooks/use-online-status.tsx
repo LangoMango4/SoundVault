@@ -9,22 +9,44 @@ export function useOnlineStatus() {
   // Advanced connectivity check function
   const checkRealConnectivity = async (): Promise<boolean> => {
     try {
-      // Try to fetch a small resource from the server
+      // Try to fetch a small resource from the server with a longer timeout
       const response = await fetch('/api/ping', { 
         method: 'GET',
         // Use cache: 'no-cache' to prevent getting cached responses
         cache: 'no-cache',
-        // Set a reasonable timeout
-        signal: AbortSignal.timeout(5000)
+        // Set a longer timeout (15 seconds instead of 5) to account for network latency
+        signal: AbortSignal.timeout(15000)
       });
       
-      const isConnected = response.ok;
-      setIsOnline(isConnected);
-      return isConnected;
+      // Only consider offline if we get an actual error response
+      if (response.status >= 200 && response.status < 500) {
+        // Any successful or redirect response, or even 4xx client errors
+        // means the server is reachable, so the client is online
+        setIsOnline(true);
+        return true;
+      } else {
+        // 500+ server errors might indicate server issues
+        setIsOnline(false);
+        return false;
+      }
     } catch (error) {
-      // Any error means we're unable to connect to the server
-      setIsOnline(false);
-      return false;
+      // Network error or timeout - we can try a second endpoint before deciding we're offline
+      try {
+        // Attempt backup connectivity check
+        const backupResponse = await fetch('/api/heartbeat', { 
+          method: 'GET',
+          cache: 'no-cache',
+          signal: AbortSignal.timeout(10000)
+        });
+        
+        const isConnected = backupResponse.status < 500;
+        setIsOnline(isConnected);
+        return isConnected;
+      } catch (backupError) {
+        // Both checks failed, now we can determine we're offline
+        setIsOnline(false);
+        return false;
+      }
     }
   };
 

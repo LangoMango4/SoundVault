@@ -152,6 +152,10 @@ export function TermsAndConditionsDialog({ open, onAccept }: TermsAndConditionsD
             <p>
               <span className="font-semibold">Changes to Terms & Conditions:</span> These Terms & Conditions may be modified, changed, or updated at any time without prior notice at the sole discretion of the site administrator. Changes may be made randomly and without warning. It is your responsibility to review these terms each time you access the site, as continued use constitutes acceptance of any changes made. You will be required to accept the updated terms upon login.
             </p>
+
+            <p>
+              <span className="font-semibold">School Work:</span> We are not responsible for any school work you may lose or fail to complete due to using this website. This is your choice and we are not liable for any consequences of overdue or incomplete assignments.
+            </p>
             
             <p className="border-t border-border/40 pt-3 mt-3">
               <span className="font-semibold">Acknowledgment:</span> By scrolling to the bottom and accepting these terms, you acknowledge that you have read, understood, and agree to be bound by all the terms and conditions set forth in this agreement.

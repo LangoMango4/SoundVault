@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -8,9 +8,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, RefreshCw } from "lucide-react";
+import { useUpdateNotification } from "@/hooks/use-update-notification";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 
 interface UpdateNotificationDialogProps {
   open: boolean;
@@ -19,60 +20,43 @@ interface UpdateNotificationDialogProps {
 }
 
 export function UpdateNotificationDialog({ open, onAccept, onRefresh }: UpdateNotificationDialogProps) {
-  const [acceptTerms, setAcceptTerms] = useState(false);
+  const { currentVersionDetails } = useUpdateNotification();
   
   return (
     <Dialog open={open}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-amber-600">
+          <DialogTitle className="flex items-center gap-2 text-primary">
             <AlertTriangle className="h-5 w-5" />
-            Important Update Notification
+            New Update Available
           </DialogTitle>
           <DialogDescription>
-            The site has been updated with exciting new features!
+            The site has been updated with new features and improvements!
           </DialogDescription>
         </DialogHeader>
         
-        <div className="border rounded-md p-4 bg-amber-50 space-y-4 my-4">
-          <h3 className="font-semibold text-lg">Terms & Conditions</h3>
-          
-          <div className="text-sm space-y-3 max-h-[200px] overflow-y-auto p-2">
-            <p>
-              By using this website, you are agreeing to the following terms and conditions:
-            </p>
-            
-            <p>
-              <span className="font-semibold">Disclaimer of Responsibility:</span> The creator of this website is not responsible for any consequences, disciplinary actions, or trouble you may face for using this website during class time or in violation of school policies.
-            </p>
-            
-            <p>
-              <span className="font-semibold">Usage Guidelines:</span> This website is intended for educational and entertainment purposes only. The "Teacher Inbound" feature is provided as a convenience and does not guarantee you won't be caught using the site.
-            </p>
-            
-            <p>
-              <span className="font-semibold">Privacy & Data:</span> Any data or scores saved on this website may be reset at any time without notice. We do not guarantee the preservation of your game progress or high scores.
-            </p>
-            
-            <p>
-              <span className="font-semibold">Updates:</span> New features have been added to the website, including Snake, Tic-Tac-Toe, and Math Challenge games. Please explore responsibly.
-            </p>
-            
-            <p>
-              <span className="font-semibold">Emergency Shortcuts:</span> The emergency shortcut has been updated to Escape + T instead of Alt key to avoid conflicts with school security systems.
-            </p>
+        <div className="border rounded-md p-4 bg-muted/40 space-y-4 my-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-lg">What's New</h3>
+            <Badge variant="outline" className="text-xs font-medium">
+              Version {currentVersionDetails.title}
+            </Badge>
           </div>
-        </div>
-        
-        <div className="flex items-center space-x-2 pt-3">
-          <Checkbox 
-            id="terms" 
-            checked={acceptTerms}
-            onCheckedChange={(checked) => setAcceptTerms(checked === true)}
-          />
-          <Label htmlFor="terms" className="text-sm font-medium">
-            I understand and accept that I am using this site at my own risk
-          </Label>
+          
+          <div className="text-sm text-muted-foreground">
+            Released: {currentVersionDetails.date}
+          </div>
+          
+          <ScrollArea className="h-[200px] rounded-md border p-3 bg-background">
+            <div className="space-y-3 pr-3">
+              {currentVersionDetails.changes.map((change, index) => (
+                <div key={index} className="flex gap-2 pb-2 last:pb-0 last:border-0 border-b border-border/40">
+                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <p>{change}</p>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
         </div>
         
         <DialogFooter className="flex flex-col gap-2 sm:flex-row">
@@ -81,21 +65,20 @@ export function UpdateNotificationDialog({ open, onAccept, onRefresh }: UpdateNo
               onClick={() => {
                 onAccept();
                 onRefresh();
-              }} 
-              disabled={!acceptTerms}
+              }}
               className="w-full bg-primary hover:bg-primary/90"
               variant="default"
             >
+              <RefreshCw className="mr-2 h-4 w-4" />
               Refresh Now
             </Button>
           )}
           <Button 
-            onClick={onAccept} 
-            disabled={!acceptTerms}
+            onClick={onAccept}
             className="w-full"
             variant="outline"
           >
-            Accept and Continue
+            Continue Without Updating
           </Button>
         </DialogFooter>
       </DialogContent>
