@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select';
 import { Crown, Bug, Sparkles, Gift as GiftIcon, RotateCcw } from 'lucide-react';
 import { ErrorMessage } from './ErrorMessage';
-import { Leaderboard } from '../Leaderboard';
+// Leaderboard import removed per user request
 
 export function CookieClicker() {
   // Game state
@@ -391,7 +391,7 @@ export function CookieClicker() {
   };
   
   return (
-    <div className={`min-h-screen grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 rounded-lg ${getBackgroundClass()}`}>
+    <div className={`min-h-screen p-6 rounded-lg ${getBackgroundClass()}`}>
       {/* Main game content */}
       <div className="flex flex-col items-center">
         {/* Windows-style Error Message */}
@@ -703,14 +703,6 @@ export function CookieClicker() {
           {isAdmin && (
             <p className="mt-1 italic">Admin tip: Try the cheat code "cookiemonster" for a surprise!</p>
           )}
-        </div>
-      </div>
-      
-      {/* Leaderboard column - now takes half screen */}
-      <div className="min-h-screen flex flex-col sticky top-0">
-        <h3 className="sr-only">Leaderboard</h3>
-        <div className="h-full">
-          <Leaderboard gameType="cookie-clicker" refreshInterval={5000} />
         </div>
       </div>
     </div>
