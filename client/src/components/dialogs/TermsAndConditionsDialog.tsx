@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Shield } from "lucide-react";
+import { Shield, ArrowDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useUpdateNotification } from "@/hooks/use-update-notification";
@@ -23,8 +23,31 @@ interface TermsAndConditionsDialogProps {
 export function TermsAndConditionsDialog({ open, onAccept }: TermsAndConditionsDialogProps) {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isLogging, setIsLogging] = useState(false);
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+  const termsContentRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { currentVersionDetails } = useUpdateNotification();
+  
+  // Effect to reset scroll status when dialog opens
+  useEffect(() => {
+    if (open) {
+      setHasScrolledToBottom(false);
+      setAcceptTerms(false);
+    }
+  }, [open]);
+  
+  // Handle scrolling in the terms content
+  const handleScroll = () => {
+    if (!termsContentRef.current) return;
+    
+    const { scrollTop, scrollHeight, clientHeight } = termsContentRef.current;
+    const bottomThreshold = scrollHeight - clientHeight;
+    
+    // Check if user has scrolled to bottom (with a small threshold for rounding errors)
+    if (scrollTop >= (bottomThreshold - 5)) {
+      setHasScrolledToBottom(true);
+    }
+  };
   
   const handleAccept = async () => {
     if (!acceptTerms) return;
@@ -71,8 +94,21 @@ export function TermsAndConditionsDialog({ open, onAccept }: TermsAndConditionsD
           </DialogDescription>
         </DialogHeader>
         
-        <div className="border rounded-md p-4 bg-muted/30 space-y-4 my-4">
-          <div className="text-sm space-y-3 max-h-[200px] overflow-y-auto p-2">
+        <div className="border rounded-md p-4 bg-muted/30 space-y-4 my-4 relative">
+          {!hasScrolledToBottom && (
+            <div className="absolute bottom-0 w-full flex justify-center items-center py-3 bg-gradient-to-t from-background/80 to-transparent pointer-events-none z-10">
+              <div className="bg-primary/10 text-primary text-sm font-medium flex items-center gap-1.5 px-3 py-1.5 rounded-full animate-pulse">
+                <ArrowDown className="h-3.5 w-3.5" />
+                Scroll to continue
+                <ArrowDown className="h-3.5 w-3.5" />
+              </div>
+            </div>
+          )}
+          <div 
+            ref={termsContentRef}
+            className="text-sm space-y-3 max-h-[200px] overflow-y-auto p-2"
+            onScroll={handleScroll}
+          >
             <p>
               By using this website, you are agreeing to the following terms and conditions:
             </p>
@@ -96,6 +132,10 @@ export function TermsAndConditionsDialog({ open, onAccept }: TermsAndConditionsD
             <p>
               <span className="font-semibold">Emergency Shortcuts:</span> The emergency shortcut is Escape + T which will quickly navigate away from this site to your school's homepage.
             </p>
+            
+            <p className="border-t border-border/40 pt-3 mt-3">
+              <span className="font-semibold">Acknowledgment:</span> By scrolling to the bottom and accepting these terms, you acknowledge that you have read, understood, and agree to be bound by all the terms and conditions set forth in this agreement.
+            </p>
           </div>
         </div>
         
@@ -103,10 +143,16 @@ export function TermsAndConditionsDialog({ open, onAccept }: TermsAndConditionsD
           <Checkbox 
             id="terms" 
             checked={acceptTerms}
+            disabled={!hasScrolledToBottom}
             onCheckedChange={(checked) => setAcceptTerms(checked === true)}
           />
-          <Label htmlFor="terms" className="text-sm font-medium">
-            I understand and accept that I am using this site at my own risk
+          <Label 
+            htmlFor="terms" 
+            className={`text-sm font-medium ${!hasScrolledToBottom ? 'text-muted-foreground' : ''}`}
+          >
+            {hasScrolledToBottom 
+              ? "I understand and accept that I am using this site at my own risk" 
+              : "Please scroll to the bottom of the terms to enable this checkbox"}
           </Label>
         </div>
         
