@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, PlayCircle, Loader2, Calendar, Clock, UserCircle, Tag, Monitor, Globe, Smartphone, CheckCircle, Search } from "lucide-react";
+import { Plus, Edit, Trash2, PlayCircle, Loader2, Calendar, Clock, UserCircle, Tag, Monitor, Globe, Smartphone, CheckCircle, Search, Bell } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { User, Sound, Category, TermsAcceptanceLog } from "@shared/schema";
+import { CURRENT_VERSION, VERSION_HISTORY } from "@/hooks/use-update-notification";
+import { useUpdateNotification } from "@/hooks/use-update-notification";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
@@ -193,7 +195,42 @@ export function AdminPanel({
     },
   });
 
-  // Close forms when panel closes
+  // Update Notification Tester component
+function UpdateNotificationTester() {
+  const { testShowUpdateNotification } = useUpdateNotification();
+  const [showSuccess, setShowSuccess] = useState(false);
+  
+  const handleTest = () => {
+    testShowUpdateNotification();
+    setShowSuccess(true);
+    
+    // Hide success message after 3 seconds
+    setTimeout(() => {
+      setShowSuccess(false);
+    }, 3000);
+  };
+  
+  return (
+    <div className="space-y-4">
+      <Button
+        onClick={handleTest}
+        className="bg-primary hover:bg-primary/90"
+      >
+        <Bell className="mr-2 h-4 w-4" />
+        Test Update Notification
+      </Button>
+      
+      {showSuccess && (
+        <div className="bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300 p-3 rounded-md text-sm flex items-center">
+          <CheckCircle className="h-4 w-4 mr-2" />
+          Update notification triggered successfully!
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Close forms when panel closes
   useEffect(() => {
     if (!open) {
       setIsUserFormOpen(false);
@@ -469,6 +506,7 @@ export function AdminPanel({
               <TabsTrigger value="users">Users</TabsTrigger>
               <TabsTrigger value="sounds">Sounds</TabsTrigger>
               <TabsTrigger value="termslogs">Terms & Conditions Logs</TabsTrigger>
+              <TabsTrigger value="system">System</TabsTrigger>
             </TabsList>
             
             <TabsContent value="users" className="flex-1 overflow-auto p-1">
@@ -637,7 +675,40 @@ export function AdminPanel({
               </div>
             </TabsContent>
             
-
+            <TabsContent value="system" className="flex-1 overflow-auto p-1">
+              <div className="flex justify-between mb-6">
+                <h3 className="text-lg font-medium">System Settings</h3>
+              </div>
+              
+              <div className="space-y-8">
+                {/* Update Notification Testing */}
+                <div className="bg-card rounded-md border shadow-sm p-6">
+                  <h4 className="font-medium text-lg mb-3">Update Notification</h4>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    The update notification automatically shows when the application is updated with a new version.
+                    For testing purposes, you can manually trigger the notification here.
+                  </p>
+                  
+                  <UpdateNotificationTester />
+                </div>
+                
+                {/* System Information */}
+                <div className="bg-card rounded-md border shadow-sm p-6">
+                  <h4 className="font-medium text-lg mb-3">System Information</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium mb-1">Current Version</p>
+                      <p className="text-sm text-muted-foreground">{CURRENT_VERSION}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium mb-1">Last Updated</p>
+                      <p className="text-sm text-muted-foreground">{VERSION_HISTORY[CURRENT_VERSION]?.date || 'Unknown'}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+            
           </Tabs>
         </DialogContent>
       </Dialog>

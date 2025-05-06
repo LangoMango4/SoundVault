@@ -4,14 +4,14 @@ import { useAuth } from '@/hooks/use-auth';
 // Exported interface definition moved below
 
 // Version control to show notification when version changes
-const CURRENT_VERSION = '1.4.0'; // Incremented from 1.3.0 to test update notification
+export const CURRENT_VERSION = '1.4.0'; // Incremented from 1.3.0 to test update notification
 const VERSION_STORAGE_KEY = 'math-homework-version';
 const LAST_ACTIVITY_KEY = 'math-homework-last-activity';
 const TERMS_SHOWN_KEY = 'math-homework-terms-shown-session';
 const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes in milliseconds
 
 // Version history with information about each update
-const VERSION_HISTORY: Record<string, { title: string; date: string; changes: string[] }> = {
+export const VERSION_HISTORY: Record<string, { title: string; date: string; changes: string[] }> = {
   '1.0.0': {
     title: 'Initial Release',
     date: '2025-04-20',
