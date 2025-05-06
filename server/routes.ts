@@ -1227,6 +1227,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Game leaderboards endpoint
+  app.get('/api/leaderboard/:gameType', async (req, res, next) => {
+    try {
+      const { gameType } = req.params;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+      
+      // Get leaderboard data with user details
+      const leaderboard = await storage.getLeaderboardWithUserDetails(gameType, limit);
+      
+      res.status(200).json(leaderboard);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

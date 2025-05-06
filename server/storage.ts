@@ -97,6 +97,7 @@ export interface IStorage {
   updateGameData(id: number, data: Partial<InsertGameData>): Promise<GameData | undefined>;
   getAllGameData(gameType?: string): Promise<GameData[]>;
   getHighScores(gameType: string, limit?: number): Promise<GameData[]>;
+  getLeaderboardWithUserDetails(gameType: string, limit?: number): Promise<any[]>;
 }
 
 // In-memory storage implementation
@@ -1040,6 +1041,28 @@ export class DatabaseStorage implements IStorage {
       .where(eq(gameData.gameType, gameType))
       .orderBy(desc(gameData.highScore))
       .limit(limit);
+  }
+  
+  async getLeaderboardWithUserDetails(gameType: string, limit: number = 10): Promise<any[]> {
+    const highScores = await this.getHighScores(gameType, limit);
+    
+    // Get user details for each score entry
+    const leaderboard = await Promise.all(
+      highScores.map(async (entry) => {
+        const user = await this.getUser(entry.userId);
+        return {
+          id: entry.id,
+          userId: entry.userId,
+          username: user?.username || "Unknown",
+          fullName: user?.fullName || "Unknown User",
+          score: entry.highScore || 0,
+          gameType: entry.gameType,
+          lastPlayed: entry.lastPlayed
+        };
+      })
+    );
+    
+    return leaderboard;
   }
 }
 
