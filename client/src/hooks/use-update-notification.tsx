@@ -4,14 +4,14 @@ import { useAuth } from '@/hooks/use-auth';
 // Exported interface definition moved below
 
 // Version control to show notification when version changes
-const CURRENT_VERSION = '1.3.0';
+const CURRENT_VERSION = '1.4.0'; // Incremented from 1.3.0 to test update notification
 const VERSION_STORAGE_KEY = 'math-homework-version';
 const LAST_ACTIVITY_KEY = 'math-homework-last-activity';
 const TERMS_SHOWN_KEY = 'math-homework-terms-shown-session';
 const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes in milliseconds
 
 // Version history with information about each update
-export const VERSION_HISTORY = {
+const VERSION_HISTORY: Record<string, { title: string; date: string; changes: string[] }> = {
   '1.0.0': {
     title: 'Initial Release',
     date: '2025-04-20',
@@ -53,6 +53,17 @@ export const VERSION_HISTORY = {
       'Implemented game leaderboards system',
       'Fixed notification spam issues'
     ]
+  },
+  '1.4.0': {
+    title: 'UI Enhancements',
+    date: '2025-05-06',
+    changes: [
+      'Redesigned update notification with changelog view',
+      'Fixed connectivity detection to prevent false offline warnings',
+      'Enhanced navigation with improved menu responsiveness',
+      'Improved game performance for slower devices',
+      'Added Terms & Conditions acceptance logs with search functionality'
+    ]
   }
 }
 
@@ -69,6 +80,7 @@ export interface UseUpdateNotificationResult {
   hideTermsAndConditions: () => void;
   refreshPage: () => void;
   currentVersionDetails: VersionDetails;
+  testShowUpdateNotification: () => void; // For testing purpose only
 }
 
 export function useUpdateNotification(): UseUpdateNotificationResult {
@@ -152,6 +164,11 @@ export function useUpdateNotification(): UseUpdateNotificationResult {
   
   // Get current version details
   const currentVersionDetails = VERSION_HISTORY[CURRENT_VERSION];
+  
+  // Testing function to force show the update notification dialog
+  const testShowUpdateNotification = () => {
+    setShowUpdateNotification(true);
+  };
 
   return {
     showUpdateNotification,
@@ -159,6 +176,7 @@ export function useUpdateNotification(): UseUpdateNotificationResult {
     hideUpdateNotification,
     hideTermsAndConditions,
     refreshPage,
-    currentVersionDetails
+    currentVersionDetails,
+    testShowUpdateNotification
   };
 }
