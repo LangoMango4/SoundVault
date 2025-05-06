@@ -52,7 +52,7 @@ export function WordScramble() {
       };
 
       // Send to API
-      const response = await apiRequest('POST', '/api/games/save', gameData);
+      const response = await apiRequest('POST', '/api/games/word-scramble/save', gameData);
       if (!response.ok) {
         throw new Error('Failed to save high score');
       }
