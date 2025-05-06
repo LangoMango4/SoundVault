@@ -146,7 +146,7 @@ export const termsAcceptanceLogs = pgTable("terms_acceptance_logs", {
   username: text("username").notNull(),
   acceptanceTime: timestamp("acceptance_time").defaultNow().notNull(),
   version: text("version").notNull(),
-  userAgent: text("user_agent"),
+  acceptanceMethod: text("acceptance_method").default("web").notNull(),
   ipAddress: text("ip_address"),
 });
 

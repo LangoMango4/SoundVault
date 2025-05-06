@@ -285,7 +285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.user.id,
         username: req.user.username,
         version: req.body.version || "1.0.0",
-        userAgent: req.headers["user-agent"] || null,
+        acceptanceMethod: req.body.method || "web",
         ipAddress: req.ip || null
       });
       
