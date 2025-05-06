@@ -10,6 +10,8 @@ import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import { useOnlineStatus } from "./hooks/use-online-status";
 import { OfflineScreen } from "./components/layout/OfflineScreen";
+import { UpdateNotificationDialog } from "./components/dialogs/UpdateNotificationDialog";
+import { useUpdateNotification } from "./hooks/use-update-notification";
 import { useEffect, useState } from "react";
 
 function Router() {
@@ -101,11 +103,24 @@ function ConnectivityChecker() {
   return null;
 }
 
+// Component to show update notification
+function UpdateNotifier() {
+  const { showUpdateNotification, hideUpdateNotification } = useUpdateNotification();
+  
+  return (
+    <UpdateNotificationDialog 
+      open={showUpdateNotification} 
+      onAccept={hideUpdateNotification} 
+    />
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ConnectivityChecker />
+        <UpdateNotifier />
         <Router />
         <Toaster />
       </AuthProvider>
