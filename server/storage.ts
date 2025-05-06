@@ -5,7 +5,8 @@ import {
   broadcastMessages, BroadcastMessage, InsertBroadcastMessage,
   chatMessages, ChatMessage, InsertChatMessage,
   cookieClickerData, CookieClickerData, InsertCookieClickerData,
-  gameData, GameData, InsertGameData
+  gameData, GameData, InsertGameData,
+  privateMessages, PrivateMessage, InsertPrivateMessage
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -97,6 +98,14 @@ export interface IStorage {
   updateGameData(id: number, data: Partial<InsertGameData>): Promise<GameData | undefined>;
   getAllGameData(gameType?: string): Promise<GameData[]>;
   getHighScores(gameType: string, limit?: number): Promise<GameData[]>;
+  
+  // Private messaging operations
+  getPrivateMessage(id: number): Promise<PrivateMessage | undefined>;
+  createPrivateMessage(message: InsertPrivateMessage): Promise<PrivateMessage>;
+  getPrivateMessagesForUser(userId: number): Promise<PrivateMessage[]>;
+  getConversation(userId1: number, userId2: number): Promise<PrivateMessage[]>;
+  markPrivateMessageAsRead(id: number): Promise<PrivateMessage | undefined>;
+  deletePrivateMessage(id: number): Promise<boolean>;
 }
 
 // In-memory storage implementation
@@ -108,6 +117,7 @@ export class MemStorage implements IStorage {
   private chatMessages: Map<number, ChatMessage>;
   private cookieClickerData: Map<number, CookieClickerData>;
   private gameData: Map<number, GameData>;
+  private privateMessages: Map<number, PrivateMessage>;
   sessionStore: session.Store;
   
   private userIdCounter: number;
@@ -117,6 +127,7 @@ export class MemStorage implements IStorage {
   private chatMessageIdCounter: number;
   private cookieClickerIdCounter: number;
   private gameDataIdCounter: number;
+  private privateMessageIdCounter: number;
 
   constructor() {
     this.users = new Map();
@@ -126,6 +137,7 @@ export class MemStorage implements IStorage {
     this.chatMessages = new Map();
     this.cookieClickerData = new Map();
     this.gameData = new Map();
+    this.privateMessages = new Map();
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // Prune expired entries every 24h
     });
@@ -137,6 +149,7 @@ export class MemStorage implements IStorage {
     this.chatMessageIdCounter = 1;
     this.cookieClickerIdCounter = 1;
     this.gameDataIdCounter = 1;
+    this.privateMessageIdCounter = 1;
     
     // Initialize with admin account and load saved data
     this.initializeData();
@@ -651,6 +664,65 @@ export class MemStorage implements IStorage {
       .filter(data => data.highScore !== null && data.highScore !== undefined)
       .sort((a, b) => (b.highScore || 0) - (a.highScore || 0))
       .slice(0, limit);
+  }
+
+  // Private message operations
+  async getPrivateMessage(id: number): Promise<PrivateMessage | undefined> {
+    return this.privateMessages.get(id);
+  }
+
+  async createPrivateMessage(insertMessage: InsertPrivateMessage): Promise<PrivateMessage> {
+    const id = this.privateMessageIdCounter++;
+    const timestamp = new Date();
+    
+    const message: PrivateMessage = { 
+      ...insertMessage, 
+      id, 
+      timestamp,
+      isRead: false,
+      isDeleted: false
+    };
+    
+    this.privateMessages.set(id, message);
+    this.saveDataToFiles(); // Save after modification
+    return message;
+  }
+
+  async getPrivateMessagesForUser(userId: number): Promise<PrivateMessage[]> {
+    return Array.from(this.privateMessages.values())
+      .filter(message => message.recipientId === userId || message.senderId === userId)
+      .filter(message => !message.isDeleted)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }
+
+  async getConversation(userId1: number, userId2: number): Promise<PrivateMessage[]> {
+    return Array.from(this.privateMessages.values())
+      .filter(message => 
+        (message.senderId === userId1 && message.recipientId === userId2) || 
+        (message.senderId === userId2 && message.recipientId === userId1)
+      )
+      .filter(message => !message.isDeleted)
+      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  }
+
+  async markPrivateMessageAsRead(id: number): Promise<PrivateMessage | undefined> {
+    const message = await this.getPrivateMessage(id);
+    if (!message) return undefined;
+    
+    const updatedMessage = { ...message, isRead: true };
+    this.privateMessages.set(id, updatedMessage);
+    this.saveDataToFiles(); // Save after modification
+    return updatedMessage;
+  }
+
+  async deletePrivateMessage(id: number): Promise<boolean> {
+    const message = await this.getPrivateMessage(id);
+    if (!message) return false;
+    
+    const updatedMessage = { ...message, isDeleted: true };
+    this.privateMessages.set(id, updatedMessage);
+    this.saveDataToFiles(); // Save after modification
+    return true;
   }
 }
 

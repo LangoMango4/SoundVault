@@ -138,3 +138,24 @@ export const insertGameDataSchema = createInsertSchema(gameData).omit({
 
 export type GameData = typeof gameData.$inferSelect;
 export type InsertGameData = z.infer<typeof insertGameDataSchema>;
+
+// Private messaging system
+export const privateMessages = pgTable("private_messages", {
+  id: serial("id").primaryKey(),
+  senderId: integer("sender_id").notNull(), // User ID who sent the message
+  recipientId: integer("recipient_id").notNull(), // User ID who received the message
+  content: text("content").notNull(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  isRead: boolean("is_read").default(false).notNull(),
+  isDeleted: boolean("is_deleted").default(false).notNull(),
+});
+
+export const insertPrivateMessageSchema = createInsertSchema(privateMessages).omit({
+  id: true,
+  timestamp: true,
+  isRead: true,
+  isDeleted: true,
+});
+
+export type PrivateMessage = typeof privateMessages.$inferSelect;
+export type InsertPrivateMessage = z.infer<typeof insertPrivateMessageSchema>;
