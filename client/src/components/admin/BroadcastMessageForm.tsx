@@ -47,10 +47,10 @@ import errorTitleIcon from "@/assets/error-title-icon.png";
 const formSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters" }).max(100),
   message: z.string().min(5, { message: "Message must be at least 5 characters" }),
-  priority: z.enum(["normal"], {
+  priority: z.enum(["low", "normal", "high", "urgent"], {
     required_error: "Please select a priority level",
-  }).default("normal"),
-  expiresAt: z.null().optional(),
+  }),
+  expiresAt: z.date().nullable().optional(),
   useWindowsStyle: z.boolean().default(true),
 });
 
@@ -168,6 +168,86 @@ export function BroadcastMessageForm({ open, onOpenChange }: BroadcastMessageFor
                   </FormControl>
                   <FormDescription>
                     The main content of your broadcast message
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="priority"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Priority</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select priority level" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="urgent">Urgent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    How important is this message to users
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="expiresAt"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Expiration (Optional)</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Never expires</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value || undefined}
+                        onSelect={field.onChange}
+                        disabled={(date) => date < new Date()}
+                        initialFocus
+                      />
+                      <div className="p-3 border-t border-border">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => field.onChange(null)}
+                          type="button"
+                        >
+                          Clear
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  <FormDescription>
+                    When this message should no longer be shown to users
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

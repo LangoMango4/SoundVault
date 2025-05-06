@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, PlayCircle, Loader2, MessageSquare } from "lucide-react";
+import { Plus, Edit, Trash2, PlayCircle, Loader2 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { User, Sound, Category } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -13,7 +13,6 @@ import { UserForm } from "./UserForm";
 import { SoundForm } from "./SoundForm";
 import { ScreenLockControl } from "./ScreenLockControl";
 import { BatchSoundImport } from "./BatchSoundImport";
-import { PrivateMessagingManager } from "../messaging/PrivateMessagingManager";
 import { Howl } from "howler";
 import {
   AlertDialog,
@@ -297,12 +296,6 @@ export function AdminPanel({
             <TabsList className="border-b rounded-none justify-start">
               <TabsTrigger value="users">Users</TabsTrigger>
               <TabsTrigger value="sounds">Sounds</TabsTrigger>
-              <TabsTrigger value="messages">
-                <div className="flex items-center">
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Private Messages
-                </div>
-              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="users" className="flex-1 overflow-auto p-1">
@@ -354,9 +347,6 @@ export function AdminPanel({
               </div>
             </TabsContent>
             
-            <TabsContent value="messages" className="flex-1 overflow-hidden">
-              <PrivateMessagingManager />
-            </TabsContent>
 
           </Tabs>
         </DialogContent>
