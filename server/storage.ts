@@ -1297,6 +1297,47 @@ export class DatabaseStorage implements IStorage {
       return false;
     }
   }
+  
+  async searchTermsAcceptanceLogs(params: { username?: string; version?: string; acceptanceMethod?: string; fromDate?: Date; toDate?: Date; limit?: number; }): Promise<TermsAcceptanceLog[]> {
+    try {
+      // Start with a basic query
+      let query = db.select().from(termsAcceptanceLogs);
+      
+      // Apply filters
+      if (params.username) {
+        query = query.where(like(termsAcceptanceLogs.username, `%${params.username}%`));
+      }
+      
+      if (params.version) {
+        query = query.where(eq(termsAcceptanceLogs.version, params.version));
+      }
+      
+      if (params.acceptanceMethod) {
+        query = query.where(eq(termsAcceptanceLogs.acceptanceMethod, params.acceptanceMethod));
+      }
+      
+      if (params.fromDate) {
+        query = query.where(gte(termsAcceptanceLogs.acceptanceTime, params.fromDate));
+      }
+      
+      if (params.toDate) {
+        query = query.where(lte(termsAcceptanceLogs.acceptanceTime, params.toDate));
+      }
+      
+      // Order by most recent first
+      query = query.orderBy(desc(termsAcceptanceLogs.acceptanceTime));
+      
+      // Apply limit if provided
+      if (params.limit && params.limit > 0) {
+        query = query.limit(params.limit);
+      }
+      
+      return await query;
+    } catch (error) {
+      console.error('Error searching terms acceptance logs:', error);
+      return [];
+    }
+  }
 }
 
 // Export a Database Storage instance now that we have DB support

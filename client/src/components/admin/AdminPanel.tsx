@@ -45,7 +45,7 @@ export function AdminPanel({
   const [isUserFormOpen, setIsUserFormOpen] = useState(false);
   const [isSoundFormOpen, setIsSoundFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<{ type: "user" | "sound", id: number } | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<{ type: "user" | "sound" | "termslog", id: number } | null>(null);
 
   // Users query
   const { 
@@ -83,6 +83,27 @@ export function AdminPanel({
   });
 
   // Delete mutations
+  const deleteTermsLogMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/terms/logs/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/terms/logs"] });
+      toast({
+        title: "Success",
+        description: "Log entry deleted successfully",
+      });
+      setDeleteDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to delete log: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
   const deleteUserMutation = useMutation({
     mutationFn: async (id: number) => {
       await apiRequest("DELETE", `/api/users/${id}`);
@@ -140,13 +161,15 @@ export function AdminPanel({
     
     if (itemToDelete.type === "user") {
       deleteUserMutation.mutate(itemToDelete.id);
-    } else {
+    } else if (itemToDelete.type === "sound") {
       deleteSoundMutation.mutate(itemToDelete.id);
+    } else if (itemToDelete.type === "termslog") {
+      deleteTermsLogMutation.mutate(itemToDelete.id);
     }
   };
 
   // Handle opening delete dialog
-  const openDeleteDialog = (type: "user" | "sound", id: number) => {
+  const openDeleteDialog = (type: "user" | "sound" | "termslog", id: number) => {
     setItemToDelete({ type, id });
     setDeleteDialogOpen(true);
   };
@@ -287,6 +310,23 @@ export function AdminPanel({
           )}
         </div>
       )
+    },
+    {
+      header: "Actions",
+      cell: (log: TermsAcceptanceLog) => (
+        <div className="flex space-x-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              openDeleteDialog("termslog", log.id);
+            }}
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      ),
     },
   ];
 
