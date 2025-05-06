@@ -13,6 +13,7 @@ interface UseUpdateNotificationResult {
 const CURRENT_VERSION = '1.3.0'; // Snake, TicTacToe, MathPuzzle games added
 const VERSION_STORAGE_KEY = 'math-homework-version';
 const LAST_ACTIVITY_KEY = 'math-homework-last-activity';
+const TERMS_SHOWN_KEY = 'math-homework-terms-shown-session';
 const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes in milliseconds
 
 export function useUpdateNotification(): UseUpdateNotificationResult {
@@ -20,10 +21,13 @@ export function useUpdateNotification(): UseUpdateNotificationResult {
   const [showTermsAndConditions, setShowTermsAndConditions] = useState(false);
   const { user, logoutMutation } = useAuth();
   
-  // Show terms and conditions every time user logs in
+  // Show terms and conditions every time user logs in, but only once per session
   useEffect(() => {
     if (user) {
-      setShowTermsAndConditions(true);
+      const termsShownThisSession = sessionStorage.getItem(TERMS_SHOWN_KEY) === 'true';
+      if (!termsShownThisSession) {
+        setShowTermsAndConditions(true);
+      }
     }
   }, [user]);
   
@@ -86,6 +90,7 @@ export function useUpdateNotification(): UseUpdateNotificationResult {
   
   const hideTermsAndConditions = () => {
     setShowTermsAndConditions(false);
+    sessionStorage.setItem(TERMS_SHOWN_KEY, 'true');
   };
   
   const refreshPage = () => {

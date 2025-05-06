@@ -38,11 +38,14 @@ export function useOnlineStatus() {
     // Handler for when connection comes back
     const handleOnline = () => {
       setIsOnline(true);
-      toast({
-        title: "Connection Restored",
-        description: "Your internet connection has been restored.",
-        variant: "default", 
-      });
+      // We'll only show this toast when moving from a confirmed offline state to online
+      if (!isOnline) {
+        toast({
+          title: "Connection Restored",
+          description: "Your internet connection has been restored.",
+          variant: "default", 
+        });
+      }
       // Verify with server
       checkRealConnectivity();
     };
@@ -74,8 +77,8 @@ export function useOnlineStatus() {
     // Send heartbeat immediately
     sendHeartbeat();
     
-    // Set up regular ping check - every 5 seconds
-    const pingIntervalId = setInterval(checkRealConnectivity, 5000);
+    // Set up regular ping check - every 15 seconds (reduced from 5 seconds to avoid too many requests)
+    const pingIntervalId = setInterval(checkRealConnectivity, 15000);
     
     // Set up heartbeat interval - every 60 seconds
     const heartbeatIntervalId = setInterval(sendHeartbeat, 60000);
