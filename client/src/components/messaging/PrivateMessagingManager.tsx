@@ -17,18 +17,32 @@ export function PrivateMessagingManager() {
   const [activeConversation, setActiveConversation] = useState<number | null>(null);
   const [chatStyle, setChatStyle] = useState<ChatStyle>(ChatStyle.MODERN);
   
-  // Only admins can send private messages
-  if (!user || user.role !== "admin") {
+  // Show different interfaces for admins and regular users
+  if (!user) {
     return (
       <div className="flex flex-col items-center justify-center h-full space-y-4 p-4">
         <MessageSquare className="h-16 w-16 text-gray-300" />
         <div className="text-center space-y-2">
           <h3 className="text-lg font-medium">Private Messaging</h3>
           <p className="text-gray-500">
-            {!user 
-              ? "Please log in to access private messaging features." 
-              : "Only administrators can initiate private messages."}
+            Please log in to access private messaging features.
           </p>
+        </div>
+      </div>
+    );
+  }
+  
+  // For regular users, we only show received messages, they can't initiate new chats
+  if (user.role !== "admin") {
+    return (
+      <div className="h-full flex flex-col">
+        <div className="py-2 px-4 flex justify-between items-center border-b">
+          <h2 className="text-lg font-medium">Private Messages</h2>
+          <p className="text-sm text-gray-500">Messages from administrators</p>
+        </div>
+        
+        <div className="flex-1 overflow-hidden">
+          <PrivateMessaging />
         </div>
       </div>
     );
