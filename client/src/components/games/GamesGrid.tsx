@@ -8,6 +8,9 @@ import { DinoDash } from "./local-games/DinoDash";
 import { MemoryMatch } from "./local-games/MemoryMatch";
 import { CookieClicker } from "./local-games/CookieClicker";
 import { WordScramble } from "./local-games/WordScramble";
+import { SnakeGame } from "./local-games/SnakeGame";
+import { TicTacToe } from "./local-games/TicTacToe";
+import { MathPuzzle } from "./local-games/MathPuzzle";
 
 interface Game {
   id: string;
