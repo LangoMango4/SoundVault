@@ -55,14 +55,35 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
   
   // Add keyboard shortcut for teacher inbound function
   useEffect(() => {
-    // Use code property to specifically check for AltRight key
+    // Use Escape + T key combination instead of AltRight to avoid Zscaler conflict
+    let escapePressed = false;
+    const escapeTimeout = 1000; // Reset escape state after 1 second
+    let escapeTimer: number | null = null;
+    
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Check if it's specifically the Right Alt key being pressed
-      if (e.code === 'AltRight') {
-        console.log("Right Alt key pressed - redirecting to school website");
+      // First key: Escape
+      if (e.key === 'Escape') {
+        escapePressed = true;
+        
+        // Reset after timeout
+        if (escapeTimer) clearTimeout(escapeTimer);
+        escapeTimer = window.setTimeout(() => {
+          escapePressed = false;
+        }, escapeTimeout);
+        
+        return;
+      }
+      
+      // Second key: T (after Escape was pressed)
+      if (escapePressed && e.key.toLowerCase() === 't') {
+        console.log("Emergency escape sequence triggered - redirecting to school website");
         handleKeyboardShortcutTeacherInbound();
+        escapePressed = false; // Reset state
+        if (escapeTimer) clearTimeout(escapeTimer);
+        
         // Try to prevent default browser behavior
         e.preventDefault();
+        e.stopPropagation();
       }
     };
     
@@ -73,6 +94,7 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
     // Cleanup function
     return () => {
       document.removeEventListener("keydown", handleKeyDown, true);
+      if (escapeTimer) clearTimeout(escapeTimer);
       console.log("Keyboard shortcut listener removed");
     };
   }, []);
@@ -145,7 +167,7 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Open school website in current tab</p>
-                    <p className="text-xs text-muted-foreground mt-1">Shortcut: Press Right Alt for same action</p>
+                    <p className="text-xs text-muted-foreground mt-1">Shortcut: Press <span className="font-bold">Escape</span> then <span className="font-bold">T</span></p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
