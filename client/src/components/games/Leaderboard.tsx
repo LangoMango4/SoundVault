@@ -109,14 +109,6 @@ export function Leaderboard({
             else if (i === 2) icon = <Medal className="w-5 h-5 text-amber-700" />;
             else icon = <Award className="w-5 h-5 text-blue-400" />;
             
-            // Format score with proper thousands separators
-            const formattedScore = typeof entry.score === 'number' 
-              ? entry.score.toLocaleString(undefined, {
-                  minimumFractionDigits: entry.score % 1 !== 0 ? 1 : 0,
-                  maximumFractionDigits: 1
-                })
-              : '0';
-            
             return (
               <div key={entry.id} className="py-3 flex justify-between items-center">
                 <div className="flex items-center gap-3">
@@ -126,7 +118,10 @@ export function Leaderboard({
                     <span className="text-sm text-gray-500 ml-1">({entry.username})</span>
                   </span>
                 </div>
-                <span className="font-bold text-lg min-w-[120px] text-right">{formattedScore}</span>
+                <div className="font-bold text-lg min-w-[120px] text-right">
+                  {/* Direct rendering of number */}
+                  {Number(entry.score).toFixed(entry.score % 1 === 0 ? 0 : 1)}
+                </div>
               </div>
             );
           })}
