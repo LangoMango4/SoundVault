@@ -957,6 +957,192 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Game-specific endpoints for our new games
+  
+  // Tic-Tac-Toe game
+  app.get('/api/games/tictactoe', isAuthenticated, async (req, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      // Get game data for current user
+      const gameData = await storage.getGameData(req.user.id, 'tictactoe');
+      
+      if (!gameData) {
+        return res.json({
+          data: {
+            wins: 0,
+            losses: 0,
+            draws: 0
+          },
+          lastPlayed: new Date().toISOString()
+        });
+      }
+      
+      return res.json(gameData);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.post('/api/games/tictactoe/save', isAuthenticated, async (req, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const { data } = req.body;
+      
+      // Check if data already exists
+      const existingData = await storage.getGameData(req.user.id, 'tictactoe');
+      
+      if (existingData) {
+        // Update existing data
+        const updatedData = await storage.updateGameData(existingData.id, {
+          data,
+          lastPlayed: new Date()
+        });
+        
+        return res.json(updatedData);
+      } else {
+        // Create new game data
+        const newData = await storage.saveGameData({
+          userId: req.user.id,
+          gameType: 'tictactoe',
+          data,
+          highScore: null
+        });
+        
+        return res.status(201).json(newData);
+      }
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Snake game
+  app.get('/api/games/snake', isAuthenticated, async (req, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      // Get game data for current user
+      const gameData = await storage.getGameData(req.user.id, 'snake');
+      
+      if (!gameData) {
+        return res.json({
+          highScore: 0,
+          lastPlayed: new Date().toISOString()
+        });
+      }
+      
+      return res.json(gameData);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.post('/api/games/snake/save', isAuthenticated, async (req, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const { highScore } = req.body;
+      
+      // Check if data already exists
+      const existingData = await storage.getGameData(req.user.id, 'snake');
+      
+      if (existingData) {
+        // Update existing data if the new score is higher
+        if (highScore > existingData.highScore) {
+          const updatedData = await storage.updateGameData(existingData.id, {
+            highScore,
+            lastPlayed: new Date()
+          });
+          
+          return res.json(updatedData);
+        }
+        return res.json(existingData);
+      } else {
+        // Create new game data
+        const newData = await storage.saveGameData({
+          userId: req.user.id,
+          gameType: 'snake',
+          data: {},
+          highScore
+        });
+        
+        return res.status(201).json(newData);
+      }
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Math Puzzle game
+  app.get('/api/games/math-puzzle', isAuthenticated, async (req, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      // Get game data for current user
+      const gameData = await storage.getGameData(req.user.id, 'math-puzzle');
+      
+      if (!gameData) {
+        return res.json({
+          highScore: 0,
+          lastPlayed: new Date().toISOString()
+        });
+      }
+      
+      return res.json(gameData);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.post('/api/games/math-puzzle/save', isAuthenticated, async (req, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const { highScore } = req.body;
+      
+      // Check if data already exists
+      const existingData = await storage.getGameData(req.user.id, 'math-puzzle');
+      
+      if (existingData) {
+        // Update existing data if the new score is higher
+        if (highScore > existingData.highScore) {
+          const updatedData = await storage.updateGameData(existingData.id, {
+            highScore,
+            lastPlayed: new Date()
+          });
+          
+          return res.json(updatedData);
+        }
+        return res.json(existingData);
+      } else {
+        // Create new game data
+        const newData = await storage.saveGameData({
+          userId: req.user.id,
+          gameType: 'math-puzzle',
+          data: {},
+          highScore
+        });
+        
+        return res.status(201).json(newData);
+      }
+    } catch (error) {
+      next(error);
+    }
+  });
+  
   app.get('/api/games/:gameType/highscores', async (req, res, next) => {
     try {
       const gameType = req.params.gameType;

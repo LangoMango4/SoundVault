@@ -60,6 +60,30 @@ export function GamesGrid() {
       category: "puzzle",
       description: "Unscramble school-related words against the clock.",
       isLocal: true
+    },
+    {
+      id: "snake-game",
+      name: "Snake Game",
+      component: SnakeGame,
+      category: "arcade",
+      description: "Control a snake to eat food and grow without hitting walls or yourself.",
+      isLocal: true
+    },
+    {
+      id: "tic-tac-toe",
+      name: "Tic-Tac-Toe",
+      component: TicTacToe,
+      category: "strategy",
+      description: "Classic game of X's and O's against a computer opponent.",
+      isLocal: true
+    },
+    {
+      id: "math-puzzle",
+      name: "Math Challenge",
+      component: MathPuzzle,
+      category: "educational",
+      description: "Test your math skills with timed challenges at different difficulty levels.",
+      isLocal: true
     }
   ];
 

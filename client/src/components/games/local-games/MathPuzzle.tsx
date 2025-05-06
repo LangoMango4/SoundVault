@@ -351,7 +351,7 @@ export function MathPuzzle() {
               
               <div className="flex flex-col sm:flex-row gap-3 justify-center mt-4">
                 <Button onClick={startGame} variant="default">
-                  <Refresh className="w-4 h-4 mr-2" /> Play Again
+                  <RefreshCw className="w-4 h-4 mr-2" /> Play Again
                 </Button>
                 <Button onClick={resetGame} variant="outline">
                   Change Difficulty
