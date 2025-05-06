@@ -1396,6 +1396,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
       
+      // Check if the user is restricted from chatting due to strikes
+      const isChatRestricted = await storage.isUserChatRestricted(req.user.id);
+      if (isChatRestricted) {
+        return res.status(403).json({ 
+          message: "Your chat privileges have been restricted due to violations of the chat rules. Please contact an administrator."
+        });
+      }
+
+      // First validate the message format
       const chatMessageData = {
         content: req.body.content,
         userId: req.user.id
@@ -1409,13 +1418,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      const message = await storage.createChatMessage(chatMessageData);
+      // Run message through moderation system
+      const moderationResult = await storage.moderateMessage(
+        chatMessageData.content,
+        req.user.id,
+        req.user.username
+      );
+      
+      // If it's not allowed at all, reject the message
+      if (!moderationResult.isAllowed) {
+        return res.status(400).json({
+          message: "Your message contains prohibited content.",
+          reason: moderationResult.reason
+        });
+      }
+      
+      // Create the message with potentially moderated content
+      const message = await storage.createChatMessage({
+        ...chatMessageData,
+        content: moderationResult.moderatedMessage
+      });
       
       // Add user information to the response
       const { password, ...safeUser } = req.user;
       const enhancedMessage = {
         ...message,
-        user: safeUser
+        user: safeUser,
+        // Include moderation info if content was modified
+        ...(moderationResult.moderatedMessage !== chatMessageData.content ? {
+          wasModerated: true,
+          moderationReason: moderationResult.reason
+        } : {})
       };
       
       res.status(201).json(enhancedMessage);
@@ -1671,6 +1704,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       console.error('Leaderboard endpoint error:', error);
+      next(error);
+    }
+  });
+
+  // Chat moderation routes - for admin use only
+  app.get('/api/moderation/logs', isAdmin, async (req, res, next) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 100;
+      const logs = await storage.getModerationLogs(limit);
+      res.json(logs);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/api/moderation/logs/user/:userId', isAdmin, async (req, res, next) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const logs = await storage.getModerationLogsByUser(userId);
+      res.json(logs);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/api/moderation/strikes', isAdmin, async (req, res, next) => {
+    try {
+      const strikes = await storage.getUsersWithStrikes();
+      
+      // Enhance with user information
+      const enhancedStrikes = await Promise.all(
+        strikes.map(async (strike) => {
+          const user = await storage.getUser(strike.userId);
+          if (!user) return strike; // Return original if user not found
+          
+          const { password, ...safeUser } = user;
+          return {
+            ...strike,
+            user: safeUser
+          };
+        })
+      );
+      
+      res.json(enhancedStrikes);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post('/api/moderation/strikes/reset/:userId', isAdmin, async (req, res, next) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const updatedStrikes = await storage.resetUserStrikes(userId);
+      if (!updatedStrikes) {
+        return res.status(404).json({ message: "User strikes record not found" });
+      }
+      
+      res.json(updatedStrikes);
+    } catch (error) {
       next(error);
     }
   });
