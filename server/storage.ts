@@ -754,6 +754,42 @@ export class MemStorage implements IStorage {
       return []; // Return empty array on error
     }
   }
+
+  // Terms and Conditions acceptance log operations
+  async logTermsAcceptance(data: InsertTermsAcceptanceLog): Promise<TermsAcceptanceLog> {
+    const id = this.termsAcceptanceLogIdCounter++;
+    const timestamp = new Date();
+    
+    const log: TermsAcceptanceLog = {
+      ...data,
+      id,
+      acceptanceTime: timestamp
+    };
+    
+    this.termsAcceptanceLogs.set(id, log);
+    
+    // Save to database or file if needed
+    console.log(`Terms acceptance logged for user ${data.username} (ID: ${data.userId}) at ${timestamp.toISOString()}`);
+    
+    return log;
+  }
+  
+  async getTermsAcceptanceLogs(limit: number = 100): Promise<TermsAcceptanceLog[]> {
+    return Array.from(this.termsAcceptanceLogs.values())
+      .sort((a, b) => new Date(b.acceptanceTime).getTime() - new Date(a.acceptanceTime).getTime())
+      .slice(0, limit);
+  }
+  
+  async getTermsAcceptanceLogsByUser(userId: number): Promise<TermsAcceptanceLog[]> {
+    return Array.from(this.termsAcceptanceLogs.values())
+      .filter(log => log.userId === userId)
+      .sort((a, b) => new Date(b.acceptanceTime).getTime() - new Date(a.acceptanceTime).getTime());
+  }
+  
+  async getLatestTermsAcceptance(userId: number): Promise<TermsAcceptanceLog | undefined> {
+    const userLogs = await this.getTermsAcceptanceLogsByUser(userId);
+    return userLogs.length > 0 ? userLogs[0] : undefined;
+  }
 }
 
 // Database storage implementation
@@ -1163,6 +1199,45 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
     
     return leaderboardResults;
+  }
+
+  // Terms and Conditions acceptance log operations
+  async logTermsAcceptance(data: InsertTermsAcceptanceLog): Promise<TermsAcceptanceLog> {
+    const [log] = await db
+      .insert(termsAcceptanceLogs)
+      .values(data)
+      .returning();
+    
+    console.log(`Terms acceptance logged for user ${data.username} (ID: ${data.userId}) at ${new Date().toISOString()}`);
+    
+    return log;
+  }
+  
+  async getTermsAcceptanceLogs(limit: number = 100): Promise<TermsAcceptanceLog[]> {
+    return db
+      .select()
+      .from(termsAcceptanceLogs)
+      .orderBy(desc(termsAcceptanceLogs.acceptanceTime))
+      .limit(limit);
+  }
+  
+  async getTermsAcceptanceLogsByUser(userId: number): Promise<TermsAcceptanceLog[]> {
+    return db
+      .select()
+      .from(termsAcceptanceLogs)
+      .where(eq(termsAcceptanceLogs.userId, userId))
+      .orderBy(desc(termsAcceptanceLogs.acceptanceTime));
+  }
+  
+  async getLatestTermsAcceptance(userId: number): Promise<TermsAcceptanceLog | undefined> {
+    const [latestLog] = await db
+      .select()
+      .from(termsAcceptanceLogs)
+      .where(eq(termsAcceptanceLogs.userId, userId))
+      .orderBy(desc(termsAcceptanceLogs.acceptanceTime))
+      .limit(1);
+    
+    return latestLog;
   }
 }
 
