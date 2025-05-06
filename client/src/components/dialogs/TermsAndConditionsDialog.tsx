@@ -89,6 +89,9 @@ export function TermsAndConditionsDialog({ open, onAccept }: TermsAndConditionsD
             <Shield className="h-5 w-5" />
             Terms & Conditions
           </DialogTitle>
+          <div className="text-xs text-muted-foreground mt-1">
+            Last Updated: May 6, 2025
+          </div>
           <DialogDescription>
             Please read and accept the following terms before continuing.
           </DialogDescription>
@@ -138,7 +141,11 @@ export function TermsAndConditionsDialog({ open, onAccept }: TermsAndConditionsD
             </p>
             
             <p>
-              <span className="font-semibold">AB Tutor and IT Monitoring:</span> Be aware that IT administrators can use AB Tutor or similar monitoring software to lock your screen at any time without warning. This site does not protect you from such monitoring tools. If your school uses such software, your activities may be visible to administrators and teachers, and they may take control of your computer at any moment. We are not responsible for any consequences arising from detection through such monitoring systems.
+              <span className="font-semibold">ABTutor and IT Notice:</span> Please be aware that the IT is able to Monitor your activity on school-owned devices. We are not liable for any consequences of your actions during school or hometime use. This means that they are able to control, filter, and monitor your computer. We are NOT liable for your actions - We have systems in place to prevent misuse, but we cannot guarantee that you will not be caught using this site.
+            </p>
+            
+            <p>
+              <span className="font-semibold">Changes to Terms & Conditions:</span> These Terms & Conditions may be modified, changed, or updated at any time without prior notice at the sole discretion of the site administrator. Changes may be made randomly and without warning. It is your responsibility to review these terms each time you access the site, as continued use constitutes acceptance of any changes made. You will be required to accept the updated terms upon login.
             </p>
             
             <p className="border-t border-border/40 pt-3 mt-3">
