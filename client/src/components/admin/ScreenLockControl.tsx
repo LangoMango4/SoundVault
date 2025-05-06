@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import lockScreenImage from "@/assets/website_locked_wifi.svg";
+import lockScreenImage from "@/assets/website_locked.svg";
 
 // PIN for unlocking the screen (only admins can lock/unlock)
 const UNLOCK_PIN = "2012";

@@ -5,7 +5,7 @@ import { Lock, ShieldCheck, Key, Wifi, WifiOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import lockScreenImage from "@/assets/website_locked_wifi.svg";
+import lockScreenImage from "@/assets/website_locked.svg";
 import { useAuth } from "@/hooks/use-auth";
 
 // PIN for unlocking the screen (only admins can unlock)
