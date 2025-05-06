@@ -117,6 +117,10 @@ export function TermsAndConditionsDialog({ open, onAccept }: TermsAndConditionsD
             </p>
             
             <p>
+              <span className="font-semibold">Catholic Education Services Guideline Compliance:</span> Users agree to follow all Catholic Education Services (CES) Cairns guidelines while using this website. This includes adherence to the CES Acceptable Use Policy for technology resources, Digital Citizenship guidelines, and Catholic values and principles. Any content or activity that violates CES guidelines is strictly prohibited, and users shall be solely responsible for ensuring their usage of this site complies with all applicable school and diocesan policies.
+            </p>
+            
+            <p>
               <span className="font-semibold">Disclaimer of Responsibility:</span> The creator of this website is not responsible for any consequences, disciplinary actions, or trouble you may face for using this website during class time or in violation of school policies.
             </p>
             
