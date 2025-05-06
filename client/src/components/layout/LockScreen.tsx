@@ -117,15 +117,14 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
   // Main lock screen
   if (!showUnlockOptions) {
     return (
-      <div className="fixed inset-0 bg-slate-200 flex flex-col items-center justify-center z-50">
+      <div className="fixed inset-0 bg-black/25 flex flex-col items-center justify-center z-50">
         <div className="max-w-xl w-full px-4"> 
           <div className="flex flex-col items-center text-center">
             {/* Windows-style error dialog */}
-            <div className="bg-white border border-gray-400 shadow-lg w-full max-w-xl overflow-hidden">
+            <div className="bg-white border border-gray-300 shadow-xl w-full max-w-xl overflow-hidden rounded-sm">
               {/* Title bar */}
               <div className="bg-red-700 text-white px-2 py-1 flex justify-between items-center">
                 <div className="flex items-center gap-1">
-                  <span className="w-4 h-4 flex items-center justify-center border border-white/60 text-xs">🖥️</span>
                   <span className="text-xs font-normal">System Administrator</span>
                 </div>
                 <div className="flex items-center">
@@ -156,14 +155,14 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
                 <div className="flex justify-end mt-6">
                   {isAdmin ? (
                     <Button 
-                      className="min-w-[75px] bg-white border border-gray-400 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
+                      className="min-w-[75px] bg-white border border-gray-300 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-sm"
                       onClick={() => setShowUnlockOptions(true)}
                     >
                       Admin Unlock
                     </Button>
                   ) : (
                     <Button 
-                      className="min-w-[75px] bg-white border border-gray-400 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
+                      className="min-w-[75px] bg-white border border-gray-300 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-sm"
                       onClick={() => {
                         // Logout the current user
                         apiRequest("POST", "/api/logout")
@@ -194,14 +193,13 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
 
   // Admin-only unlock options screen
   return (
-    <div className="fixed inset-0 bg-slate-200 flex flex-col items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/25 flex flex-col items-center justify-center z-50">
       <div className="max-w-xl w-full px-4">
         <div className="flex flex-col items-center text-center">
-          <div className="bg-white border border-gray-400 shadow-lg w-full max-w-xl overflow-hidden">
+          <div className="bg-white border border-gray-300 shadow-xl w-full max-w-xl overflow-hidden rounded-sm">
             {/* Title bar */}
             <div className="bg-red-700 text-white px-2 py-1 flex justify-between items-center">
               <div className="flex items-center gap-1">
-                <span className="w-4 h-4 flex items-center justify-center border border-white/60 text-xs">🖥️</span>
                 <span className="text-xs font-normal">System Administrator - Unlock Options</span>
               </div>
               <div className="flex items-center">
@@ -264,13 +262,13 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
                       
                       <div className="flex justify-end gap-2 pt-2">
                         <Button 
-                          className="min-w-[75px] bg-white border border-gray-400 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
+                          className="min-w-[75px] bg-white border border-gray-300 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-sm"
                           onClick={() => setShowUnlockOptions(false)}
                         >
                           Cancel
                         </Button>
                         <Button 
-                          className="min-w-[75px] bg-white border border-gray-400 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
+                          className="min-w-[75px] bg-white border border-gray-300 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-sm"
                           onClick={handleAdminUnlockAttempt}
                         >
                           Unlock
@@ -312,7 +310,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
                       
                       <div className="flex justify-end gap-2 pt-2">
                         <Button 
-                          className="min-w-[75px] bg-white border border-gray-400 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
+                          className="min-w-[75px] bg-white border border-gray-300 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-sm"
                           onClick={() => {
                             setShowUnlockOptions(false);
                             setError("");
@@ -322,7 +320,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
                           Cancel
                         </Button>
                         <Button 
-                          className="min-w-[75px] bg-white border border-gray-400 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
+                          className="min-w-[75px] bg-white border border-gray-300 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-sm"
                           onClick={handleAdminOnlyUnlock}
                         >
                           Unlock

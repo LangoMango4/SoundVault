@@ -13,12 +13,11 @@ export function ErrorMessage({ show, onClose, title = "System Administrator", me
   if (!show) return null;
   
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white shadow-lg w-[400px] max-w-md overflow-hidden border border-gray-400">
+    <div className="fixed inset-0 bg-black/25 flex items-center justify-center z-50">
+      <div className="bg-white shadow-xl w-[400px] max-w-md overflow-hidden border border-gray-300 rounded-sm">
         {/* Title bar */}
         <div className="bg-red-700 text-white px-2 py-1 flex justify-between items-center">
           <div className="flex items-center gap-1">
-            <span className="w-4 h-4 flex items-center justify-center border border-white/60 text-xs">🖥️</span>
             <span className="text-xs font-normal">{title}</span>
           </div>
           <div className="flex items-center">
@@ -33,7 +32,7 @@ export function ErrorMessage({ show, onClose, title = "System Administrator", me
         </div>
         
         {/* Content */}
-        <div className="p-4 pb-3">
+        <div className="p-4 pb-2 bg-white">
           <div className="flex items-start gap-4">
             <div className="flex-shrink-0">
               <img src={warningTriangle} alt="Warning" className="h-8 w-8" />
@@ -43,10 +42,10 @@ export function ErrorMessage({ show, onClose, title = "System Administrator", me
             </div>
           </div>
           
-          <div className="flex justify-end mt-6 mr-1">
+          <div className="flex justify-end mt-6">
             <button 
               onClick={onClose}
-              className="min-w-[75px] bg-white border border-gray-400 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-none"
+              className="min-w-[75px] bg-white border border-gray-300 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-sm"
             >
               OK
             </button>
