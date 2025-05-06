@@ -137,6 +137,10 @@ export function TermsAndConditionsDialog({ open, onAccept }: TermsAndConditionsD
               <span className="font-semibold">Screen Locking Disclaimer:</span> The screen locking feature is provided for quick concealment of the site. We are not liable for any unsaved progress, game data, or scores that may be lost when the screen is locked. It is your responsibility to save your progress before using this feature or when an administrator initiates a lock.
             </p>
             
+            <p>
+              <span className="font-semibold">AB Tutor and IT Monitoring:</span> Be aware that IT administrators can use AB Tutor or similar monitoring software to lock your screen at any time without warning. This site does not protect you from such monitoring tools. If your school uses such software, your activities may be visible to administrators and teachers, and they may take control of your computer at any moment. We are not responsible for any consequences arising from detection through such monitoring systems.
+            </p>
+            
             <p className="border-t border-border/40 pt-3 mt-3">
               <span className="font-semibold">Acknowledgment:</span> By scrolling to the bottom and accepting these terms, you acknowledge that you have read, understood, and agree to be bound by all the terms and conditions set forth in this agreement.
             </p>
