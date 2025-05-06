@@ -16,7 +16,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import { db } from "./db";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, or } from "drizzle-orm";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
 
@@ -1112,6 +1112,83 @@ export class DatabaseStorage implements IStorage {
       .where(eq(gameData.gameType, gameType))
       .orderBy(desc(gameData.highScore))
       .limit(limit);
+  }
+
+  // Private messaging operations
+  async getPrivateMessage(id: number): Promise<PrivateMessage | undefined> {
+    const [message] = await db
+      .select()
+      .from(privateMessages)
+      .where(eq(privateMessages.id, id));
+    return message;
+  }
+
+  async createPrivateMessage(insertMessage: InsertPrivateMessage): Promise<PrivateMessage> {
+    const [message] = await db
+      .insert(privateMessages)
+      .values({
+        ...insertMessage,
+        isRead: false,
+        isDeleted: false
+      })
+      .returning();
+    return message;
+  }
+
+  async getPrivateMessagesForUser(userId: number): Promise<PrivateMessage[]> {
+    return db
+      .select()
+      .from(privateMessages)
+      .where(
+        and(
+          or(
+            eq(privateMessages.senderId, userId),
+            eq(privateMessages.recipientId, userId)
+          ),
+          eq(privateMessages.isDeleted, false)
+        )
+      )
+      .orderBy(desc(privateMessages.timestamp));
+  }
+
+  async getConversation(userId1: number, userId2: number): Promise<PrivateMessage[]> {
+    return db
+      .select()
+      .from(privateMessages)
+      .where(
+        and(
+          or(
+            and(
+              eq(privateMessages.senderId, userId1),
+              eq(privateMessages.recipientId, userId2)
+            ),
+            and(
+              eq(privateMessages.senderId, userId2),
+              eq(privateMessages.recipientId, userId1)
+            )
+          ),
+          eq(privateMessages.isDeleted, false)
+        )
+      )
+      .orderBy(privateMessages.timestamp);
+  }
+
+  async markPrivateMessageAsRead(id: number): Promise<PrivateMessage | undefined> {
+    const [updatedMessage] = await db
+      .update(privateMessages)
+      .set({ isRead: true })
+      .where(eq(privateMessages.id, id))
+      .returning();
+    return updatedMessage;
+  }
+
+  async deletePrivateMessage(id: number): Promise<boolean> {
+    const [updatedMessage] = await db
+      .update(privateMessages)
+      .set({ isDeleted: true })
+      .where(eq(privateMessages.id, id))
+      .returning();
+    return !!updatedMessage;
   }
 }
 
