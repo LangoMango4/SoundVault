@@ -9,7 +9,7 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Lock, Unlock, ShieldCheck, Users, Wifi, WifiOff } from "lucide-react";
+import { Lock, ShieldCheck, Users, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -140,8 +140,8 @@ export function ScreenLockControl({ isLocked, onLockChange }: ScreenLockControlP
           className="flex items-center gap-2 w-full justify-between"
         >
           <div className="flex items-center gap-2">
-            {isLocked ? <WifiOff className="h-4 w-4" /> : 
-             (adminOnlyUnlock ? <ShieldCheck className="h-4 w-4" /> : <Wifi className="h-4 w-4" />)}
+            {isLocked ? <Lock className="h-4 w-4" /> : 
+             (adminOnlyUnlock ? <ShieldCheck className="h-4 w-4" /> : <Lock className="h-4 w-4" />)}
             <span>Screen Lock</span>
           </div>
           <span className={`text-xs ${adminOnlyUnlock ? "bg-blue-100 text-blue-800" : "bg-neutral-100"} px-2 py-1 rounded`}>
@@ -205,7 +205,7 @@ export function ScreenLockControl({ isLocked, onLockChange }: ScreenLockControlP
                 onClick={handleAdminOnlyUnlock}
                 className="w-full sm:w-auto"
               >
-                <Wifi className="mr-2 h-4 w-4" />
+                <ShieldCheck className="mr-2 h-4 w-4" />
                 Unlock for Admin Only
               </Button>
               <Button 
