@@ -1,20 +1,75 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 
-interface UseUpdateNotificationResult {
+// Exported interface definition moved below
+
+// Version control to show notification when version changes
+const CURRENT_VERSION = '1.3.0';
+const VERSION_STORAGE_KEY = 'math-homework-version';
+const LAST_ACTIVITY_KEY = 'math-homework-last-activity';
+const TERMS_SHOWN_KEY = 'math-homework-terms-shown-session';
+const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes in milliseconds
+
+// Version history with information about each update
+export const VERSION_HISTORY = {
+  '1.0.0': {
+    title: 'Initial Release',
+    date: '2025-04-20',
+    changes: [
+      'Initial release of Maths Homework',
+      'Added soundboard functionality',
+      'Implemented basic chat system',
+      'Created admin panel for managing sounds and users'
+    ]
+  },
+  '1.1.0': {
+    title: 'Security Update',
+    date: '2025-04-25',
+    changes: [
+      'Added "Teacher Inbound" emergency button',
+      'Implemented screen lock feature with PIN protection',
+      'Added keyboard shortcut (Alt) for quick hide functionality',
+      'Improved security with auto-logout after 10 minutes of inactivity'
+    ]
+  },
+  '1.2.0': {
+    title: 'Performance & UI Improvements',
+    date: '2025-04-30',
+    changes: [
+      'Fixed connectivity issues with enhanced keepalive mechanism',
+      'Improved UI responsiveness across different devices',
+      'Added Windows-style notification system',
+      'Updated Terms & Conditions dialog',
+      'Changed emergency shortcut to Escape+T to avoid Zscaler conflicts'
+    ]
+  },
+  '1.3.0': {
+    title: 'Games Update',
+    date: '2025-05-05',
+    changes: [
+      'Added Snake game with persistent high scores',
+      'Added Tic-Tac-Toe game with local multiplayer',
+      'Added Math Puzzle game with random challenges',
+      'Implemented game leaderboards system',
+      'Fixed notification spam issues'
+    ]
+  }
+}
+
+interface VersionDetails {
+  title: string;
+  date: string;
+  changes: string[];
+}
+
+export interface UseUpdateNotificationResult {
   showUpdateNotification: boolean;
   showTermsAndConditions: boolean;
   hideUpdateNotification: () => void;
   hideTermsAndConditions: () => void;
   refreshPage: () => void;
+  currentVersionDetails: VersionDetails;
 }
-
-// Version control to show notification when version changes
-const CURRENT_VERSION = '1.3.0'; // Snake, TicTacToe, MathPuzzle games added
-const VERSION_STORAGE_KEY = 'math-homework-version';
-const LAST_ACTIVITY_KEY = 'math-homework-last-activity';
-const TERMS_SHOWN_KEY = 'math-homework-terms-shown-session';
-const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes in milliseconds
 
 export function useUpdateNotification(): UseUpdateNotificationResult {
   const [showUpdateNotification, setShowUpdateNotification] = useState(false);
@@ -95,11 +150,15 @@ export function useUpdateNotification(): UseUpdateNotificationResult {
     window.location.reload();
   };
   
+  // Get current version details
+  const currentVersionDetails = VERSION_HISTORY[CURRENT_VERSION];
+
   return {
     showUpdateNotification,
     showTermsAndConditions,
     hideUpdateNotification,
     hideTermsAndConditions,
-    refreshPage
+    refreshPage,
+    currentVersionDetails
   };
 }

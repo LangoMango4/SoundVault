@@ -138,3 +138,22 @@ export const insertGameDataSchema = createInsertSchema(gameData).omit({
 
 export type GameData = typeof gameData.$inferSelect;
 export type InsertGameData = z.infer<typeof insertGameDataSchema>;
+
+// Terms and Conditions acceptance log
+export const termsAcceptanceLogs = pgTable("terms_acceptance_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  username: text("username").notNull(),
+  acceptanceTime: timestamp("acceptance_time").defaultNow().notNull(),
+  version: text("version").notNull(),
+  userAgent: text("user_agent"),
+  ipAddress: text("ip_address"),
+});
+
+export const insertTermsAcceptanceLogSchema = createInsertSchema(termsAcceptanceLogs).omit({
+  id: true,
+  acceptanceTime: true,
+});
+
+export type TermsAcceptanceLog = typeof termsAcceptanceLogs.$inferSelect;
+export type InsertTermsAcceptanceLog = z.infer<typeof insertTermsAcceptanceLogSchema>;
