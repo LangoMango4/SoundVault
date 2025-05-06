@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, PlayCircle, Loader2, Calendar, Clock, UserCircle, Tag, Monitor } from "lucide-react";
+import { Plus, Edit, Trash2, PlayCircle, Loader2, Calendar, Clock, UserCircle, Tag, Monitor, Globe, Smartphone, CheckCircle } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { User, Sound, Category, TermsAcceptanceLog } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -265,12 +265,26 @@ export function AdminPanel({
       }
     },
     {
-      accessorKey: "userAgent",
-      header: "Browser",
+      accessorKey: "acceptanceMethod",
+      header: "Method",
       cell: (log: TermsAcceptanceLog) => (
-        <div className="flex items-center gap-1.5 max-w-[200px] truncate" title={log.userAgent || ""}>
-          <Monitor className="h-4 w-4 text-muted-foreground" />
-          {log.userAgent ? log.userAgent.split(" ").slice(0, 2).join(" ") : "Unknown"}
+        <div className="flex items-center gap-1.5">
+          {log.acceptanceMethod === "web" ? (
+            <>
+              <Globe className="h-4 w-4 text-muted-foreground" />
+              Web Interface
+            </>
+          ) : log.acceptanceMethod === "mobile" ? (
+            <>
+              <Smartphone className="h-4 w-4 text-muted-foreground" />
+              Mobile App
+            </>
+          ) : (
+            <>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              {log.acceptanceMethod}
+            </>
+          )}
         </div>
       )
     },

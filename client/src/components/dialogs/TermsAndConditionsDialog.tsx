@@ -57,7 +57,8 @@ export function TermsAndConditionsDialog({ open, onAccept }: TermsAndConditionsD
     try {
       // Log acceptance of terms & conditions
       await apiRequest('POST', '/api/terms/accept', {
-        version: currentVersionDetails.title
+        version: currentVersionDetails.title,
+        method: 'web'
       });
       
       // Call the original onAccept function
