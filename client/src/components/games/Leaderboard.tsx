@@ -92,44 +92,52 @@ export function Leaderboard({
   }
 
   return (
-    <div className="p-4 border rounded-md bg-white">
-      <h3 className="text-lg font-bold mb-4 flex items-center">
-        <Trophy className="w-5 h-5 mr-2 text-yellow-500" />
+    <div className="p-4 border rounded-md bg-white w-full">
+      <h3 className="text-xl font-bold mb-4 flex items-center">
+        <Trophy className="w-6 h-6 mr-2 text-yellow-500" />
         Leaderboard
       </h3>
       
       {leaderboard.length === 0 ? (
-        <p className="text-gray-500 text-center py-4">No scores yet. Be the first to play!</p>
+        <p className="text-gray-500 text-center py-6">No scores yet. Be the first to play!</p>
       ) : (
         <div className="divide-y">
           {leaderboard.map((entry, i) => {
             let icon = null;
-            if (i === 0) icon = <Trophy className="w-4 h-4 text-yellow-500" />;
-            else if (i === 1) icon = <Medal className="w-4 h-4 text-gray-400" />;
-            else if (i === 2) icon = <Medal className="w-4 h-4 text-amber-700" />;
-            else icon = <Award className="w-4 h-4 text-blue-400" />;
+            if (i === 0) icon = <Trophy className="w-5 h-5 text-yellow-500" />;
+            else if (i === 1) icon = <Medal className="w-5 h-5 text-gray-400" />;
+            else if (i === 2) icon = <Medal className="w-5 h-5 text-amber-700" />;
+            else icon = <Award className="w-5 h-5 text-blue-400" />;
+            
+            // Format score with proper thousands separators
+            const formattedScore = typeof entry.score === 'number' 
+              ? entry.score.toLocaleString(undefined, {
+                  minimumFractionDigits: entry.score % 1 !== 0 ? 1 : 0,
+                  maximumFractionDigits: 1
+                })
+              : '0';
             
             return (
-              <div key={entry.id} className="py-2 flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <span className="flex items-center justify-center w-6">{icon}</span>
-                  <span className="font-medium truncate max-w-[200px]">
+              <div key={entry.id} className="py-3 flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center justify-center w-7">{icon}</span>
+                  <span className="font-medium text-lg truncate max-w-[250px]">
                     {entry.fullName} 
-                    <span className="text-xs text-gray-500 ml-1">({entry.username})</span>
+                    <span className="text-sm text-gray-500 ml-1">({entry.username})</span>
                   </span>
                 </div>
-                <span className="font-bold">{entry.score.toLocaleString()}</span>
+                <span className="font-bold text-lg min-w-[120px] text-right">{formattedScore}</span>
               </div>
             );
           })}
         </div>
       )}
       
-      <div className="mt-4 pt-2 border-t text-xs text-gray-500 flex justify-between items-center">
+      <div className="mt-4 pt-2 border-t text-sm text-gray-500 flex justify-between items-center">
         <span>Updated every {refreshInterval / 1000}s</span>
         <button 
           onClick={fetchLeaderboard}
-          className="text-blue-500 hover:underline"
+          className="text-blue-500 hover:underline font-medium"
         >
           Refresh Now
         </button>
