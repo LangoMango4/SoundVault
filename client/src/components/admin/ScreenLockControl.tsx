@@ -212,7 +212,7 @@ export function ScreenLockControl({ isLocked, onLockChange }: ScreenLockControlP
                 onClick={handleUnlockAttempt}
                 className="w-full sm:w-auto"
               >
-                <Wifi className="mr-2 h-4 w-4" />
+                <Lock className="mr-2 h-4 w-4" />
                 Unlock for Everyone
               </Button>
             </DialogFooter>
@@ -249,7 +249,7 @@ export function ScreenLockControl({ isLocked, onLockChange }: ScreenLockControlP
                 Cancel
               </Button>
               <Button variant="destructive" onClick={handleLockScreen}>
-                <WifiOff className="mr-2 h-4 w-4" />
+                <Lock className="mr-2 h-4 w-4" />
                 Lock Screen
               </Button>
             </DialogFooter>
