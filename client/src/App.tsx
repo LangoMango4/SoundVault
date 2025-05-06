@@ -35,6 +35,7 @@ function Router() {
 function ConnectivityChecker() {
   const { isOnline, checkRealConnectivity } = useOnlineStatus();
   const [forceOffline, setForceOffline] = useState(false);
+  const { showUpdateNotification } = useUpdateNotification();
   
   // This effect runs periodic real connectivity checks
   useEffect(() => {
@@ -98,8 +99,8 @@ function ConnectivityChecker() {
     };
   }, []);
   
-  // Return the offline screen if we're not online
-  if (!isOnline || forceOffline) {
+  // Don't show offline screen if update notification is active
+  if ((!isOnline || forceOffline) && !showUpdateNotification) {
     return <OfflineScreen />;
   }
   

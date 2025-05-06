@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useUpdateNotification } from '@/hooks/use-update-notification';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -8,8 +8,12 @@ export default function UpdateNotificationTester() {
   const { testShowUpdateNotification } = useUpdateNotification();
   const { toast } = useToast();
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isDisabled, setIsDisabled] = useState(false);
   
-  const handleTest = () => {
+  const handleTest = useCallback(() => {
+    if (isDisabled) return;
+    
+    setIsDisabled(true);
     testShowUpdateNotification();
     setShowSuccess(true);
     
@@ -18,20 +22,26 @@ export default function UpdateNotificationTester() {
       description: "Update notification triggered successfully!"
     });
     
-    // Hide success message after 3 seconds
+    // Re-enable button after a delay
+    setTimeout(() => {
+      setIsDisabled(false);
+    }, 2000);
+    
+    // Hide success message after a delay
     setTimeout(() => {
       setShowSuccess(false);
     }, 3000);
-  };
+  }, [isDisabled, testShowUpdateNotification, toast]);
   
   return (
     <div className="space-y-4">
       <Button
         onClick={handleTest}
         className="bg-primary hover:bg-primary/90"
+        disabled={isDisabled}
       >
         <Bell className="mr-2 h-4 w-4" />
-        Test Update Notification
+        {isDisabled ? 'Notification Sent...' : 'Test Update Notification'}
       </Button>
       
       {showSuccess && (
