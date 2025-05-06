@@ -1235,7 +1235,21 @@ export class DatabaseStorage implements IStorage {
       .insert(chatMessages)
       .values({
         ...insertMessage,
-        isDeleted: false
+        isDeleted: false,
+        isSystem: insertMessage.isSystem || false
+      })
+      .returning();
+    return message;
+  }
+  
+  async createSystemMessage(content: string): Promise<ChatMessage> {
+    const [message] = await db
+      .insert(chatMessages)
+      .values({
+        content,
+        userId: 0, // System user ID
+        isDeleted: false,
+        isSystem: true
       })
       .returning();
     return message;

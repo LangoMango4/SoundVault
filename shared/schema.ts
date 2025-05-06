@@ -81,12 +81,14 @@ export const chatMessages = pgTable("chat_messages", {
   userId: integer("user_id").notNull(), // User ID who sent the message
   timestamp: timestamp("timestamp").defaultNow().notNull(),
   isDeleted: boolean("is_deleted").default(false).notNull(),
+  isSystem: boolean("is_system").default(false).notNull(),
 });
 
 export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
   id: true,
   timestamp: true,
   isDeleted: true,
+  isSystem: true,
 });
 
 export type ChatMessage = typeof chatMessages.$inferSelect;

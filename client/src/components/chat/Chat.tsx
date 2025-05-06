@@ -16,6 +16,7 @@ interface ChatMessage {
   userId: number;
   timestamp: Date;
   isDeleted: boolean;
+  isSystem?: boolean;
   user?: {
     id: number;
     username: string;
