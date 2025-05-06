@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, PlayCircle, Loader2, Calendar, Clock, UserCircle, Tag, Monitor, Globe, Smartphone, CheckCircle } from "lucide-react";
+import { Plus, Edit, Trash2, PlayCircle, Loader2, Calendar, Clock, UserCircle, Tag, Monitor, Globe, Smartphone, CheckCircle, Search } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { User, Sound, Category, TermsAcceptanceLog } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -46,6 +49,8 @@ export function AdminPanel({
   const [isSoundFormOpen, setIsSoundFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ type: "user" | "sound" | "termslog", id: number } | null>(null);
+  const [searchParams, setSearchParams] = useState<{username?: string; version?: string; method?: string}>({});
+  const [isSearching, setIsSearching] = useState(false);
 
   // Users query
   const { 
@@ -81,6 +86,48 @@ export function AdminPanel({
     queryKey: ["/api/terms/logs", termsLogsLimit],
     enabled: open && activeTab === "termslogs",
   });
+  
+  // Search Terms & Conditions logs
+  const searchTermsLogs = async () => {
+    try {
+      setIsSearching(true);
+      const params = new URLSearchParams();
+      
+      if (searchParams.username?.trim()) {
+        params.append("username", searchParams.username.trim());
+      }
+      
+      if (searchParams.version?.trim()) {
+        params.append("version", searchParams.version.trim());
+      }
+      
+      if (searchParams.method?.trim() && searchParams.method !== 'all') {
+        params.append("acceptanceMethod", searchParams.method.trim());
+      }
+      
+      const response = await fetch(`/api/terms/logs/search?${params.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error(`Search failed: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      queryClient.setQueryData(["/api/terms/logs", termsLogsLimit], data);
+      
+      toast({
+        title: "Search completed",
+        description: `Found ${data.length} result${data.length !== 1 ? 's' : ''}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Search failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   // Delete mutations
   const deleteTermsLogMutation = useMutation({
@@ -498,6 +545,61 @@ export function AdminPanel({
                 <p className="text-sm text-muted-foreground">
                   This table shows all instances where users have accepted the Terms & Conditions. Logs are sorted by the most recent acceptance first.
                 </p>
+                
+                {/* Search Form */}
+                <div className="bg-card rounded-md border shadow-sm p-4">
+                  <h4 className="font-medium mb-3">Search Logs</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="username">Username</Label>
+                      <Input 
+                        id="username" 
+                        placeholder="Search by username"
+                        onChange={(e) => setSearchParams(prev => ({ ...prev, username: e.target.value }))} 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="version">Version</Label>
+                      <Input 
+                        id="version" 
+                        placeholder="e.g. 1.2.0"
+                        onChange={(e) => setSearchParams(prev => ({ ...prev, version: e.target.value }))} 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="method">Acceptance Method</Label>
+                      <Select onValueChange={(value) => setSearchParams(prev => ({ ...prev, method: value }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All methods</SelectItem>
+                          <SelectItem value="web">Web Interface</SelectItem>
+                          <SelectItem value="mobile">Mobile App</SelectItem>
+                          <SelectItem value="api">API</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end mt-4 gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setSearchParams({});
+                        refetchTermsLogs();
+                      }}
+                    >
+                      Clear
+                    </Button>
+                    <Button 
+                      onClick={() => searchTermsLogs()}
+                    >
+                      <Search className="mr-2 h-4 w-4" />
+                      Search
+                    </Button>
+                  </div>
+                </div>
                 
                 {termsLogsLoading ? (
                   <div className="flex justify-center py-8">
