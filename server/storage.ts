@@ -6,7 +6,9 @@ import {
   chatMessages, ChatMessage, InsertChatMessage,
   cookieClickerData, CookieClickerData, InsertCookieClickerData,
   gameData, GameData, InsertGameData,
-  termsAcceptanceLogs, TermsAcceptanceLog, InsertTermsAcceptanceLog
+  termsAcceptanceLogs, TermsAcceptanceLog, InsertTermsAcceptanceLog,
+  chatModerationLogs, ChatModerationLog, InsertChatModerationLog,
+  userStrikes, UserStrike, InsertUserStrike
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -107,6 +109,19 @@ export interface IStorage {
   getLatestTermsAcceptance(userId: number): Promise<TermsAcceptanceLog | undefined>;
   deleteTermsAcceptanceLog(id: number): Promise<boolean>;
   searchTermsAcceptanceLogs(params: { username?: string; version?: string; acceptanceMethod?: string; fromDate?: Date; toDate?: Date; limit?: number; }): Promise<TermsAcceptanceLog[]>;
+  
+  // Chat moderation operations
+  moderateMessage(content: string, userId: number, username: string): Promise<{ isAllowed: boolean; moderatedMessage: string; reason?: string; moderationType?: string; }>;
+  logModerationAction(log: InsertChatModerationLog): Promise<ChatModerationLog>;
+  getModerationLogs(limit?: number): Promise<ChatModerationLog[]>;
+  getModerationLogsByUser(userId: number): Promise<ChatModerationLog[]>;
+  
+  // User strikes operations
+  getUserStrikes(userId: number): Promise<UserStrike | undefined>;
+  incrementUserStrikes(userId: number, username: string): Promise<UserStrike>;
+  resetUserStrikes(userId: number): Promise<UserStrike | undefined>;
+  getUsersWithStrikes(): Promise<UserStrike[]>;
+  isUserChatRestricted(userId: number): Promise<boolean>;
 }
 
 // In-memory storage implementation

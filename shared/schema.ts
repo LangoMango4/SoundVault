@@ -157,3 +157,40 @@ export const insertTermsAcceptanceLogSchema = createInsertSchema(termsAcceptance
 
 export type TermsAcceptanceLog = typeof termsAcceptanceLogs.$inferSelect;
 export type InsertTermsAcceptanceLog = z.infer<typeof insertTermsAcceptanceLogSchema>;
+
+// Chat moderation system
+export const chatModerationLogs = pgTable("chat_moderation_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  username: text("username").notNull(),
+  originalMessage: text("original_message").notNull(),
+  moderatedAt: timestamp("moderated_at").defaultNow().notNull(),
+  reason: text("reason").notNull(),
+  moderationType: text("moderation_type").notNull(), // 'profanity', 'hate_speech', 'inappropriate', etc.
+});
+
+export const insertChatModerationLogSchema = createInsertSchema(chatModerationLogs).omit({
+  id: true,
+  moderatedAt: true,
+});
+
+export type ChatModerationLog = typeof chatModerationLogs.$inferSelect;
+export type InsertChatModerationLog = z.infer<typeof insertChatModerationLogSchema>;
+
+// User strikes for chat violations
+export const userStrikes = pgTable("user_strikes", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  username: text("username").notNull(),
+  strikesCount: integer("strikes_count").notNull().default(0),
+  isChatRestricted: boolean("is_chat_restricted").notNull().default(false),
+  lastStrikeAt: timestamp("last_strike_at").defaultNow(),
+});
+
+export const insertUserStrikeSchema = createInsertSchema(userStrikes).omit({
+  id: true,
+  lastStrikeAt: true,
+});
+
+export type UserStrike = typeof userStrikes.$inferSelect;
+export type InsertUserStrike = z.infer<typeof insertUserStrikeSchema>;
