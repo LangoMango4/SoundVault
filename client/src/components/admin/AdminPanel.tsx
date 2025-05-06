@@ -18,6 +18,7 @@ import { UserForm } from "./UserForm";
 import { SoundForm } from "./SoundForm";
 import { ScreenLockControl } from "./ScreenLockControl";
 import { BatchSoundImport } from "./BatchSoundImport";
+import UpdateNotificationTester from "./UpdateNotificationTester";
 import { Howl } from "howler";
 import {
   AlertDialog,
