@@ -8,7 +8,8 @@ import {
   insertCategorySchema, 
   insertSoundSchema,
   insertBroadcastMessageSchema,
-  insertChatMessageSchema
+  insertChatMessageSchema,
+  insertGameDataSchema
 } from "@shared/schema";
 import passport from "passport";
 import multer from "multer";

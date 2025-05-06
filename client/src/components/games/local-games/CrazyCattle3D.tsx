@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
-import { useAuth } from '@/hooks/use-auth';
-import { ErrorMessage } from './ErrorMessage';
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { apiRequest } from "@/lib/queryClient";
+import { ErrorMessage } from "./ErrorMessage";
+import { ArrowLeft, ArrowRight, Play, Pause, Volume2, VolumeX } from 'lucide-react';
 
-// Define cow model structure
 interface Cow {
   position: number; // 0 = left, 1 = center, 2 = right lane
   speed: number;
@@ -20,7 +19,7 @@ interface Cow {
 interface Obstacle {
   position: number; // 0 = left, 1 = center, 2 = right lane
   distance: number;
-  type: 'rock' | 'fence' | 'pond';
+  type: 'rock' | 'fence' | 'pond' | 'bush' | 'haystack';
   element: React.RefObject<HTMLDivElement>;
 }
 
@@ -34,14 +33,24 @@ interface GameState {
   gameOver: boolean;
   isPaused: boolean;
   isStarted: boolean;
+  soundEnabled: boolean;
 }
 
-const colors = [
-  '#8D5524', // brown
+// Original Crazy Cattle feel
+const CATTLE_COLORS = [
   '#FFFFFF', // white
-  '#E5E5E5', // gray
-  '#000000', // black
-  '#E7C591'  // tan
+  '#8D5524', // brown
+  '#000000', // black with white spots
+  '#A0522D', // sienna
+  '#D2691E'  // chocolate
+];
+
+const OBSTACLES = [
+  { type: 'rock', width: 30, height: 20, color: '#8a8a8a' },
+  { type: 'fence', width: 40, height: 15, color: '#ba8c63' },
+  { type: 'pond', width: 35, height: 10, color: '#4a80bd' },
+  { type: 'bush', width: 25, height: 25, color: '#2e8b57' },
+  { type: 'haystack', width: 45, height: 30, color: '#DAA520' }
 ];
 
 export function CrazyCattle3D() {
@@ -58,6 +67,7 @@ export function CrazyCattle3D() {
     gameOver: false,
     isPaused: false,
     isStarted: false,
+    soundEnabled: true
   });
   
   const [cow, setCow] = useState<Cow>({
@@ -67,7 +77,7 @@ export function CrazyCattle3D() {
     element: React.createRef(),
     rotation: 0,
     bounceHeight: 0,
-    color: colors[Math.floor(Math.random() * colors.length)]
+    color: CATTLE_COLORS[Math.floor(Math.random() * CATTLE_COLORS.length)]
   });
   
   const [obstacles, setObstacles] = useState<Obstacle[]>([]);
@@ -77,6 +87,41 @@ export function CrazyCattle3D() {
   const lastTimeRef = useRef<number>();
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const roadRef = useRef<HTMLDivElement>(null);
+  
+  // Sound references
+  const mooSoundRef = useRef<HTMLAudioElement | null>(null);
+  const collisionSoundRef = useRef<HTMLAudioElement | null>(null);
+  const bgMusicRef = useRef<HTMLAudioElement | null>(null);
+  
+  // Setup audio elements
+  useEffect(() => {
+    mooSoundRef.current = new Audio('/attached_assets/cow-moo.mp3');
+    collisionSoundRef.current = new Audio('/attached_assets/boom.mp3');
+    bgMusicRef.current = new Audio('/attached_assets/crazy-cattle-bg.mp3');
+    
+    if (bgMusicRef.current) {
+      bgMusicRef.current.loop = true;
+      bgMusicRef.current.volume = 0.4;
+    }
+    
+    return () => {
+      // Clean up audio on component unmount
+      if (bgMusicRef.current) {
+        bgMusicRef.current.pause();
+      }
+    };
+  }, []);
+  
+  // Handle sound toggle
+  useEffect(() => {
+    if (bgMusicRef.current) {
+      if (gameState.soundEnabled && gameState.isStarted && !gameState.isPaused && !gameState.gameOver) {
+        bgMusicRef.current.play().catch(e => console.error("Audio play failed:", e));
+      } else {
+        bgMusicRef.current.pause();
+      }
+    }
+  }, [gameState.soundEnabled, gameState.isStarted, gameState.isPaused, gameState.gameOver]);
   
   // Fetch high score and leaderboard on component mount
   useEffect(() => {
@@ -105,12 +150,15 @@ export function CrazyCattle3D() {
   
   // Save high score when game ends
   useEffect(() => {
-    if (gameState.gameOver && user) {
+    if (gameState.gameOver && user && gameState.score > 0) {
       const saveScore = async () => {
         try {
           await apiRequest('POST', '/api/game-data/crazy-cattle', {
             score: gameState.score,
-            username: user.username
+            data: {
+              level: gameState.level,
+              distance: gameState.distance
+            }
           });
           
           // Refresh leaderboard
@@ -132,11 +180,17 @@ export function CrazyCattle3D() {
   // Handle keyboard input
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!gameState.isStarted || gameState.gameOver || gameState.isPaused) return;
+      if (!gameState.isStarted || gameState.gameOver) return;
       
       switch (e.key) {
         case 'ArrowLeft':
-          if (cow.position > 0) {
+          if (cow.position > 0 && !gameState.isPaused) {
+            // Play moo sound
+            if (gameState.soundEnabled && mooSoundRef.current) {
+              mooSoundRef.current.currentTime = 0;
+              mooSoundRef.current.play().catch(() => {});
+            }
+            
             setCow(prev => ({
               ...prev,
               position: prev.position - 1,
@@ -145,7 +199,13 @@ export function CrazyCattle3D() {
           }
           break;
         case 'ArrowRight':
-          if (cow.position < 2) {
+          if (cow.position < 2 && !gameState.isPaused) {
+            // Play moo sound
+            if (gameState.soundEnabled && mooSoundRef.current) {
+              mooSoundRef.current.currentTime = 0;
+              mooSoundRef.current.play().catch(() => {});
+            }
+            
             setCow(prev => ({
               ...prev,
               position: prev.position + 1,
@@ -155,27 +215,39 @@ export function CrazyCattle3D() {
           break;
         case 'ArrowUp':
           // Speed boost
-          setGameState(prev => ({
-            ...prev,
-            speed: Math.min(prev.speed + 2, 15)
-          }));
+          if (!gameState.isPaused) {
+            setGameState(prev => ({
+              ...prev,
+              speed: Math.min(prev.speed + 2, 15)
+            }));
+          }
           break;
         case 'ArrowDown':
           // Slow down
-          setGameState(prev => ({
-            ...prev,
-            speed: Math.max(prev.speed - 2, 3)
-          }));
+          if (!gameState.isPaused) {
+            setGameState(prev => ({
+              ...prev,
+              speed: Math.max(prev.speed - 2, 3)
+            }));
+          }
           break;
         case ' ':
           togglePause();
+          break;
+        case 'Escape':
+          if (gameState.isStarted) {
+            togglePause();
+          }
+          break;
+        case 'm':
+          toggleSound();
           break;
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [gameState.isStarted, gameState.gameOver, gameState.isPaused, cow.position]);
+  }, [gameState.isStarted, gameState.gameOver, gameState.isPaused, cow.position, gameState.soundEnabled]);
   
   // Main game loop
   const gameLoop = (time: number) => {
@@ -223,6 +295,13 @@ export function CrazyCattle3D() {
         ) {
           // Collision occurred
           const newLives = gameState.lives - 1;
+          
+          // Play collision sound
+          if (gameState.soundEnabled && collisionSoundRef.current) {
+            collisionSoundRef.current.currentTime = 0;
+            collisionSoundRef.current.play().catch(() => {});
+          }
+          
           if (newLives <= 0) {
             setGameState(prev => ({
               ...prev,
@@ -230,6 +309,12 @@ export function CrazyCattle3D() {
               gameOver: true,
               highScore: Math.max(prev.highScore, newScore)
             }));
+            
+            // Show Windows-style error message
+            setError({
+              show: true,
+              message: `Game Over! Your cow has been terminated. Final score: ${newScore}`
+            });
             return;
           } else {
             // Remove the obstacle and reduce lives
@@ -240,21 +325,24 @@ export function CrazyCattle3D() {
             }));
             
             toast({
-              title: "Ouch!",
-              description: `Your cow hit an obstacle! ${newLives} lives remaining.`,
+              title: "Moo-ch! 🐄",
+              description: `Your cow hit an obstacle! ${newLives} ${newLives === 1 ? 'life' : 'lives'} remaining.`,
               variant: "destructive"
             });
           }
         }
       }
       
-      // Maybe add a new obstacle
-      if (Math.random() < 0.01 * gameState.speed && newObstacles.length < 5) {
-        const obstacleTypes = ['rock', 'fence', 'pond'] as const;
+      // Maybe add a new obstacle (more frequent at higher levels)
+      const obstacleChance = 0.005 * gameState.level * (gameState.speed / 5);
+      if (Math.random() < obstacleChance && newObstacles.length < 5) {
+        // Select random obstacle type from the OBSTACLES array
+        const obstacleInfo = OBSTACLES[Math.floor(Math.random() * OBSTACLES.length)];
+        
         const newObstacle: Obstacle = {
           position: Math.floor(Math.random() * 3),
           distance: cow.distance + 100 + Math.random() * 50,
-          type: obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)],
+          type: obstacleInfo.type as 'rock' | 'fence' | 'pond' | 'bush' | 'haystack',
           element: React.createRef()
         };
         newObstacles.push(newObstacle);
@@ -268,7 +356,8 @@ export function CrazyCattle3D() {
         distance: newDistance,
         score: newScore,
         level: newLevel,
-        speed: Math.min(prev.speed + deltaTime * 0.0001, 15) // Gradually increase speed
+        // Gradually increase speed based on level
+        speed: Math.min(5 + (newLevel * 0.5), 15)
       }));
     }
     
@@ -298,6 +387,7 @@ export function CrazyCattle3D() {
       gameOver: false,
       isPaused: false,
       isStarted: true,
+      soundEnabled: gameState.soundEnabled
     });
     
     setCow({
@@ -307,10 +397,11 @@ export function CrazyCattle3D() {
       element: React.createRef(),
       rotation: 0,
       bounceHeight: 0,
-      color: colors[Math.floor(Math.random() * colors.length)]
+      color: CATTLE_COLORS[Math.floor(Math.random() * CATTLE_COLORS.length)]
     });
     
     setObstacles([]);
+    setError({ show: false, message: '' });
   };
   
   const togglePause = () => {
@@ -321,9 +412,22 @@ export function CrazyCattle3D() {
     }));
   };
   
+  const toggleSound = () => {
+    setGameState(prev => ({
+      ...prev,
+      soundEnabled: !prev.soundEnabled
+    }));
+  };
+  
   // Handle movement button clicks
   const moveLeft = () => {
     if (cow.position > 0 && gameState.isStarted && !gameState.gameOver && !gameState.isPaused) {
+      // Play moo sound
+      if (gameState.soundEnabled && mooSoundRef.current) {
+        mooSoundRef.current.currentTime = 0;
+        mooSoundRef.current.play().catch(() => {});
+      }
+      
       setCow(prev => ({
         ...prev,
         position: prev.position - 1,
@@ -334,6 +438,12 @@ export function CrazyCattle3D() {
   
   const moveRight = () => {
     if (cow.position < 2 && gameState.isStarted && !gameState.gameOver && !gameState.isPaused) {
+      // Play moo sound
+      if (gameState.soundEnabled && mooSoundRef.current) {
+        mooSoundRef.current.currentTime = 0;
+        mooSoundRef.current.play().catch(() => {});
+      }
+      
       setCow(prev => ({
         ...prev,
         position: prev.position + 1,
@@ -347,7 +457,7 @@ export function CrazyCattle3D() {
       <div className="flex justify-between items-center mb-4">
         <div>
           <h2 className="text-2xl font-bold">Crazy Cattle 3D</h2>
-          <p className="text-gray-600">Race your cow through obstacles</p>
+          <p className="text-gray-600">Guide your cow through the countryside</p>
         </div>
         <div className="flex flex-col items-end">
           <div className="flex gap-2 items-center">
@@ -371,14 +481,27 @@ export function CrazyCattle3D() {
       
       <div className="flex-1 flex">
         {/* Game view */}
-        <div className="flex-1 relative overflow-hidden border rounded-md" ref={gameContainerRef} 
+        <div className="flex-1 relative overflow-hidden border rounded-md bg-gradient-to-b from-blue-300 to-blue-600" 
+             ref={gameContainerRef} 
              style={{
-               perspective: '1000px',
-               perspectiveOrigin: '50% 50%',
+               perspective: '800px',
+               perspectiveOrigin: '50% 30%',
              }}>
           
-          {/* Sky and ground */}
-          <div className="absolute inset-0 bg-gradient-to-b from-blue-300 to-blue-600"></div>
+          {/* Sun */}
+          <div className="absolute top-8 right-8 w-16 h-16 rounded-full bg-yellow-300 shadow-lg"></div>
+          
+          {/* Clouds */}
+          <div className="absolute top-12 left-12 w-24 h-8 rounded-full bg-white opacity-80"></div>
+          <div className="absolute top-20 left-32 w-16 h-6 rounded-full bg-white opacity-70"></div>
+          <div className="absolute top-16 right-32 w-20 h-7 rounded-full bg-white opacity-75"></div>
+          
+          {/* Hills in the distance */}
+          <div className="absolute bottom-[45%] left-0 w-full h-24">
+            <div className="absolute bottom-0 left-0 w-[30%] h-full rounded-t-full bg-green-700 opacity-80"></div>
+            <div className="absolute bottom-0 left-[25%] w-[40%] h-[80%] rounded-t-full bg-green-700 opacity-70"></div>
+            <div className="absolute bottom-0 right-0 w-[35%] h-[90%] rounded-t-full bg-green-700 opacity-75"></div>
+          </div>
           
           {/* Game road */}
           <div 
@@ -397,37 +520,60 @@ export function CrazyCattle3D() {
             
             {/* Obstacles */}
             {obstacles.map((obstacle, index) => {
-              // Calculate visual position based on distance
-              const zPos = 1 - (obstacle.distance - cow.distance) / 100;
-              const scale = 0.5 + zPos * 0.5;
-              const xPos = (obstacle.position - 1) * 33.3;
+              // Calculate distance-based size and position
+              const scale = Math.max(0.1, 1 - (obstacle.distance - cow.distance) / 100);
+              const obstacleInfo = OBSTACLES.find(o => o.type === obstacle.type) || OBSTACLES[0];
               
-              const getObstacleStyle = () => {
-                switch(obstacle.type) {
-                  case 'rock':
-                    return {
-                      backgroundColor: '#8a8a8a',
-                      borderRadius: '50%',
-                      width: '30px',
-                      height: '20px',
-                    };
-                  case 'fence':
-                    return {
-                      backgroundColor: '#ba8c63',
-                      width: '40px',
-                      height: '15px',
-                      borderTop: '2px solid #6b4226',
-                      borderBottom: '2px solid #6b4226',
-                    };
-                  case 'pond':
-                    return {
-                      backgroundColor: '#4a80bd',
-                      borderRadius: '50%',
-                      width: '35px',
-                      height: '25px',
-                    };
-                }
-              };
+              let left = '50%';
+              if (obstacle.position === 0) left = '16.7%';
+              if (obstacle.position === 2) left = '83.3%';
+              
+              const bottom = `${Math.max(5, (1 - (obstacle.distance - cow.distance) / 100) * 80)}%`;
+              
+              // Determine the obstacle appearance
+              let obstacleElement;
+              switch(obstacle.type) {
+                case 'rock':
+                  obstacleElement = (
+                    <div className="w-full h-full rounded-md bg-gray-600 shadow-md border-2 border-gray-700"></div>
+                  );
+                  break;
+                case 'fence':
+                  obstacleElement = (
+                    <div className="w-full h-full flex flex-col justify-between overflow-hidden">
+                      <div className="h-1/3 bg-amber-700"></div>
+                      <div className="h-1/3 flex justify-around">
+                        <div className="w-1/6 h-full bg-amber-700"></div>
+                        <div className="w-1/6 h-full bg-amber-700"></div>
+                        <div className="w-1/6 h-full bg-amber-700"></div>
+                        <div className="w-1/6 h-full bg-amber-700"></div>
+                      </div>
+                      <div className="h-1/3 bg-amber-700"></div>
+                    </div>
+                  );
+                  break;
+                case 'pond':
+                  obstacleElement = (
+                    <div className="w-full h-full rounded-full bg-blue-500 shadow-md border-2 border-blue-600 overflow-hidden">
+                      <div className="w-full h-1/4 bg-blue-300 opacity-40 transform translate-y-1"></div>
+                    </div>
+                  );
+                  break;
+                case 'bush':
+                  obstacleElement = (
+                    <div className="w-full h-full rounded-full bg-green-600 shadow-md border-2 border-green-700"></div>
+                  );
+                  break;
+                case 'haystack':
+                  obstacleElement = (
+                    <div className="w-full h-full rounded-t-full bg-yellow-700 shadow-md border-2 border-yellow-800"></div>
+                  );
+                  break;
+                default:
+                  obstacleElement = (
+                    <div className="w-full h-full rounded-md bg-red-500 shadow-md"></div>
+                  );
+              }
               
               return (
                 <div 
@@ -435,161 +581,173 @@ export function CrazyCattle3D() {
                   ref={obstacle.element}
                   className="absolute transform -translate-x-1/2"
                   style={{
-                    left: `${50 + xPos}%`,
-                    bottom: `${zPos * 100}%`,
-                    transform: `scale(${scale})`,
-                    zIndex: Math.floor(zPos * 100),
-                    ...getObstacleStyle()
+                    left,
+                    bottom,
+                    width: obstacleInfo.width * scale,
+                    height: obstacleInfo.height * scale,
+                    zIndex: Math.floor(obstacle.distance * -1)
                   }}
-                ></div>
+                >
+                  {obstacleElement}
+                </div>
               );
             })}
-          </div>
-          
-          {/* The cow */}
-          {gameState.isStarted && (
-            <div
+            
+            {/* Cow */}
+            <div 
               ref={cow.element}
-              className="absolute transform -translate-x-1/2"
+              className="absolute bottom-[20%] transform -translate-x-1/2"
               style={{
-                left: `${50 + (cow.position - 1) * 33.3}%`,
-                bottom: '20%',
-                width: '40px',
-                height: '30px',
-                backgroundColor: cow.color,
-                borderRadius: '50% 30% 40% 30%',
-                transform: `rotateZ(${cow.rotation}deg) translateY(-${cow.bounceHeight}px)`,
-                transition: 'left 0.2s ease-out',
-                boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+                left: cow.position === 0 ? '16.7%' : cow.position === 1 ? '50%' : '83.3%',
+                width: 30,
+                height: 30,
+                transform: `translateX(-50%) translateY(${-cow.bounceHeight}px) rotateX(-60deg) rotateZ(${cow.rotation}deg)`,
+                zIndex: 50
               }}
             >
-              {/* Cow features */}
-              <div className="absolute top-0 left-1/4 w-1/2 h-1/3 bg-white rounded-full"></div>
-              <div className="absolute bottom-1/4 right-0 w-1/4 h-1/4 bg-black rounded-full"></div>
-              <div className="absolute bottom-1/4 left-0 w-1/4 h-1/4 bg-black rounded-full"></div>
-            </div>
-          )}
-          
-          {/* Game overlay messages */}
-          {!gameState.isStarted && !gameState.gameOver && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-center p-4">
-              <div>
-                <h2 className="text-2xl font-bold mb-4">Crazy Cattle 3D</h2>
-                <p className="mb-6">
-                  Help your cow navigate through obstacles! <br />
-                  Use arrow keys or buttons to move. <br />
-                  Collect points and avoid hitting rocks, fences and ponds.
-                </p>
-                <Button onClick={startGame} size="lg">
-                  Start Game
-                </Button>
+              <div className="relative w-full h-full">
+                {/* Cow body - using the cow's color */}
+                <div 
+                  className="absolute inset-0 rounded-lg shadow-md"
+                  style={{ backgroundColor: cow.color }}
+                ></div>
+                
+                {/* Cow head */}
+                <div className="absolute bottom-[80%] left-1/2 w-[60%] h-[60%] bg-white rounded-t-lg transform -translate-x-1/2">
+                  {/* Eyes */}
+                  <div className="absolute top-[20%] left-[20%] w-[15%] h-[20%] bg-black rounded-full"></div>
+                  <div className="absolute top-[20%] right-[20%] w-[15%] h-[20%] bg-black rounded-full"></div>
+                  
+                  {/* Snout */}
+                  <div className="absolute bottom-[20%] left-1/2 w-[60%] h-[30%] bg-pink-300 rounded-md transform -translate-x-1/2">
+                    <div className="absolute top-1/2 left-1/4 w-[20%] h-[30%] bg-black rounded-full"></div>
+                    <div className="absolute top-1/2 right-1/4 w-[20%] h-[30%] bg-black rounded-full"></div>
+                  </div>
+                </div>
+                
+                {/* Spots (if white cow) */}
+                {cow.color === '#FFFFFF' && (
+                  <>
+                    <div className="absolute top-[20%] left-[10%] w-[25%] h-[25%] bg-black rounded-full"></div>
+                    <div className="absolute bottom-[15%] right-[20%] w-[30%] h-[30%] bg-black rounded-full"></div>
+                  </>
+                )}
+                
+                {/* Horns (for non-white cows) */}
+                {cow.color !== '#FFFFFF' && (
+                  <>
+                    <div className="absolute top-[-10%] left-[15%] w-[10%] h-[30%] bg-gray-300 rounded-t-lg transform -rotate-15"></div>
+                    <div className="absolute top-[-10%] right-[15%] w-[10%] h-[30%] bg-gray-300 rounded-t-lg transform rotate-15"></div>
+                  </>
+                )}
               </div>
+            </div>
+          </div>
+          
+          {/* Game overlay */}
+          {!gameState.isStarted && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-70 text-white p-6">
+              <h2 className="text-3xl font-bold mb-4">Crazy Cattle 3D</h2>
+              <p className="mb-6 text-center max-w-md">
+                Guide your cow through obstacles! Use arrow keys to move left and right. Press Space to pause the game.
+              </p>
+              <Button onClick={startGame} className="text-lg">Start Game</Button>
             </div>
           )}
           
           {gameState.isPaused && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-center">
-              <div>
-                <h2 className="text-2xl font-bold mb-4">Game Paused</h2>
-                <Button onClick={togglePause} className="mx-2">Resume</Button>
-                <Button variant="destructive" onClick={() => setGameState(prev => ({ ...prev, gameOver: true }))}>End Game</Button>
-              </div>
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-50 text-white">
+              <h2 className="text-3xl font-bold mb-4">Game Paused</h2>
+              <Button onClick={togglePause} className="text-lg">Resume</Button>
             </div>
           )}
           
           {gameState.gameOver && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-center p-4">
-              <div>
-                <h2 className="text-2xl font-bold mb-2">Game Over!</h2>
-                <p className="text-xl mb-4">Your score: {gameState.score}</p>
-                {gameState.score >= gameState.highScore && gameState.score > 0 && (
-                  <p className="text-xl text-yellow-300 mb-4">New High Score!</p>
-                )}
-                <Button onClick={startGame} size="lg" className="mx-2">
-                  Play Again
-                </Button>
-              </div>
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-70 text-white p-6">
+              <h2 className="text-3xl font-bold mb-4">Game Over!</h2>
+              <p className="mb-2">Your Score: {gameState.score}</p>
+              <p className="mb-6">High Score: {gameState.highScore}</p>
+              <Button onClick={startGame} className="text-lg">Play Again</Button>
             </div>
           )}
+          
+          {/* Mobile controls */}
+          <div className="absolute bottom-4 left-0 w-full flex justify-between px-6">
+            <Button variant="outline" size="lg" onClick={moveLeft} className="bg-white bg-opacity-50 h-16 w-16">
+              <ArrowLeft size={24} />
+            </Button>
+            
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={togglePause} 
+                className="bg-white bg-opacity-50"
+                disabled={!gameState.isStarted || gameState.gameOver}
+              >
+                {gameState.isPaused ? <Play size={16} /> : <Pause size={16} />}
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={toggleSound} 
+                className="bg-white bg-opacity-50"
+              >
+                {gameState.soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+              </Button>
+            </div>
+            
+            <Button variant="outline" size="lg" onClick={moveRight} className="bg-white bg-opacity-50 h-16 w-16">
+              <ArrowRight size={24} />
+            </Button>
+          </div>
         </div>
         
         {/* Leaderboard */}
-        <div className="w-64 ml-4 border rounded-md p-4 hidden md:block">
-          <h3 className="font-bold text-lg mb-2 text-center">Leaderboard</h3>
+        <div className="w-64 ml-4 border rounded-md p-4 overflow-auto hidden md:block">
+          <h3 className="text-lg font-bold mb-2">Leaderboard</h3>
           {leaderboard.length > 0 ? (
-            <div className="space-y-2">
-              {leaderboard.slice(0, 10).map((entry, index) => (
-                <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                  <div className="flex items-center">
-                    <span className="font-bold mr-2 w-5 text-center">{index + 1}.</span>
-                    <span className={user?.username === entry.username ? 'font-bold text-primary' : ''}>
-                      {entry.username}
-                    </span>
-                  </div>
-                  <span>{entry.score}</span>
-                </div>
+            <ul className="divide-y">
+              {leaderboard.slice(0, 10).map((entry, i) => (
+                <li key={i} className="py-2 flex justify-between">
+                  <span>{i + 1}. {entry.username}</span>
+                  <span className="font-medium">{entry.score}</span>
+                </li>
               ))}
-            </div>
+            </ul>
           ) : (
-            <p className="text-center text-gray-500 text-sm">No scores yet!</p>
+            <p className="text-gray-500 text-sm">No scores yet. Be the first to play!</p>
           )}
+          
+          <div className="mt-6">
+            <h4 className="font-medium mb-2">How to Play:</h4>
+            <ul className="text-sm text-gray-700 space-y-1">
+              <li>← → : Move cow left/right</li>
+              <li>↑ : Increase speed</li>
+              <li>↓ : Decrease speed</li>
+              <li>Space: Pause/Resume</li>
+              <li>M: Toggle sound</li>
+            </ul>
+          </div>
         </div>
       </div>
       
-      {/* Mobile controls */}
-      {gameState.isStarted && !gameState.gameOver && (
-        <div className="mt-4 flex justify-between">
-          <div className="flex gap-2">
-            <Button size="lg" onClick={moveLeft}>
-              ⬅️ Left
-            </Button>
-            <Button size="lg" onClick={moveRight}>
-              Right ➡️
-            </Button>
-          </div>
-          <div>
-            <Button 
-              variant={gameState.isPaused ? "default" : "outline"}
-              onClick={togglePause}
-            >
-              {gameState.isPaused ? "Resume" : "Pause"}
-            </Button>
-          </div>
-        </div>
+      {/* Windows-style error message */}
+      {error.show && (
+        <ErrorMessage 
+          title="Cow Collision"
+          message={error.message} 
+          onClose={() => {
+            setError({ show: false, message: '' });
+          }}
+        />
       )}
       
-      {/* Progress bar showing current speed */}
-      <div className="mt-4">
-        <div className="flex justify-between text-sm mb-1">
-          <span>Speed</span>
-          <span>{Math.round(gameState.speed)} km/h</span>
-        </div>
-        <Progress value={(gameState.speed / 15) * 100} className="h-2" />
-      </div>
-      
-      {/* Leaderboard for mobile */}
-      <div className="mt-4 md:hidden">
-        <h3 className="font-bold text-lg mb-2">Leaderboard</h3>
-        {leaderboard.length > 0 ? (
-          <div className="grid grid-cols-3 gap-2">
-            {leaderboard.slice(0, 6).map((entry, index) => (
-              <div key={index} className="p-2 bg-gray-50 rounded text-center">
-                <div className="font-bold">{index + 1}. {entry.username}</div>
-                <div>{entry.score}</div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-center text-gray-500">No scores yet!</p>
-        )}
-      </div>
-      
-      {/* Error dialog */}
-      <ErrorMessage 
-        show={error.show}
-        onClose={() => setError({ show: false, message: '' })}
-        message={error.message}
-      />
+      {/* Hidden audio elements */}
+      <audio id="moo-sound" src="/attached_assets/cow-moo.mp3" preload="auto" style={{ display: 'none' }}></audio>
+      <audio id="collision-sound" src="/attached_assets/boom.mp3" preload="auto" style={{ display: 'none' }}></audio>
+      <audio id="bg-music" src="/attached_assets/crazy-cattle-bg.mp3" preload="auto" loop style={{ display: 'none' }}></audio>
     </div>
   );
 }
