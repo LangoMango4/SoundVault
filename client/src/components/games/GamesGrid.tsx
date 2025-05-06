@@ -8,7 +8,6 @@ import { DinoDash } from "./local-games/DinoDash";
 import { MemoryMatch } from "./local-games/MemoryMatch";
 import { CookieClicker } from "./local-games/CookieClicker";
 import { WordScramble } from "./local-games/WordScramble";
-import { CrazyCattle3D } from "./local-games/CrazyCattle3D";
 
 interface Game {
   id: string;
@@ -57,14 +56,6 @@ export function GamesGrid() {
       component: WordScramble,
       category: "puzzle",
       description: "Unscramble school-related words against the clock.",
-      isLocal: true
-    },
-    {
-      id: "crazy-cattle",
-      name: "Crazy Cattle 3D",
-      component: CrazyCattle3D,
-      category: "racing",
-      description: "Guide your cow through an obstacle course in this wild 3D racing game!",
       isLocal: true
     }
   ];
