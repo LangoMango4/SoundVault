@@ -594,9 +594,19 @@ export function AdminPanel({
                     </Button>
                     <Button 
                       onClick={() => searchTermsLogs()}
+                      disabled={isSearching}
                     >
-                      <Search className="mr-2 h-4 w-4" />
-                      Search
+                      {isSearching ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Searching...
+                        </>
+                      ) : (
+                        <>
+                          <Search className="mr-2 h-4 w-4" />
+                          Search
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>
