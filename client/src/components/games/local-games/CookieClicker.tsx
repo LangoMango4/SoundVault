@@ -391,9 +391,9 @@ export function CookieClicker() {
   };
   
   return (
-    <div className={`grid grid-cols-1 lg:grid-cols-4 gap-4 p-4 rounded-lg ${getBackgroundClass()}`}>
+    <div className={`grid grid-cols-1 lg:grid-cols-2 gap-4 p-4 rounded-lg ${getBackgroundClass()}`}>
       {/* Main game content */}
-      <div className="lg:col-span-3 flex flex-col items-center">
+      <div className="flex flex-col items-center">
         {/* Windows-style Error Message */}
         <ErrorMessage 
           show={showError} 
@@ -706,8 +706,8 @@ export function CookieClicker() {
         </div>
       </div>
       
-      {/* Leaderboard column */}
-      <div className="lg:col-span-1 h-full">
+      {/* Leaderboard column - now takes half screen */}
+      <div className="h-full">
         <Leaderboard gameType="cookie-clicker" refreshInterval={5000} />
       </div>
     </div>
