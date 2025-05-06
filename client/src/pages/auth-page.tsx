@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,26 +22,39 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Loader2, ShieldCheck } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
 
 
 export default function AuthPage() {
   const { user, isLoading, loginMutation } = useAuth();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"user" | "admin">("user");
   
   // Set up form
   const form = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: "",
-      password: "",
+      username: activeTab === "admin" ? "admin" : "",
+      password: activeTab === "admin" ? "alarms12" : "",
     },
   });
+  
+  // Update form values when tab changes
+  useEffect(() => {
+    form.setValue("username", activeTab === "admin" ? "admin" : "");
+    form.setValue("password", activeTab === "admin" ? "alarms12" : "");
+  }, [activeTab, form]);
   
   // Handle form submission
   const onSubmit = (values: LoginData) => {
     loginMutation.mutate(values);
+  };
+  
+  // Quick login function for admin
+  const quickAdminLogin = () => {
+    loginMutation.mutate({ username: "admin", password: "alarms12" });
   };
   
   // Redirect to home if already logged in
@@ -60,6 +73,18 @@ export default function AuthPage() {
         </CardHeader>
         
         <CardContent>
+          <div className="mb-4">
+            <Button 
+              onClick={quickAdminLogin} 
+              className="w-full bg-green-600 hover:bg-green-700"
+              type="button"
+              disabled={loginMutation.isPending}
+            >
+              <ShieldCheck className="mr-2 h-4 w-4" />
+              Quick Admin Login
+            </Button>
+          </div>
+          
           <Tabs 
             defaultValue="user" 
             value={activeTab} 
