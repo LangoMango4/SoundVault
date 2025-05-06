@@ -126,7 +126,7 @@ export function BroadcastMessageForm({ open, onOpenChange }: BroadcastMessageFor
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <img src={warningIcon} alt="Warning" className="h-6 w-6" />
+            <img src={warningIcon} alt="Warning" className="h-7 w-7" />
             <DialogTitle>Broadcast Message</DialogTitle>
           </div>
           <DialogDescription>
@@ -306,7 +306,7 @@ export function BroadcastMessageForm({ open, onOpenChange }: BroadcastMessageFor
                     <div className="p-4">
                       <div className="flex items-start gap-3 mb-4">
                         <div className="flex-shrink-0">
-                          <svg className="text-yellow-400 h-8 w-8" viewBox="0 0 24 24" fill="currentColor">
+                          <svg className="text-yellow-400 h-12 w-12" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-2h2v2h-2zm0-10v6h2V7h-2z"/>
                           </svg>
                         </div>
@@ -328,7 +328,7 @@ export function BroadcastMessageForm({ open, onOpenChange }: BroadcastMessageFor
                 ) : (
                   <div className="bg-white border border-gray-200 shadow-md rounded-md p-4">
                     <div className="flex items-start gap-3">
-                      <img src={warningIcon} alt="Warning" className="h-5 w-5 mt-0.5" />
+                      <img src={warningIcon} alt="Warning" className="h-8 w-8 mt-0.5" />
                       <div>
                         <h4 className="font-medium text-base">{form.watch("title") || "Announcement Title"}</h4>
                         <p className="text-sm text-gray-600">{form.watch("message") || "Message content will appear here"}</p>
@@ -352,7 +352,7 @@ export function BroadcastMessageForm({ open, onOpenChange }: BroadcastMessageFor
                 type="submit"
                 disabled={createMessageMutation.isPending}
               >
-                <img src={warningIcon} alt="Warning" className="w-5 h-5 mr-2" />
+                <img src={warningIcon} alt="Warning" className="w-6 h-6 mr-2" />
                 {createMessageMutation.isPending ? "Sending..." : "Broadcast Message"}
               </Button>
             </DialogFooter>
