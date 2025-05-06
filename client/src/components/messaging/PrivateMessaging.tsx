@@ -43,6 +43,15 @@ export function PrivateMessaging() {
     refetchInterval: 15000 // Refetch every 15 seconds
   });
   
+  // Auto-select the first conversation for regular users
+  // This will ensure the conversation appears immediately without clicking
+  useEffect(() => {
+    if (user && user.role !== 'admin' && conversations && conversations.length > 0 && !selectedUser) {
+      // Auto-select the first conversation for regular users
+      setSelectedUser(conversations[0].user.id);
+    }
+  }, [user, conversations, selectedUser]);
+  
   // Fetch single conversation when a user is selected
   const { data: activeConversation, isLoading: isLoadingMessages, refetch: refetchMessages } = useQuery<Conversation>({
     queryKey: ["/api/private-messages", selectedUser],

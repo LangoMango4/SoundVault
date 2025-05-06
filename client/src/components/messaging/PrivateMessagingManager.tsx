@@ -36,9 +36,11 @@ export function PrivateMessagingManager() {
   if (user.role !== "admin") {
     return (
       <div className="h-full flex flex-col">
-        <div className="py-2 px-4 flex justify-between items-center border-b">
+        <div className="py-2 px-4 flex justify-between items-center border-b bg-blue-50">
           <h2 className="text-lg font-medium">Private Messages</h2>
-          <p className="text-sm text-gray-500">Messages from administrators</p>
+          <div className="px-2 py-1 bg-blue-100 rounded-md text-xs">
+            Messages from administrators
+          </div>
         </div>
         
         <div className="flex-1 overflow-hidden">
