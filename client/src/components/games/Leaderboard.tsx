@@ -92,33 +92,46 @@ export function Leaderboard({
   }
 
   return (
-    <div className="p-5 border rounded-lg bg-white w-full shadow-sm">
-      <h2 className="text-2xl font-bold mb-5 flex items-center">
-        <Trophy className="w-7 h-7 mr-3 text-yellow-500" />
+    <div className="p-6 border rounded-lg bg-white w-full shadow-md h-full flex flex-col">
+      <h2 className="text-3xl font-bold mb-6 flex items-center">
+        <Trophy className="w-8 h-8 mr-3 text-yellow-500" />
         Leaderboard
       </h2>
       
       {leaderboard.length === 0 ? (
-        <p className="text-gray-500 text-center py-6">No scores yet. Be the first to play!</p>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-gray-500 text-center py-6 text-lg">No scores yet. Be the first to play!</p>
+        </div>
       ) : (
-        <div className="divide-y">
+        <div className="divide-y flex-1 overflow-auto">
           {leaderboard.map((entry, i) => {
             let icon = null;
-            if (i === 0) icon = <Trophy className="w-5 h-5 text-yellow-500" />;
-            else if (i === 1) icon = <Medal className="w-5 h-5 text-gray-400" />;
-            else if (i === 2) icon = <Medal className="w-5 h-5 text-amber-700" />;
+            let rowClass = "py-5 flex justify-between items-center";
+            
+            if (i === 0) {
+              icon = <Trophy className="w-6 h-6 text-yellow-500" />;
+              rowClass += " bg-yellow-50";
+            }
+            else if (i === 1) {
+              icon = <Medal className="w-6 h-6 text-gray-400" />;
+              rowClass += " bg-gray-50";
+            }
+            else if (i === 2) {
+              icon = <Medal className="w-6 h-6 text-amber-700" />;
+              rowClass += " bg-amber-50";
+            }
             else icon = <Award className="w-5 h-5 text-blue-400" />;
             
             return (
-              <div key={entry.id} className="py-4 flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <span className="flex items-center justify-center w-7">{icon}</span>
-                  <span className="font-medium text-lg truncate max-w-[250px]">
+              <div key={entry.id} className={rowClass}>
+                <div className="flex items-center gap-4">
+                  <span className="flex items-center justify-center w-8 h-8">{icon}</span>
+                  <span className="font-medium text-xl truncate max-w-[250px]">
                     {entry.fullName} 
                     <span className="text-sm text-gray-500 ml-1">({entry.username})</span>
                   </span>
                 </div>
-                <div className="font-bold text-xl min-w-[120px] text-right">
+                <div className="font-bold text-2xl min-w-[140px] text-right">
                   {/* Direct rendering of number with proper formatting */}
                   {Number(entry.score).toFixed(entry.score % 1 === 0 ? 0 : 1)}
                 </div>
@@ -128,13 +141,13 @@ export function Leaderboard({
         </div>
       )}
       
-      <div className="mt-5 pt-3 border-t text-sm text-gray-500 flex justify-between items-center">
+      <div className="mt-6 pt-4 border-t text-sm text-gray-500 flex justify-between items-center">
         <span>Updated every {refreshInterval / 1000}s</span>
         <button 
           onClick={fetchLeaderboard}
           className="text-blue-500 hover:underline font-medium flex items-center gap-1"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
             <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
             <path d="M3 3v5h5"></path>
             <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
