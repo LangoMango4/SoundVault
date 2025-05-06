@@ -143,8 +143,14 @@ export class MemStorage implements IStorage {
   private chatMessageIdCounter: number;
   private cookieClickerIdCounter: number;
   private gameDataIdCounter: number;
+  private chatModerationLogIdCounter: number;
+  private userStrikeIdCounter: number;
 
   private termsAcceptanceLogIdCounter: number;
+  
+  // In-memory storage for chat moderation
+  private chatModerationLogs: Map<number, ChatModerationLog>;
+  private userStrikes: Map<number, UserStrike>;
 
   constructor() {
     this.users = new Map();
@@ -155,6 +161,8 @@ export class MemStorage implements IStorage {
     this.cookieClickerData = new Map();
     this.gameData = new Map();
     this.termsAcceptanceLogs = new Map();
+    this.chatModerationLogs = new Map();
+    this.userStrikes = new Map();
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // Prune expired entries every 24h
     });
@@ -167,6 +175,8 @@ export class MemStorage implements IStorage {
     this.cookieClickerIdCounter = 1;
     this.gameDataIdCounter = 1;
     this.termsAcceptanceLogIdCounter = 1;
+    this.chatModerationLogIdCounter = 1;
+    this.userStrikeIdCounter = 1;
     
     // Initialize with admin account and load saved data
     this.initializeData();
@@ -1352,6 +1362,152 @@ export class DatabaseStorage implements IStorage {
       console.error('Error searching terms acceptance logs:', error);
       return [];
     }
+  }
+  // Chat moderation operations
+  async moderateMessage(content: string, userId: number, username: string): Promise<{ isAllowed: boolean; moderatedMessage: string; reason?: string; moderationType?: string; }> {
+    // Simple list of banned words/phrases for moderation
+    const moderationRules = [
+      { pattern: /\b(fuck|shit|ass|bitch|cunt|dick|cock|pussy|whore)\b/gi, type: 'profanity', reason: 'Profanity detected' },
+      { pattern: /\b(nigger|nigga|faggot|retard|spastic)\b/gi, type: 'hate_speech', reason: 'Hate speech detected' },
+      { pattern: /\b(porn|pornhub|xvideos|onlyfans|sex|sexy)\b/gi, type: 'inappropriate', reason: 'Inappropriate content detected' },
+      { pattern: /\b(suicide|kill myself|hang myself|jump off)\b/gi, type: 'concerning', reason: 'Concerning content detected' },
+      { pattern: /\b(address|phone number|credit card|password|SSN|social security)\b/gi, type: 'personal_info', reason: 'Potential personal information sharing detected' },
+    ];
+
+    let moderatedMessage = content;
+    let hasViolation = false;
+    let moderationType = '';
+    let reason = '';
+
+    // Check each rule against the message
+    for (const rule of moderationRules) {
+      if (rule.pattern.test(content)) {
+        // Replace the matched content with asterisks
+        moderatedMessage = moderatedMessage.replace(rule.pattern, (match) => '*'.repeat(match.length));
+        hasViolation = true;
+        moderationType = rule.type;
+        reason = rule.reason;
+        
+        // Log the moderation action
+        await this.logModerationAction({
+          userId,
+          username,
+          originalMessage: content,
+          reason: rule.reason,
+          moderationType: rule.type
+        });
+        
+        // Increment user strikes
+        await this.incrementUserStrikes(userId, username);
+        
+        break; // Stop at the first violation for simplicity
+      }
+    }
+
+    return {
+      isAllowed: !hasViolation,
+      moderatedMessage,
+      moderationType: hasViolation ? moderationType : undefined,
+      reason: hasViolation ? reason : undefined,
+    };
+  }
+
+  async logModerationAction(log: InsertChatModerationLog): Promise<ChatModerationLog> {
+    const [moderationLog] = await db
+      .insert(chatModerationLogs)
+      .values(log)
+      .returning();
+    return moderationLog;
+  }
+
+  async getModerationLogs(limit: number = 100): Promise<ChatModerationLog[]> {
+    return db
+      .select()
+      .from(chatModerationLogs)
+      .orderBy(desc(chatModerationLogs.moderatedAt))
+      .limit(limit);
+  }
+
+  async getModerationLogsByUser(userId: number): Promise<ChatModerationLog[]> {
+    return db
+      .select()
+      .from(chatModerationLogs)
+      .where(eq(chatModerationLogs.userId, userId))
+      .orderBy(desc(chatModerationLogs.moderatedAt));
+  }
+
+  // User strikes operations
+  async getUserStrikes(userId: number): Promise<UserStrike | undefined> {
+    const [userStrike] = await db
+      .select()
+      .from(userStrikes)
+      .where(eq(userStrikes.userId, userId));
+    return userStrike;
+  }
+
+  async incrementUserStrikes(userId: number, username: string): Promise<UserStrike> {
+    // Get existing strikes or create new record
+    const existingStrikes = await this.getUserStrikes(userId);
+    
+    if (existingStrikes) {
+      // Increment existing strikes
+      const newStrikeCount = existingStrikes.strikesCount + 1;
+      const isChatRestricted = newStrikeCount >= 5; // Restrict chat after 5+ strikes
+      
+      const [updated] = await db
+        .update(userStrikes)
+        .set({
+          strikesCount: newStrikeCount,
+          isChatRestricted,
+          lastStrikeAt: new Date()
+        })
+        .where(eq(userStrikes.userId, userId))
+        .returning();
+      
+      return updated;
+    } else {
+      // Create new strike record
+      const [newStrike] = await db
+        .insert(userStrikes)
+        .values({
+          userId,
+          username,
+          strikesCount: 1,
+          isChatRestricted: false, // First strike doesn't restrict chat
+        })
+        .returning();
+      
+      return newStrike;
+    }
+  }
+
+  async resetUserStrikes(userId: number): Promise<UserStrike | undefined> {
+    const existingStrikes = await this.getUserStrikes(userId);
+    if (!existingStrikes) return undefined;
+    
+    const [updated] = await db
+      .update(userStrikes)
+      .set({
+        strikesCount: 0,
+        isChatRestricted: false,
+        lastStrikeAt: new Date()
+      })
+      .where(eq(userStrikes.userId, userId))
+      .returning();
+    
+    return updated;
+  }
+
+  async getUsersWithStrikes(): Promise<UserStrike[]> {
+    return db
+      .select()
+      .from(userStrikes)
+      .orderBy(desc(userStrikes.strikesCount));
+  }
+
+  async isUserChatRestricted(userId: number): Promise<boolean> {
+    const userStrike = await this.getUserStrikes(userId);
+    return userStrike ? userStrike.isChatRestricted : false;
   }
 }
 
