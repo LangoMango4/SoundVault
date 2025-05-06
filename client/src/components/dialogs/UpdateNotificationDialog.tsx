@@ -10,7 +10,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, CheckCircle2, RefreshCw } from "lucide-react";
 import { useUpdateNotification } from "@/hooks/use-update-notification";
-import { ScrollArea } from "@/components/ui/scroll-area";
+// Using a div with overflow-y-auto instead of ScrollArea which might not be available
+// import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 
 interface UpdateNotificationDialogProps {
@@ -47,7 +48,7 @@ export function UpdateNotificationDialog({ open, onAccept, onRefresh }: UpdateNo
             Released: {currentVersionDetails.date}
           </div>
           
-          <ScrollArea className="h-[200px] rounded-md border p-3 bg-background">
+          <div className="h-[200px] rounded-md border p-3 bg-background overflow-y-auto">
             <div className="space-y-3 pr-3">
               {currentVersionDetails.changes.map((change, index) => (
                 <div key={index} className="flex gap-2 pb-2 last:pb-0 last:border-0 border-b border-border/40">
@@ -56,7 +57,7 @@ export function UpdateNotificationDialog({ open, onAccept, onRefresh }: UpdateNo
                 </div>
               ))}
             </div>
-          </ScrollArea>
+          </div>
         </div>
         
         <DialogFooter className="flex flex-col gap-2 sm:flex-row">
