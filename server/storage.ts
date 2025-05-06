@@ -653,6 +653,32 @@ export class MemStorage implements IStorage {
       .sort((a, b) => (b.highScore || 0) - (a.highScore || 0))
       .slice(0, limit);
   }
+  
+  async getLeaderboardWithUserDetails(gameType: string, limit: number = 10): Promise<any[]> {
+    // Get high scores first
+    const highScores = await this.getHighScores(gameType, limit);
+    
+    // For each high score, get the user details
+    const leaderboardData = await Promise.all(
+      highScores.map(async (score) => {
+        const user = await this.getUser(score.userId);
+        if (!user) return null; // Skip if user not found
+        
+        return {
+          id: score.id,
+          userId: score.userId,
+          username: user.username,
+          fullName: user.fullName,
+          score: score.highScore || 0,
+          gameType: score.gameType,
+          lastPlayed: score.lastPlayed
+        };
+      })
+    );
+    
+    // Filter out null entries (users not found) and return
+    return leaderboardData.filter(entry => entry !== null);
+  }
 }
 
 // Database storage implementation
@@ -1044,25 +1070,24 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getLeaderboardWithUserDetails(gameType: string, limit: number = 10): Promise<any[]> {
-    const highScores = await this.getHighScores(gameType, limit);
-    
-    // Get user details for each score entry
-    const leaderboard = await Promise.all(
-      highScores.map(async (entry) => {
-        const user = await this.getUser(entry.userId);
-        return {
-          id: entry.id,
-          userId: entry.userId,
-          username: user?.username || "Unknown",
-          fullName: user?.fullName || "Unknown User",
-          score: entry.highScore || 0,
-          gameType: entry.gameType,
-          lastPlayed: entry.lastPlayed
-        };
+    // Get game data joined with user data - more efficient with a single query
+    const leaderboardResults = await db
+      .select({
+        id: gameData.id,
+        userId: gameData.userId,
+        username: users.username,
+        fullName: users.fullName,
+        score: gameData.highScore,
+        gameType: gameData.gameType,
+        lastPlayed: gameData.lastPlayed
       })
-    );
+      .from(gameData)
+      .innerJoin(users, eq(gameData.userId, users.id))
+      .where(eq(gameData.gameType, gameType))
+      .orderBy(desc(gameData.highScore))
+      .limit(limit);
     
-    return leaderboard;
+    return leaderboardResults;
   }
 }
 

@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
+import { apiRequest } from "@/lib/queryClient";
+import { Leaderboard } from "../Leaderboard";
 
 // Words related to math, school, and general knowledge
 const words = [
@@ -27,6 +29,7 @@ export function WordScramble() {
   const [timeLeft, setTimeLeft] = useState(30);
   const [gameActive, setGameActive] = useState(true);
   const [hint, setHint] = useState(false);
+  const [saveHighScoreFailed, setSaveHighScoreFailed] = useState(false);
   const { toast } = useToast();
 
   const scrambleWord = (word: string) => {
@@ -99,6 +102,9 @@ export function WordScramble() {
       setScrambledWord(scrambleWord(nextWord));
     } else {
       setGameActive(false);
+      
+      // Save high score to the database
+      saveHighScore(score);
     }
   };
 
@@ -141,8 +147,40 @@ export function WordScramble() {
 
   const progressPercent = Math.round(((currentWordIndex) / words.length) * 100);
 
+  // Function to save high score to the database
+  const saveHighScore = async (finalScore: number) => {
+    try {
+      // Prepare game data with score
+      const gameData = {
+        gameType: 'word-scramble',
+        data: { wordCount: words.length, correctWords: finalScore },
+        highScore: finalScore
+      };
+
+      // Send to API
+      const response = await apiRequest('POST', '/api/games/save', gameData);
+      if (!response.ok) {
+        throw new Error('Failed to save high score');
+      }
+      
+      // Success message
+      toast({
+        title: 'High Score Saved!',
+        description: `Your score of ${finalScore} has been recorded.`,
+      });
+    } catch (error) {
+      console.error('Error saving high score:', error);
+      setSaveHighScoreFailed(true);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to save your high score. Try again later.',
+      });
+    }
+  };
+
   return (
-    <div className="max-w-lg mx-auto">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
       <h1 className="text-3xl font-bold text-center mb-2">Word Scramble</h1>
       <p className="text-center mb-6">Unscramble the word before time runs out!</p>
 
