@@ -4,10 +4,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
-import { LeaderboardComponent } from "../LeaderboardComponent";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Trophy, Award } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
 
 // Words related to math, school, and general knowledge
 const words = [
@@ -31,11 +27,7 @@ export function WordScramble() {
   const [timeLeft, setTimeLeft] = useState(30);
   const [gameActive, setGameActive] = useState(true);
   const [hint, setHint] = useState(false);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const [leaderboardRank, setLeaderboardRank] = useState<number | undefined>(undefined);
-  const [isSubmittingScore, setIsSubmittingScore] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
 
   const scrambleWord = (word: string) => {
     const wordArray = word.split("");
@@ -107,50 +99,6 @@ export function WordScramble() {
       setScrambledWord(scrambleWord(nextWord));
     } else {
       setGameActive(false);
-      if (user) {
-        submitScoreToLeaderboard(score);
-      }
-    }
-  };
-  
-  const submitScoreToLeaderboard = async (finalScore: number) => {
-    if (!user || isSubmittingScore) return;
-    
-    try {
-      setIsSubmittingScore(true);
-      const response = await fetch(`/api/games/word-scramble/score`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ score: finalScore })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setLeaderboardRank(data.rank);
-        setShowLeaderboard(true);
-        
-        toast({
-          title: "Score submitted!",
-          description: `Your score has been added to the leaderboard.`,
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to submit score. Please try again.",
-        });
-      }
-    } catch (error) {
-      console.error("Error submitting score:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to submit score. Please try again.",
-      });
-    } finally {
-      setIsSubmittingScore(false);
     }
   };
 
@@ -195,32 +143,7 @@ export function WordScramble() {
 
   return (
     <div className="max-w-lg mx-auto">
-      <div className="flex justify-between items-center mb-2">
-        <h1 className="text-3xl font-bold">Word Scramble</h1>
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1">
-              <Trophy className="h-4 w-4" />
-              Leaderboard
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-full sm:w-[500px] overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle className="flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-yellow-500" />
-                Word Scramble Leaderboard
-              </SheetTitle>
-            </SheetHeader>
-            <div className="mt-4">
-              <LeaderboardComponent 
-                gameId="word-scramble"
-                currentScore={!gameActive ? score : undefined}
-                currentRank={!gameActive ? leaderboardRank : undefined}
-              />
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
+      <h1 className="text-3xl font-bold text-center mb-2">Word Scramble</h1>
       <p className="text-center mb-6">Unscramble the word before time runs out!</p>
 
       {gameActive ? (
@@ -291,36 +214,9 @@ export function WordScramble() {
           ) : (
             <p className="mb-4 text-orange-600">Keep practicing! You'll get better!</p>
           )}
-          <div className="flex gap-2 justify-center mt-6">
-            <Button onClick={resetGame} size="lg">
-              Play Again
-            </Button>
-            {user && (
-              <Sheet open={showLeaderboard} onOpenChange={setShowLeaderboard}>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="lg" className="gap-1">
-                    <Trophy className="h-4 w-4" />
-                    Leaderboard
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-full sm:w-[500px] overflow-y-auto">
-                  <SheetHeader>
-                    <SheetTitle className="flex items-center gap-2">
-                      <Trophy className="h-5 w-5 text-yellow-500" />
-                      Word Scramble Leaderboard
-                    </SheetTitle>
-                  </SheetHeader>
-                  <div className="mt-4">
-                    <LeaderboardComponent 
-                      gameId="word-scramble"
-                      currentScore={score}
-                      currentRank={leaderboardRank}
-                    />
-                  </div>
-                </SheetContent>
-              </Sheet>
-            )}
-          </div>
+          <Button onClick={resetGame} size="lg">
+            Play Again
+          </Button>
         </div>
       )}
     </div>

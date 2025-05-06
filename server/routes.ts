@@ -820,30 +820,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Generic leaderboard endpoint for all games
-  app.get('/api/games/:gameType/leaderboard', async (req, res, next) => {
+  // High scores and leaderboard endpoint
+  app.get('/api/games/cookie-clicker/leaderboard', async (req, res, next) => {
     try {
-      const gameType = req.params.gameType;
-      let leaderboard = [];
+      // Get all cookie clicker data
+      const allData = await storage.getAllCookieClickerData();
       
-      if (gameType === 'cookie-clicker') {
-        // Special handling for cookie clicker which has its own table
-        const allData = await storage.getAllCookieClickerData();
-        
-        // Sort by cookies in descending order
-        leaderboard = allData
-          .sort((a, b) => b.cookies - a.cookies)
-          .slice(0, 10) // Get top 10
-          .map(entry => ({
-            id: entry.id,
-            userId: entry.userId,
-            highScore: entry.cookies, // Use cookies as high score
-            lastPlayed: entry.lastUpdated
-          }));
-      } else {
-        // For other games, use the generic game data table
-        leaderboard = await storage.getHighScores(gameType, 10);
-      }
+      // Sort by cookies in descending order
+      const leaderboard = allData
+        .sort((a, b) => b.cookies - a.cookies)
+        .slice(0, 10); // Get top 10
       
       // Enhance with user information
       const enhancedLeaderboard = await Promise.all(
@@ -861,54 +847,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       res.json(enhancedLeaderboard);
-    } catch (error) {
-      next(error);
-    }
-  });
-  
-  // Update high score endpoint
-  app.post('/api/games/:gameType/score', isAuthenticated, async (req, res, next) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-      
-      const gameType = req.params.gameType;
-      const { score } = req.body;
-      
-      if (score === undefined || score === null) {
-        return res.status(400).json({ message: "Score is required" });
-      }
-      
-      // Get existing game data for this user and game
-      let gameData = await storage.getGameData(req.user.id, gameType);
-      
-      if (gameData) {
-        // Only update if the new score is higher than the existing high score
-        if (!gameData.highScore || score > gameData.highScore) {
-          gameData = await storage.updateGameData(gameData.id, { 
-            highScore: score,
-            data: { ...gameData.data, lastScore: score }
-          });
-        }
-      } else {
-        // Create new game data entry
-        gameData = await storage.saveGameData({
-          userId: req.user.id,
-          gameType,
-          highScore: score,
-          data: { lastScore: score }
-        });
-      }
-      
-      // Get user's rank
-      const allScores = await storage.getHighScores(gameType);
-      const rank = allScores.findIndex(entry => entry.userId === req.user!.id) + 1;
-      
-      res.json({
-        gameData,
-        rank: rank > 0 ? rank : allScores.length + 1 // If not found, rank is after the last person
-      });
     } catch (error) {
       next(error);
     }

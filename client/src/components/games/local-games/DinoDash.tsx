@@ -1,19 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Trophy } from "lucide-react";
-import { LeaderboardComponent } from "../LeaderboardComponent";
-import { useAuth } from "@/hooks/use-auth";
 
 export function DinoDash() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gameStarted, setGameStarted] = useState(false);
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const [leaderboardRank, setLeaderboardRank] = useState<number | undefined>(undefined);
-  const [isSubmittingScore, setIsSubmittingScore] = useState(false);
-  const { user } = useAuth();
   
   // Game state
   const gameState = useRef({
@@ -191,65 +183,9 @@ export function DinoDash() {
     gameState.current.speed = 5;
   };
   
-  // Submit score to leaderboard
-  const submitScore = async () => {
-    if (!user || isSubmittingScore || score <= 0) return;
-    
-    try {
-      setIsSubmittingScore(true);
-      const response = await fetch('/api/games/dino-dash/leaderboard/submit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          score: score,
-        }),
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setLeaderboardRank(data.rank);
-        setShowLeaderboard(true);
-      } else {
-        console.error('Failed to submit score');
-      }
-    } catch (error) {
-      console.error('Error submitting score:', error);
-    } finally {
-      setIsSubmittingScore(false);
-    }
-  };
-  
   return (
     <div className="flex flex-col items-center justify-center">
-      <div className="flex justify-between items-center w-full max-w-3xl mb-4">
-        <h1 className="text-2xl font-bold">Dino Dash</h1>
-        
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1">
-              <Trophy className="h-4 w-4" />
-              Leaderboard
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-full sm:w-[500px] overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle className="flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-yellow-500" />
-                Dino Dash Leaderboard
-              </SheetTitle>
-            </SheetHeader>
-            <div className="mt-4">
-              <LeaderboardComponent 
-                gameId="dino-dash"
-                currentScore={score}
-                currentRank={leaderboardRank}
-              />
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
+      <h1 className="text-2xl font-bold mb-4">Dino Dash</h1>
       
       <div className="relative border border-gray-300 bg-white">
         {!gameStarted && !gameOver && (
@@ -265,18 +201,7 @@ export function DinoDash() {
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-white">
             <h2 className="text-xl mb-2">Game Over!</h2>
             <p className="mb-4">Your score: {score}</p>
-            <div className="flex gap-2">
-              <Button onClick={handleRestartGame}>Play Again</Button>
-              {user && score > 0 && (
-                <Button 
-                  variant="outline" 
-                  onClick={submitScore} 
-                  disabled={isSubmittingScore}
-                >
-                  {isSubmittingScore ? "Submitting..." : "Submit Score"}
-                </Button>
-              )}
-            </div>
+            <Button onClick={handleRestartGame}>Play Again</Button>
           </div>
         )}
         

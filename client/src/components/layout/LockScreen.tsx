@@ -7,7 +7,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import lockScreenImage from "@/assets/website_locked.svg";
 import { useAuth } from "@/hooks/use-auth";
-import warningTriangle from "@/assets/warning-triangle.svg";
 
 // PIN for unlocking the screen (only admins can unlock)
 const ADMIN_PIN = "2012";
@@ -117,73 +116,57 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
   // Main lock screen
   if (!showUnlockOptions) {
     return (
-      <div className="fixed inset-0 bg-black/25 flex flex-col items-center justify-center z-50">
-        <div className="max-w-xl w-full px-4"> 
+      <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50">
+        <div className="max-w-xl w-full px-4"> {/* Increased from max-w-md to max-w-xl */}
           <div className="flex flex-col items-center text-center">
-            {/* Windows-style error dialog */}
-            <div className="bg-white border border-gray-300 shadow-xl w-full max-w-xl overflow-hidden rounded-sm">
-              {/* Title bar */}
-              <div className="bg-white text-black px-2 py-1 flex justify-between items-center border-t-[3px] border-t-red-600">
-                <div className="flex items-center gap-1">
-                  <span className="text-xs font-normal">System Administrator</span>
-                </div>
-                <div className="flex items-center">
-                  <button className="text-black text-xs px-1 hover:bg-gray-100">?</button>
-                  <button className="text-black text-xs px-1 hover:bg-gray-100">×</button>
-                </div>
+            {/* Display the image which already contains the lock icon and text */}
+            <img 
+              src={lockScreenImage} 
+              alt="Locked Screen" 
+              className="w-full max-w-xl object-contain mb-4" /* Made image larger with max-w-xl instead of max-w-md */
+            />
+            
+            {lockReason && (
+              <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mb-4 w-full max-w-md">
+                <p className="text-amber-800 font-medium text-sm">Reason for lock:</p>
+                <p className="text-amber-900">{lockReason}</p>
               </div>
-              
-              {/* Content */}
-              <div className="p-3 pb-2">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0">
-                    <img src={warningTriangle} alt="Warning" className="h-8 w-8" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm mb-2">You are not authorized to access this website</p>
-                    <p className="text-sm mb-4">This website has been locked by the administrator</p>
-                    
-                    {lockReason && (
-                      <div className="bg-amber-50 border border-amber-200 rounded-md p-2 mb-3">
-                        <p className="text-amber-800 font-medium text-xs">Reason for lock:</p>
-                        <p className="text-amber-900 text-sm">{lockReason}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="flex justify-end mt-6">
-                  {isAdmin ? (
-                    <Button 
-                      className="min-w-[75px] bg-white border border-gray-300 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-sm"
-                      onClick={() => setShowUnlockOptions(true)}
-                    >
-                      Admin Unlock
-                    </Button>
-                  ) : (
-                    <Button 
-                      className="min-w-[75px] bg-white border border-gray-300 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-sm"
-                      onClick={() => {
-                        // Logout the current user
-                        apiRequest("POST", "/api/logout")
-                          .then(() => {
-                            // Redirect to auth page
-                            window.location.href = "/auth";
-                          })
-                          .catch(error => {
-                            toast({
-                              title: "Logout Failed",
-                              description: "Failed to log out. Please try again.",
-                              variant: "destructive",
-                            });
-                          });
-                      }}
-                    >
-                      Change User
-                    </Button>
-                  )}
-                </div>
-              </div>
+            )}
+            
+            <div className="flex flex-col gap-3">
+              {isAdmin ? (
+                <Button 
+                  variant="default" 
+                  onClick={() => setShowUnlockOptions(true)}
+                  className="mt-4"
+                >
+                  <Lock className="mr-2 h-4 w-4" />
+                  Admin Unlock Options
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    // Logout the current user
+                    apiRequest("POST", "/api/logout")
+                      .then(() => {
+                        // Redirect to auth page
+                        window.location.href = "/auth";
+                      })
+                      .catch(error => {
+                        toast({
+                          title: "Logout Failed",
+                          description: "Failed to log out. Please try again.",
+                          variant: "destructive",
+                        });
+                      });
+                  }}
+                  className="mt-2"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout (Change User)
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -193,144 +176,133 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
 
   // Admin-only unlock options screen
   return (
-    <div className="fixed inset-0 bg-black/25 flex flex-col items-center justify-center z-50">
-      <div className="max-w-xl w-full px-4">
-        <div className="flex flex-col items-center text-center">
-          <div className="bg-white border border-gray-300 shadow-xl w-full max-w-xl overflow-hidden rounded-sm">
-            {/* Title bar */}
-            <div className="bg-white text-black px-2 py-1 flex justify-between items-center border-t-[3px] border-t-red-600">
-              <div className="flex items-center gap-1">
-                <span className="text-xs font-normal">System Administrator - Unlock Options</span>
-              </div>
-              <div className="flex items-center">
-                <button className="text-black text-xs px-1 hover:bg-gray-100">?</button>
-                <button 
-                  className="text-black text-xs px-1 hover:bg-gray-100"
-                  onClick={() => setShowUnlockOptions(false)}
-                >×</button>
-              </div>
+    <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50">
+      <div className="max-w-xl w-full px-4"> {/* Increased from max-w-md to max-w-xl */}
+        <div className="flex flex-col items-center text-center space-y-6">
+          {/* Lock icon with fixed dimensions, increased size */}
+          <div className="w-48 h-48 flex items-center justify-center"> {/* Increased from w-32 h-32 to w-48 h-48 */}
+            <img 
+              src={lockScreenImage} 
+              alt="Locked Screen" 
+              className="object-contain max-w-full max-h-full"
+            />
+          </div>
+          
+          {lockReason && (
+            <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mb-2 w-full max-w-md">
+              <p className="text-amber-800 font-medium text-sm">Reason for lock:</p>
+              <p className="text-amber-900">{lockReason}</p>
             </div>
-            
-            {/* Content */}
-            <div className="p-3 pb-2">
-              <div className="mb-2">
-                <Tabs defaultValue="pin" className="w-full">
-                  <TabsList className="grid grid-cols-2 mb-4">
-                    <TabsTrigger value="pin" className="rounded-none">
-                      <Lock className="mr-2 h-4 w-4" />
-                      Unlock for Everyone
-                    </TabsTrigger>
-                    <TabsTrigger value="password" className="rounded-none">
-                      <Key className="mr-2 h-4 w-4" />
-                      Admin-Only Access
-                    </TabsTrigger>
-                  </TabsList>
+          )}
+          
+          <div className="space-y-4 w-full max-w-xl">
+            <Tabs 
+              defaultValue="pin" 
+              className="w-full"
+            >
+              <TabsList className="grid grid-cols-2 mb-4">
+                <TabsTrigger value="pin">
+                  <Lock className="mr-2 h-4 w-4" />
+                  Unlock for Everyone
+                </TabsTrigger>
+                <TabsTrigger value="password">
+                  <Key className="mr-2 h-4 w-4" />
+                  Unlock for Admins Only
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="pin" className="space-y-4">
+                <div className="rounded-md bg-amber-50 p-4 border border-amber-200">
+                  <div className="flex items-start gap-3">
+                    <div className="text-amber-800 text-sm">
+                      <p className="font-medium">Global Unlock - Admin Access Required</p>
+                      <p>
+                        Enter the admin PIN to permanently unlock the website for ALL users.
+                        This will remove the lock for everyone.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="space-y-1">
+                    <Input
+                      type="password"
+                      maxLength={4}
+                      placeholder="Enter 4-digit PIN"
+                      value={pin}
+                      onChange={(e) => setPin(e.target.value)}
+                      className="text-center"
+                    />
+                    {error && <p className="text-sm text-destructive text-center">{error}</p>}
+                  </div>
                   
-                  <TabsContent value="pin" className="space-y-4">
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0">
-                        <img src={warningTriangle} alt="Warning" className="h-8 w-8" />
-                      </div>
-                      <div className="flex-1 text-left">
-                        <p className="text-sm mb-2">Global Unlock - Admin Access Required</p>
-                        <p className="text-xs mb-3 text-gray-700">
-                          Enter the admin PIN to permanently unlock the website for ALL users.
-                          This will remove the lock for everyone.
-                        </p>
-                        
-                        {lockReason && (
-                          <div className="bg-amber-50 border border-amber-200 rounded-md p-2 mb-3">
-                            <p className="text-amber-800 font-medium text-xs">Reason for lock:</p>
-                            <p className="text-amber-900 text-sm">{lockReason}</p>
-                          </div>
-                        )}
-                      </div>
+                  <div className="flex gap-2 pt-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setShowUnlockOptions(false)}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleAdminUnlockAttempt}
+                      className="flex-1"
+                    >
+                      Unlock with PIN
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="password" className="space-y-4">
+                <div className="rounded-md bg-blue-50 p-4 border border-blue-200">
+                  <div className="flex items-start gap-3">
+                    <div className="text-blue-800 text-sm">
+                      <p className="font-medium">Admin Only Access</p>
+                      <p>
+                        Enter the admin PIN to unlock the screen for your session only. 
+                        The website will remain locked for other users.
+                      </p>
                     </div>
-                    
-                    <div className="space-y-2">
-                      <div className="space-y-1">
-                        <Input
-                          type="password"
-                          maxLength={4}
-                          placeholder="Enter 4-digit PIN"
-                          value={pin}
-                          onChange={(e) => setPin(e.target.value)}
-                          className="text-center"
-                        />
-                        {error && <p className="text-sm text-red-600 text-center">{error}</p>}
-                      </div>
-                      
-                      <div className="flex justify-end gap-2 pt-2">
-                        <Button 
-                          className="min-w-[75px] bg-white border border-gray-300 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-sm"
-                          onClick={() => setShowUnlockOptions(false)}
-                        >
-                          Cancel
-                        </Button>
-                        <Button 
-                          className="min-w-[75px] bg-white border border-gray-300 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-sm"
-                          onClick={handleAdminUnlockAttempt}
-                        >
-                          Unlock
-                        </Button>
-                      </div>
-                    </div>
-                  </TabsContent>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="space-y-1">
+                    <Input
+                      type="password"
+                      maxLength={4}
+                      placeholder="Enter 4-digit PIN"
+                      value={adminPin}
+                      onChange={(e) => setAdminPin(e.target.value)}
+                      className="text-center"
+                    />
+                    {error && <p className="text-sm text-destructive text-center">{error}</p>}
+                  </div>
                   
-                  <TabsContent value="password" className="space-y-4">
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0">
-                        <svg className="text-blue-500 h-10 w-10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" fill="currentColor"/>
-                          <path d="M12 12C14.2091 12 16 10.2091 16 8C16 5.79086 14.2091 4 12 4C9.79086 4 8 5.79086 8 8C8 10.2091 9.79086 12 12 12Z" fill="white"/>
-                          <path d="M18 19C18 19 18 16 12 16C6 16 6 19 6 19" stroke="white" strokeWidth="2"/>
-                        </svg>
-                      </div>
-                      <div className="flex-1 text-left">
-                        <p className="text-sm mb-2">Admin Only Access</p>
-                        <p className="text-xs mb-3 text-gray-700">
-                          Enter the admin PIN to unlock the screen for your session only. 
-                          The website will remain locked for other users.
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="space-y-1">
-                        <Input
-                          type="password"
-                          maxLength={4}
-                          placeholder="Enter 4-digit PIN"
-                          value={adminPin}
-                          onChange={(e) => setAdminPin(e.target.value)}
-                          className="text-center"
-                        />
-                        {error && <p className="text-sm text-red-600 text-center">{error}</p>}
-                      </div>
-                      
-                      <div className="flex justify-end gap-2 pt-2">
-                        <Button 
-                          className="min-w-[75px] bg-white border border-gray-300 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-sm"
-                          onClick={() => {
-                            setShowUnlockOptions(false);
-                            setError("");
-                            setAdminPin("");
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                        <Button 
-                          className="min-w-[75px] bg-white border border-gray-300 px-4 py-1 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-sm"
-                          onClick={handleAdminOnlyUnlock}
-                        >
-                          Unlock
-                        </Button>
-                      </div>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </div>
-            </div>
+                  <div className="flex gap-2 pt-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setShowUnlockOptions(false);
+                        setError("");
+                        setAdminPin("");
+                      }}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleAdminOnlyUnlock}
+                      className="flex-1"
+                    >
+                      Unlock with PIN
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>
