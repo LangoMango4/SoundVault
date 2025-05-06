@@ -86,9 +86,14 @@ export function Chat() {
       const res = await apiRequest("POST", "/api/chat", { content });
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (newMessage: ChatMessage) => {
       setMessage("");
       queryClient.invalidateQueries({ queryKey: ["/api/chat"] });
+      
+      // Auto-delete the message after 5 seconds
+      setTimeout(() => {
+        deleteMessageMutation.mutate({ id: newMessage.id, showNotification: false });
+      }, 5000);
     },
     onError: (error: Error) => {
       toast({
@@ -101,16 +106,20 @@ export function Chat() {
 
   // Delete a chat message (soft delete)
   const deleteMessageMutation = useMutation({
-    mutationFn: async (id: number) => {
+    mutationFn: async ({ id, showNotification = true }: { id: number, showNotification?: boolean }) => {
       const res = await apiRequest("DELETE", `/api/chat/${id}`);
-      return res.json();
+      return { data: await res.json(), showNotification };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["/api/chat"] });
-      toast({
-        title: "Message deleted",
-        description: "The message has been successfully deleted.",
-      });
+      
+      // Only show toast for manual deletions, not auto-deletions
+      if (result.showNotification) {
+        toast({
+          title: "Message deleted",
+          description: "The message has been successfully deleted.",
+        });
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -242,7 +251,7 @@ export function Chat() {
                                       variant="ghost"
                                       size="sm"
                                       className="h-6 w-6 p-0"
-                                      onClick={() => deleteMessageMutation.mutate(msg.id)}
+                                      onClick={() => deleteMessageMutation.mutate({ id: msg.id, showNotification: true })}
                                     >
                                       <Trash2 className="h-3.5 w-3.5" />
                                     </Button>
