@@ -106,6 +106,7 @@ export interface IStorage {
   getTermsAcceptanceLogsByUser(userId: number): Promise<TermsAcceptanceLog[]>;
   getLatestTermsAcceptance(userId: number): Promise<TermsAcceptanceLog | undefined>;
   deleteTermsAcceptanceLog(id: number): Promise<boolean>;
+  searchTermsAcceptanceLogs(params: { username?: string; version?: string; acceptanceMethod?: string; fromDate?: Date; toDate?: Date; limit?: number; }): Promise<TermsAcceptanceLog[]>;
 }
 
 // In-memory storage implementation
@@ -790,6 +791,49 @@ export class MemStorage implements IStorage {
   async getLatestTermsAcceptance(userId: number): Promise<TermsAcceptanceLog | undefined> {
     const userLogs = await this.getTermsAcceptanceLogsByUser(userId);
     return userLogs.length > 0 ? userLogs[0] : undefined;
+  }
+  
+  async deleteTermsAcceptanceLog(id: number): Promise<boolean> {
+    const result = this.termsAcceptanceLogs.delete(id);
+    if (result) {
+      this.saveDataToFiles(); // Save after modification
+    }
+    return result;
+  }
+  
+  async searchTermsAcceptanceLogs(params: { username?: string; version?: string; acceptanceMethod?: string; fromDate?: Date; toDate?: Date; limit?: number; }): Promise<TermsAcceptanceLog[]> {
+    let logs = Array.from(this.termsAcceptanceLogs.values());
+    
+    // Apply filters
+    if (params.username) {
+      logs = logs.filter(log => log.username.toLowerCase().includes(params.username!.toLowerCase()));
+    }
+    
+    if (params.version) {
+      logs = logs.filter(log => log.version === params.version);
+    }
+    
+    if (params.acceptanceMethod) {
+      logs = logs.filter(log => log.acceptanceMethod === params.acceptanceMethod);
+    }
+    
+    if (params.fromDate) {
+      logs = logs.filter(log => new Date(log.acceptanceTime) >= params.fromDate!);
+    }
+    
+    if (params.toDate) {
+      logs = logs.filter(log => new Date(log.acceptanceTime) <= params.toDate!);
+    }
+    
+    // Sort by most recent first
+    logs.sort((a, b) => b.acceptanceTime.getTime() - a.acceptanceTime.getTime());
+    
+    // Apply limit if provided
+    if (params.limit && params.limit > 0) {
+      logs = logs.slice(0, params.limit);
+    }
+    
+    return logs;
   }
 }
 
