@@ -41,6 +41,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format, addDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import warningIcon from "@/assets/warning-icon.png";
+import errorTitleIcon from "@/assets/error-title-icon.png";
 
 // Form validation schema
 const formSchema = z.object({
@@ -291,13 +292,13 @@ export function BroadcastMessageForm({ open, onOpenChange }: BroadcastMessageFor
                 {form.watch("useWindowsStyle") ? (
                   <div className="bg-white shadow-lg w-80 overflow-hidden rounded-sm">
                     {/* Title bar */}
-                    <div className="bg-green-600 text-white px-3 py-1.5 flex justify-between items-center">
+                    <div className="bg-white text-black border-b border-gray-300 px-3 py-1.5 flex justify-between items-center">
                       <div className="flex items-center">
                         <span className="text-sm font-medium">{form.watch("title") || "System Administrator"}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <button className="text-white hover:text-gray-200 text-xl leading-none">?</button>
-                        <button className="text-white hover:text-gray-200 text-xl leading-none">×</button>
+                        <button className="text-black hover:text-gray-600 text-xl leading-none">?</button>
+                        <button className="text-black hover:text-gray-600 text-xl leading-none">×</button>
                       </div>
                     </div>
                     

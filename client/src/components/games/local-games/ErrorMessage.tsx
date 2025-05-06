@@ -1,4 +1,5 @@
 import React from 'react';
+import errorTitleIcon from '@/assets/error-title-icon.png';
 
 interface ErrorMessageProps {
   show: boolean;
@@ -14,15 +15,15 @@ export function ErrorMessage({ show, onClose, title = "System Administrator", me
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white shadow-lg w-80 overflow-hidden rounded-sm">
         {/* Title bar */}
-        <div className="bg-green-600 text-white px-3 py-1.5 flex justify-between items-center">
+        <div className="bg-white text-black border-b border-gray-300 px-3 py-1.5 flex justify-between items-center">
           <div className="flex items-center">
             <span className="text-sm font-medium">{title}</span>
           </div>
           <div className="flex items-center gap-2">
-            <button className="text-white hover:text-gray-200 text-xl leading-none">?</button>
+            <button className="text-black hover:text-gray-600 text-xl leading-none">?</button>
             <button 
               onClick={onClose}
-              className="text-white hover:text-gray-200 text-xl leading-none"
+              className="text-black hover:text-gray-600 text-xl leading-none"
             >
               ×
             </button>

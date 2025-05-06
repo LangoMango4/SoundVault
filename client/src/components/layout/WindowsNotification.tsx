@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import warningIcon from '@/assets/warning-icon.png';
 import windowsIcon from '@/assets/windows-notification.png';
+import errorTitleIcon from '@/assets/error-title-icon.png';
 
 interface WindowsNotificationProps {
   title: string;
@@ -27,16 +28,16 @@ export function WindowsNotification({
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/25">
       <div className="flex flex-col w-full max-w-md bg-white border border-gray-200 shadow-lg rounded-sm overflow-hidden">
         {/* Header bar */}
-        <div className="flex items-center justify-between px-2 py-1 bg-gradient-to-r from-[#009900] to-[#006600] text-white">
+        <div className="flex items-center justify-between px-2 py-1 bg-white text-black border-b border-gray-300">
           <div className="flex items-center">
             <span className="text-sm font-medium">{title}</span>
           </div>
           <div className="flex items-center space-x-1">
-            <span className="px-2">?</span>
+            <span className="px-2 text-black hover:text-gray-600">?</span>
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-5 w-5 p-0 text-white hover:bg-white/20"
+              className="h-5 w-5 p-0 text-black hover:text-gray-600"
               onClick={onClose}
             >
               <X className="h-3 w-3" />
