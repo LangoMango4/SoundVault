@@ -24,7 +24,8 @@ export function showSystemNotification(
     .replace(/\\"/g, '"')           // Replace escaped quotes
     .replace(/\\/g, '');            // Remove any remaining backslashes
   
-  // Using a string title since JSX isn't valid in .ts files
+  // Use a plain string title for System Notification so the timeout system recognizes it
+  // and applies the correct duration
   toast({
     title: "System Notification",
     description: formattedMessage,
