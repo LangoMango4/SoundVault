@@ -264,7 +264,7 @@ export function BroadcastMessages() {
                           <img 
                             src={windowsExeIcon} 
                             alt="Windows" 
-                            className="h-4 w-4 mr-2"
+                            className="h-3 w-3 mr-2"
                           />
                           <CardTitle className="text-base">{message.title}</CardTitle>
                         </div>

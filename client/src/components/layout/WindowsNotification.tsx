@@ -31,7 +31,7 @@ export function WindowsNotification({
         {/* Header bar */}
         <div className="flex items-center justify-between px-2 py-1 bg-white text-black border-b border-gray-300">
           <div className="flex items-center">
-            <img src={windowsExeIcon} alt="Windows" className="h-4 w-4 mr-1.5" />
+            <img src={windowsExeIcon} alt="Windows" className="h-3 w-3 mr-1.5" />
             <span className="text-sm font-medium">{title}</span>
           </div>
           <div className="flex items-center space-x-1">
