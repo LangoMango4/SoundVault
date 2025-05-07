@@ -19,6 +19,7 @@ import { SoundForm } from "./SoundForm";
 import { ScreenLockControl } from "./ScreenLockControl";
 import { BatchSoundImport } from "./BatchSoundImport";
 import UpdateNotificationTester from "./UpdateNotificationTester";
+import NotificationTester from "./NotificationTester";
 import { Howl } from "howler";
 import {
   AlertDialog,
@@ -737,6 +738,7 @@ export function AdminPanel({
               <TabsTrigger value="termslogs">Terms & Conditions Logs</TabsTrigger>
               <TabsTrigger value="moderation">Moderation</TabsTrigger>
               <TabsTrigger value="system">System</TabsTrigger>
+              <TabsTrigger value="notifications">Notifications</TabsTrigger>
             </TabsList>
             
             <TabsContent value="users" className="flex-1 overflow-auto p-1">
