@@ -1,7 +1,7 @@
 import * as React from "react"
 import * as ToastPrimitives from "@radix-ui/react-toast"
 import { cva, type VariantProps } from "class-variance-authority"
-import { X } from "lucide-react"
+import { X, AlertTriangle } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -89,13 +89,21 @@ ToastClose.displayName = ToastPrimitives.Close.displayName
 const ToastTitle = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Title>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Title>
->(({ className, ...props }, ref) => (
-  <ToastPrimitives.Title
-    ref={ref}
-    className={cn("text-sm font-semibold", className)}
-    {...props}
-  />
-))
+>(({ className, children, ...props }, ref) => {
+  // Check if this is a system notification and add a warning icon
+  const isSystemNotification = children === "System Notification";
+  
+  return (
+    <ToastPrimitives.Title
+      ref={ref}
+      className={cn("text-sm font-semibold flex items-center gap-1", className)}
+      {...props}
+    >
+      {isSystemNotification && <AlertTriangle className="h-4 w-4" />}
+      {children}
+    </ToastPrimitives.Title>
+  );
+})
 ToastTitle.displayName = ToastPrimitives.Title.displayName
 
 const ToastDescription = React.forwardRef<

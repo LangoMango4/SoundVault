@@ -1,21 +1,40 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+// Consistently extract a clean error message from various response formats
+export async function extractErrorMessage(res: Response): Promise<string> {
+  const text = await res.text();
+  
+  // Try to parse the error as JSON to extract the message
+  let errorMessage = res.statusText;
+  
+  try {
+    // Check if it's valid JSON
+    const errorJson = JSON.parse(text);
+    
+    // Check for common error message patterns
+    if (errorJson.message) {
+      errorMessage = errorJson.message;
+    } else if (errorJson.error) {
+      errorMessage = errorJson.error;
+    } else if (typeof errorJson === 'string') {
+      errorMessage = errorJson;
+    } else if (typeof errorJson === 'object' && Object.keys(errorJson).length > 0) {
+      // Get the first property if it's a simple object with a message-like property
+      errorMessage = errorJson[Object.keys(errorJson)[0]];
+    }
+  } catch (e) {
+    // If the error text is not valid JSON, clean up the text
+    // Remove any status code prefixes like "400:" or "500: "
+    errorMessage = text || res.statusText;
+    errorMessage = errorMessage.replace(/^\d{3}:?\s*/, '');
+  }
+  
+  return errorMessage;
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    const text = await res.text();
-    // Try to parse the error as JSON to extract the message
-    let errorMessage = res.statusText;
-    try {
-      const errorJson = JSON.parse(text);
-      if (errorJson.message) {
-        errorMessage = errorJson.message;
-      }
-    } catch (e) {
-      // If the error text is not valid JSON, use the raw text
-      errorMessage = text || res.statusText;
-    }
-    
-    // Throw a clean error without the status code prefix
+    const errorMessage = await extractErrorMessage(res);
     throw new Error(errorMessage);
   }
 }

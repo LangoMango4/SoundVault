@@ -6,8 +6,9 @@ import type {
 } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 1
-// Increase display time for error messages to 10 seconds so users have time to read them
-const TOAST_REMOVE_DELAY = 10000
+// Different display times for different kinds of toasts
+const TOAST_REMOVE_DELAY = 5000      // Regular notifications - 5 seconds
+const SYSTEM_TOAST_REMOVE_DELAY = 10000  // System/error notifications - 10 seconds
 
 type ToasterToast = ToastProps & {
   id: string
