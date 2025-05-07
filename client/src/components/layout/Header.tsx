@@ -111,7 +111,7 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
               </h1>
               {user && (
                 <p className="text-xs text-gray-500 -mt-1">
-                  made by sniff sniff / skibidi._fish
+                  This was made by sniff sniff / skibidi._fish - Copyright 2025 All Rights Reserved
                 </p>
               )}
             </div>
