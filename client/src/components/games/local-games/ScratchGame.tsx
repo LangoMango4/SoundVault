@@ -40,7 +40,7 @@ export function ScratchGame() {
           )}
           <iframe 
             src="https://scratch.mit.edu/projects/105500895/embed" 
-            allowTransparency={true} 
+            allowTransparency="true" 
             width="485" 
             height="402" 
             frameBorder="0" 
