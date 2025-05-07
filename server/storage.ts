@@ -1539,25 +1539,19 @@ export class DatabaseStorage implements IStorage {
   }
   // Chat moderation operations
   async moderateMessage(content: string, userId: number, username: string): Promise<{ isAllowed: boolean; moderatedMessage: string; reason?: string; moderationType?: string; }> {
-    // Simple list of banned words/phrases for moderation
-    const moderationRules = [
-      { pattern: /\b(fuck|shit|ass|bitch|cunt|dick|cock|pussy|whore)\b/gi, type: 'profanity', reason: 'Profanity detected' },
-      { pattern: /\b(nigger|nigga|faggot|retard|spastic)\b/gi, type: 'hate_speech', reason: 'Hate speech detected' },
-      { pattern: /\b(porn|pornhub|xvideos|onlyfans|sex|sexy)\b/gi, type: 'inappropriate', reason: 'Inappropriate content detected' },
-      { pattern: /\b(suicide|kill myself|hang myself|jump off)\b/gi, type: 'concerning', reason: 'Concerning content detected' },
-      { pattern: /\b(address|phone number|credit card|password|SSN|social security)\b/gi, type: 'personal_info', reason: 'Potential personal information sharing detected' },
-    ];
+    // Use enhanced moderation rules for more sophisticated pattern matching
+    const moderationRules = enhancedModerationRules;
 
     let moderatedMessage = content;
     let hasViolation = false;
-    let moderationType = '';
-    let reason = '';
+    let moderationType = "";
+    let reason = "";
 
     // Check each rule against the message
     for (const rule of moderationRules) {
       if (rule.pattern.test(content)) {
         // Replace the matched content with asterisks
-        moderatedMessage = moderatedMessage.replace(rule.pattern, (match) => '*'.repeat(match.length));
+        moderatedMessage = moderatedMessage.replace(rule.pattern, (match) => "*".repeat(match.length));
         hasViolation = true;
         moderationType = rule.type;
         reason = rule.reason;

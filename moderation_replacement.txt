@@ -1,0 +1,41 @@
+  async moderateMessage(content: string, userId: number, username: string): Promise<{ isAllowed: boolean; moderatedMessage: string; reason?: string; moderationType?: string; }> {
+    // Use enhanced moderation rules for more sophisticated pattern matching
+    const moderationRules = enhancedModerationRules;
+
+    let moderatedMessage = content;
+    let hasViolation = false;
+    let moderationType = '';
+    let reason = '';
+
+    // Check each rule against the message
+    for (const rule of moderationRules) {
+      if (rule.pattern.test(content)) {
+        // Replace the matched content with asterisks
+        moderatedMessage = moderatedMessage.replace(rule.pattern, (match) => '*'.repeat(match.length));
+        hasViolation = true;
+        moderationType = rule.type;
+        reason = rule.reason;
+        
+        // Log the moderation action
+        await this.logModerationAction({
+          userId,
+          username,
+          originalMessage: content,
+          reason: rule.reason,
+          moderationType: rule.type
+        });
+        
+        // Increment user strikes
+        await this.incrementUserStrikes(userId, username);
+        
+        break; // Stop at the first violation for simplicity
+      }
+    }
+
+    return {
+      isAllowed: !hasViolation,
+      moderatedMessage,
+      moderationType: hasViolation ? moderationType : undefined,
+      reason: hasViolation ? reason : undefined,
+    };
+  }
