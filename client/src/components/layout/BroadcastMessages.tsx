@@ -128,28 +128,8 @@ export function BroadcastMessages() {
     }
   });
 
-  // Get appropriate priority badge color
-  const getPriorityBadge = (priority: string) => {
-    switch(priority) {
-      case 'high':
-        return <Badge variant="destructive">High Priority</Badge>;
-      case 'urgent':
-        return <Badge variant="destructive" className="animate-pulse">Urgent</Badge>;
-      case 'low':
-        return <Badge variant="secondary">Low Priority</Badge>;
-      default:
-        return <Badge>Normal</Badge>;
-    }
-  };
-  
-  // Format time since message was created
-  const getTimeAgo = (dateString: Date) => {
-    try {
-      return formatDistance(new Date(dateString), new Date(), { addSuffix: true });
-    } catch (e) {
-      return 'recently';
-    }
-  };
+  // Only check if the user is an admin (for delete permission)
+  const isAdmin = user?.role === 'admin';
   
   // Open notifications when there are new unread messages
   useEffect(() => {
@@ -240,7 +220,7 @@ export function BroadcastMessages() {
           sender=""
           open={showWindowsNotification}
           onClose={handleCloseNotification}
-          onDelete={handleDeleteNotification}
+          onDelete={isAdmin ? handleDeleteNotification : undefined}
         />
       )}
       
@@ -280,22 +260,14 @@ export function BroadcastMessages() {
                   return (
                     <Card key={message.id} className={hasBeenRead ? 'opacity-70' : ''}>
                       <CardHeader className="pb-2">
-                        <div className="flex justify-between items-start">
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-1.5">
-                              <img 
-                                src={windowsExeIcon} 
-                                alt="Windows" 
-                                className="h-4 w-4"
-                              />
-                              <CardTitle className="text-base">{message.title}</CardTitle>
-                            </div>
-                          </div>
-                          {getPriorityBadge(message.priority)}
+                        <div className="flex items-center">
+                          <img 
+                            src={windowsExeIcon} 
+                            alt="Windows" 
+                            className="h-4 w-4 mr-2"
+                          />
+                          <CardTitle className="text-base">{message.title}</CardTitle>
                         </div>
-                        <CardDescription className="text-xs">
-                          {getTimeAgo(message.createdAt)}
-                        </CardDescription>
                       </CardHeader>
                       <CardContent className="pb-2">
                         <p className="text-sm whitespace-pre-line">{message.message}</p>
@@ -311,15 +283,17 @@ export function BroadcastMessages() {
                             Mark as read
                           </Button>
                         )}
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          className="text-red-500 hover:text-red-700 hover:bg-red-100"
-                          onClick={() => deleteBroadcastMessageMutation.mutate(message.id)}
-                        >
-                          <X className="mr-1 h-4 w-4" />
-                          Delete
-                        </Button>
+                        {isAdmin && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="text-red-500 hover:text-red-700 hover:bg-red-100"
+                            onClick={() => deleteBroadcastMessageMutation.mutate(message.id)}
+                          >
+                            <X className="mr-1 h-4 w-4" />
+                            Delete
+                          </Button>
+                        )}
                       </CardFooter>
                     </Card>
                   );
