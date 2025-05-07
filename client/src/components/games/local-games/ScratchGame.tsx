@@ -24,9 +24,9 @@ export function ScratchGame() {
     <div className="flex flex-col items-center w-full max-w-4xl mx-auto gap-4">
       <div className="w-full bg-white rounded-lg shadow-md overflow-hidden">
         <div className="p-4 bg-slate-50 border-b">
-          <h2 className="text-xl font-bold text-slate-800">Scratch Ninja Run</h2>
+          <h2 className="text-xl font-bold text-slate-800">Geometry Dash</h2>
           <p className="text-sm text-slate-500">
-            Play as a ninja and dodge obstacles to get a high score!
+            Avoid obstacles and reach the highest score!
           </p>
         </div>
         <div className="flex justify-center p-4 bg-white">
@@ -38,15 +38,15 @@ export function ScratchGame() {
               </div>
             </div>
           )}
-          <iframe 
-            src="https://scratch.mit.edu/projects/105500895/embed" 
-            allowTransparency="true" 
-            width="485" 
-            height="402" 
-            frameBorder="0" 
-            scrolling="no" 
+          <iframe
+            src="https://scratch.mit.edu/projects/105500895/embed"
+            allowTransparency="true"
+            width="485"
+            height="402"
+            frameBorder="0"
+            scrolling="no"
             allowFullScreen={true}
-            title="Scratch Ninja Run"
+            title="Geometry Dash"
             className="border rounded shadow-sm"
           ></iframe>
         </div>
@@ -55,26 +55,23 @@ export function ScratchGame() {
       <Card className="w-full">
         <CardContent className="pt-6">
           <div className="text-center mb-4">
-            <h3 className="font-semibold text-lg">How to Play</h3>
-            <p className="text-sm text-gray-600 mt-1">
-              Press the space bar to jump over obstacles and avoid hitting them.
-              Try to get the highest score possible!
-            </p>
+            <h3 className="font-semibold text-lg"></h3>
+            <p className="text-sm text-gray-600 mt-1"></p>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-600">Controls:</span>
-              <span className="font-medium">Space Bar</span>
+              <span className="text-gray-600">Controls: N/A</span>
+              <span className="font-medium"></span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Game Type:</span>
-              <span className="font-medium">Scratch Game</span>
+              <span className="text-gray-600">Game Type: Scratch</span>
+              <span className="font-medium"></span>
             </div>
           </div>
-          
+
           <div className="mt-4 text-xs text-gray-500 text-center">
-            <p>Created on Scratch by ChrisDuffey.</p>
+            <p>Created on Scratch, Credits to Original Owners.</p>
           </div>
         </CardContent>
       </Card>

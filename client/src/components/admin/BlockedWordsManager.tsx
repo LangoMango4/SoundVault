@@ -33,8 +33,18 @@ import {
   Trash,
   Edit,
   Save,
-  X
+  X,
+  ListPlus
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 type BlockedWordsManagerProps = {
   className?: string;
@@ -50,6 +60,9 @@ export default function BlockedWordsManager({ className }: BlockedWordsManagerPr
   const [editingWord, setEditingWord] = useState<CustomBlockedWord | null>(null);
   const [editedWord, setEditedWord] = useState("");
   const [editedWordType, setEditedWordType] = useState("");
+  const [bulkWords, setBulkWords] = useState("");
+  const [bulkWordType, setBulkWordType] = useState("exact");
+  const [bulkAddDialogOpen, setBulkAddDialogOpen] = useState(false);
 
   // Fetch all custom blocked words
   const { data: blockedWords, isLoading } = useQuery<CustomBlockedWord[]>({
@@ -97,6 +110,62 @@ export default function BlockedWordsManager({ className }: BlockedWordsManagerPr
       toast({
         title: "Error",
         description: `Failed to add blocked word: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Mutation to add multiple words at once
+  const bulkAddMutation = useMutation({
+    mutationFn: async (words: { word: string; type: string }[]) => {
+      // Process words one by one to avoid overwhelming the server
+      const results = [];
+      let successCount = 0;
+      let failCount = 0;
+      
+      for (const wordData of words) {
+        try {
+          const response = await fetch("/api/moderation/blocked-words", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              word: wordData.word,
+              type: wordData.type,
+              addedBy: user?.id,
+            }),
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            results.push(result);
+            successCount++;
+          } else {
+            failCount++;
+          }
+        } catch (error) {
+          failCount++;
+        }
+      }
+      
+      return { results, successCount, failCount };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/moderation/blocked-words"] });
+      setBulkWords("");
+      setBulkAddDialogOpen(false);
+      
+      toast({
+        title: "Words added",
+        description: `Successfully added ${data.successCount} word${data.successCount !== 1 ? 's' : ''}${data.failCount > 0 ? `, ${data.failCount} failed` : ''}`,
+        variant: "success",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to add words: ${error.message}`,
         variant: "destructive",
       });
     },
@@ -227,6 +296,41 @@ export default function BlockedWordsManager({ className }: BlockedWordsManagerPr
     if (deleteWordId !== null) {
       deleteWordMutation.mutate(deleteWordId);
     }
+  };
+  
+  const handleBulkAdd = () => {
+    if (!bulkWords.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter at least one word",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Split by newlines and remove empty lines
+    const words = bulkWords
+      .split('\n')
+      .map(word => word.trim())
+      .filter(word => word.length > 0);
+    
+    if (words.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please enter at least one word",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Create word objects
+    const wordObjects = words.map(word => ({
+      word,
+      type: bulkWordType,
+    }));
+    
+    // Start the bulk add mutation
+    bulkAddMutation.mutate(wordObjects);
   };
 
   const blockedWordsColumns = [
@@ -380,17 +484,28 @@ export default function BlockedWordsManager({ className }: BlockedWordsManagerPr
             </Select>
           </div>
           
-          <Button 
-            type="submit" 
-            disabled={addWordMutation.isPending || !newWord.trim()}
-          >
-            {addWordMutation.isPending ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <PlusCircle className="h-4 w-4 mr-2" />
-            )}
-            Add Word
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              type="submit" 
+              disabled={addWordMutation.isPending || !newWord.trim()}
+            >
+              {addWordMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <PlusCircle className="h-4 w-4 mr-2" />
+              )}
+              Add Word
+            </Button>
+            
+            <Button 
+              type="button" 
+              variant="outline"
+              onClick={() => setBulkAddDialogOpen(true)}
+            >
+              <ListPlus className="h-4 w-4 mr-2" />
+              Bulk Add
+            </Button>
+          </div>
         </form>
       </Card>
       
@@ -448,6 +563,67 @@ export default function BlockedWordsManager({ className }: BlockedWordsManagerPr
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      {/* Bulk Add Dialog */}
+      <Dialog open={bulkAddDialogOpen} onOpenChange={setBulkAddDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Bulk Add Blocked Words</DialogTitle>
+            <DialogDescription>
+              Add multiple blocked words at once, one word per line.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="bulk-words">Words</Label>
+              <Textarea
+                id="bulk-words"
+                placeholder="Enter blocked words, one per line..."
+                rows={8}
+                value={bulkWords}
+                onChange={(e) => setBulkWords(e.target.value)}
+                className="resize-none"
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="bulk-word-type">Match Type</Label>
+              <Select
+                value={bulkWordType}
+                onValueChange={setBulkWordType}
+              >
+                <SelectTrigger id="bulk-word-type">
+                  <SelectValue placeholder="Match Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="exact">Exact</SelectItem>
+                  <SelectItem value="contains">Contains</SelectItem>
+                  <SelectItem value="startsWith">Starts With</SelectItem>
+                  <SelectItem value="endsWith">Ends With</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setBulkAddDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="button" 
+              onClick={handleBulkAdd}
+              disabled={!bulkWords.trim()}
+            >
+              Add Words
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
