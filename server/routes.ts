@@ -1849,6 +1849,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Custom blocked words management
+  app.get('/api/moderation/blocked-words', isAdmin, async (req, res, next) => {
+    try {
+      const blockedWords = await storage.getCustomBlockedWords();
+      res.json(blockedWords);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post('/api/moderation/blocked-words', isAdmin, async (req, res, next) => {
+    try {
+      const { word, type } = req.body;
+      
+      if (!word || !type) {
+        return res.status(400).json({ message: "Word and type are required" });
+      }
+      
+      // Add current user as the one who added this word
+      const addedBy = req.user!.id;
+      
+      const newWord = await storage.addCustomBlockedWord({
+        word,
+        type,
+        addedBy,
+        active: true
+      });
+      
+      res.status(201).json(newWord);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.patch('/api/moderation/blocked-words/:id', isAdmin, async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid ID" });
+      }
+      
+      const updates = req.body;
+      const updatedWord = await storage.updateCustomBlockedWord(id, updates);
+      
+      if (!updatedWord) {
+        return res.status(404).json({ message: "Blocked word not found" });
+      }
+      
+      res.json(updatedWord);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.delete('/api/moderation/blocked-words/:id', isAdmin, async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid ID" });
+      }
+      
+      const success = await storage.deleteCustomBlockedWord(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Blocked word not found" });
+      }
+      
+      res.json({ message: "Blocked word deleted successfully" });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -126,6 +126,13 @@ export interface IStorage {
   updateChatRestriction(userId: number, restrict: boolean): Promise<UserStrike | undefined>;
   getUsersWithStrikes(): Promise<UserStrike[]>;
   isUserChatRestricted(userId: number): Promise<boolean>;
+  
+  // Custom blocked words operations
+  getCustomBlockedWords(): Promise<CustomBlockedWord[]>;
+  getCustomBlockedWord(id: number): Promise<CustomBlockedWord | undefined>;
+  addCustomBlockedWord(data: InsertCustomBlockedWord): Promise<CustomBlockedWord>;
+  updateCustomBlockedWord(id: number, data: Partial<CustomBlockedWord>): Promise<CustomBlockedWord | undefined>;
+  deleteCustomBlockedWord(id: number): Promise<boolean>;
 }
 
 // In-memory storage implementation
