@@ -1,9 +1,10 @@
 import * as React from "react"
 import * as ToastPrimitives from "@radix-ui/react-toast"
 import { cva, type VariantProps } from "class-variance-authority"
-import { X, AlertTriangle } from "lucide-react"
+import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import warningIconPath from "@assets/SecurityAndMaintenance_Alert.png"
 
 const ToastProvider = ToastPrimitives.Provider
 
@@ -43,12 +44,34 @@ const Toast = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
     VariantProps<typeof toastVariants>
 >(({ className, variant, ...props }, ref) => {
+  // Check if this is a system notification by examining title prop
+  const isSystemNotification = 
+    props.children && 
+    Array.isArray(props.children) && 
+    props.children.some(child => 
+      child?.props?.children === "System Notification"
+    );
+
   return (
     <ToastPrimitives.Root
       ref={ref}
       className={cn(toastVariants({ variant }), className)}
       {...props}
-    />
+    >
+      {/* Add the warning icon at the start of the toast if it's a system notification */}
+      {isSystemNotification && (
+        <div className="mr-3 flex-shrink-0 self-start mt-1">
+          <img 
+            src={warningIconPath} 
+            alt="Warning" 
+            className="h-6 w-6" 
+          />
+        </div>
+      )}
+      <div className="flex-1">
+        {props.children}
+      </div>
+    </ToastPrimitives.Root>
   )
 })
 Toast.displayName = ToastPrimitives.Root.displayName
@@ -90,16 +113,14 @@ const ToastTitle = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Title>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Title>
 >(({ className, children, ...props }, ref) => {
-  // Check if this is a system notification and add a warning icon
-  const isSystemNotification = typeof children === 'string' && children === "System Notification";
-  
+  // This component only renders the title text (not the warning icon)
+  // The warning icon will be moved to the start of the toast container
   return (
     <ToastPrimitives.Title
       ref={ref}
-      className={cn("text-sm font-semibold flex items-center gap-1", className)}
+      className={cn("text-sm font-semibold", className)}
       {...props}
     >
-      {isSystemNotification && <AlertTriangle className="h-4 w-4 text-amber-500" />}
       {children}
     </ToastPrimitives.Title>
   );

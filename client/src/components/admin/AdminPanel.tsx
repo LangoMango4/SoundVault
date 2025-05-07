@@ -738,7 +738,6 @@ export function AdminPanel({
               <TabsTrigger value="termslogs">Terms & Conditions Logs</TabsTrigger>
               <TabsTrigger value="moderation">Moderation</TabsTrigger>
               <TabsTrigger value="system">System</TabsTrigger>
-              <TabsTrigger value="notifications">Notifications</TabsTrigger>
             </TabsList>
             
             <TabsContent value="users" className="flex-1 overflow-auto p-1">
@@ -1029,26 +1028,7 @@ export function AdminPanel({
               </div>
             </TabsContent>
 
-            <TabsContent value="notifications" className="flex-1 overflow-auto p-1">
-              <div className="flex justify-between mb-6">
-                <h3 className="text-lg font-medium">Notification Testing</h3>
-              </div>
-              
-              <div className="space-y-8">
-                {/* Error Notification Testing */}
-                <div className="bg-card rounded-md border shadow-sm p-6">
-                  <h4 className="font-medium text-lg mb-3">System Notifications</h4>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Test different types of system notifications and error messages. This helps verify the
-                    improved error handling system with proper formatting and visual indicators.
-                  </p>
-                  
-                  <div className="space-y-4">
-                    <NotificationTester />
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
+
             
           </Tabs>
         </DialogContent>
