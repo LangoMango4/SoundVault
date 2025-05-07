@@ -94,6 +94,7 @@ export interface UseUpdateNotificationResult {
   refreshPage: () => void;
   currentVersionDetails: VersionDetails;
   testShowUpdateNotification: () => void; // For testing purpose only
+  checkForDeployment?: () => Promise<void>; // Manual deployment check for testing
 }
 
 export function useUpdateNotification(): UseUpdateNotificationResult {
@@ -135,15 +136,27 @@ export function useUpdateNotification(): UseUpdateNotificationResult {
         
         // If we don't have a stored timestamp, store the current one
         if (!storedTimestamp) {
+          console.log('Initial deployment timestamp stored:', data.timestamp);
           localStorage.setItem(DEPLOYMENT_TIMESTAMP_KEY, data.timestamp);
+          // Also store the current version to prevent duplicate notifications
+          localStorage.setItem(VERSION_STORAGE_KEY, CURRENT_VERSION);
           return;
         }
         
         // If the deployment timestamp is newer than our stored one,
         // it means the app has been redeployed
         if (Number(data.timestamp) > Number(storedTimestamp)) {
-          console.log('New deployment detected!', data);
+          console.log('New deployment detected!', {
+            stored: Number(storedTimestamp),
+            current: Number(data.timestamp),
+            difference: Number(data.timestamp) - Number(storedTimestamp)
+          });
+          
           localStorage.setItem(DEPLOYMENT_TIMESTAMP_KEY, data.timestamp);
+          
+          // Clear the version storage key to force showing update notification
+          localStorage.removeItem(VERSION_STORAGE_KEY);
+          
           // Show update notification
           setShowUpdateNotification(true);
         }
@@ -231,6 +244,48 @@ export function useUpdateNotification(): UseUpdateNotificationResult {
     localStorage.removeItem(VERSION_STORAGE_KEY);
   };
 
+  // Extract checkForDeployment function for manual testing
+  const checkForDeploymentManually = useCallback(async () => {
+    try {
+      const response = await fetch('/api/deployment');
+      if (!response.ok) return;
+      
+      const data = await response.json();
+      const storedTimestamp = localStorage.getItem(DEPLOYMENT_TIMESTAMP_KEY);
+      
+      console.log('Manual deployment check:', {
+        current: data,
+        stored: storedTimestamp ? Number(storedTimestamp) : null,
+        difference: storedTimestamp ? Number(data.timestamp) - Number(storedTimestamp) : null
+      });
+      
+      // If we don't have a stored timestamp, store the current one
+      if (!storedTimestamp) {
+        console.log('Initial deployment timestamp stored:', data.timestamp);
+        localStorage.setItem(DEPLOYMENT_TIMESTAMP_KEY, data.timestamp);
+        return;
+      }
+      
+      // If the deployment timestamp is newer than our stored one,
+      // it means the app has been redeployed
+      if (Number(data.timestamp) > Number(storedTimestamp)) {
+        console.log('New deployment detected in manual check!');
+        localStorage.setItem(DEPLOYMENT_TIMESTAMP_KEY, data.timestamp);
+        
+        // Clear the version storage key to force showing update notification
+        localStorage.removeItem(VERSION_STORAGE_KEY);
+        
+        // Show update notification
+        setShowUpdateNotification(true);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Failed to check for deployment:', error);
+    }
+  }, []);
+
   return {
     showUpdateNotification,
     showTermsAndConditions,
@@ -238,6 +293,7 @@ export function useUpdateNotification(): UseUpdateNotificationResult {
     hideTermsAndConditions,
     refreshPage,
     currentVersionDetails,
-    testShowUpdateNotification
+    testShowUpdateNotification,
+    checkForDeployment: checkForDeploymentManually
   };
 }
