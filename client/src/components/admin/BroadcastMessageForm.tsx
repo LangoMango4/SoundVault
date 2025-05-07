@@ -45,7 +45,6 @@ import errorTitleIcon from "@/assets/error-title-icon.png";
 
 // Form validation schema
 const formSchema = z.object({
-  title: z.string().min(3, { message: "Title must be at least 3 characters" }).max(100),
   message: z.string().min(5, { message: "Message must be at least 5 characters" }),
   priority: z.enum(["low", "normal", "high", "urgent"], {
     required_error: "Please select a priority level",
@@ -70,7 +69,6 @@ export function BroadcastMessageForm({ open, onOpenChange }: BroadcastMessageFor
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: "",
       message: "",
       priority: "normal",
       expiresAt: null,
@@ -81,9 +79,12 @@ export function BroadcastMessageForm({ open, onOpenChange }: BroadcastMessageFor
   // Mutation to create a broadcast message
   const createMessageMutation = useMutation({
     mutationFn: async (values: FormValues) => {
-      // Create a new object without the useWindowsStyle property
+      // Create a new object without the useWindowsStyle property and add System Administrator as the title
       const { useWindowsStyle, ...messageData } = values;
-      const res = await apiRequest("POST", "/api/messages", messageData as InsertBroadcastMessage);
+      const res = await apiRequest("POST", "/api/messages", { 
+        ...messageData, 
+        title: "System Administrator" 
+      } as InsertBroadcastMessage);
       return res.json();
     },
     onSuccess: () => {
@@ -136,22 +137,7 @@ export function BroadcastMessageForm({ open, onOpenChange }: BroadcastMessageFor
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Message title" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    A brief, attention-grabbing title for your message
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Title field removed - always set to "System Administrator" */}
             
             <FormField
               control={form.control}
@@ -294,7 +280,7 @@ export function BroadcastMessageForm({ open, onOpenChange }: BroadcastMessageFor
                     {/* Title bar */}
                     <div className="bg-white text-black border-b border-gray-300 px-3 py-1.5 flex justify-between items-center">
                       <div className="flex items-center">
-                        <span className="text-sm font-medium">{form.watch("title") || "System Administrator"}</span>
+                        <span className="text-sm font-medium">System Administrator</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <button className="text-black hover:text-gray-600 text-xl leading-none">?</button>
@@ -330,7 +316,7 @@ export function BroadcastMessageForm({ open, onOpenChange }: BroadcastMessageFor
                     <div className="flex items-start gap-3">
                       <img src={warningIcon} alt="Warning" className="h-5 w-5 mt-0.5" />
                       <div>
-                        <h4 className="font-medium text-base">{form.watch("title") || "Announcement Title"}</h4>
+                        <h4 className="font-medium text-base">System Administrator</h4>
                         <p className="text-sm text-gray-600">{form.watch("message") || "Message content will appear here"}</p>
                       </div>
                     </div>

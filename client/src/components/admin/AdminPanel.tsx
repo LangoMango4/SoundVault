@@ -18,7 +18,7 @@ import { UserForm } from "./UserForm";
 import { SoundForm } from "./SoundForm";
 import { ScreenLockControl } from "./ScreenLockControl";
 import { BatchSoundImport } from "./BatchSoundImport";
-import { BlockedWordsManager } from "./BlockedWordsManager";
+import BlockedWordsManager from "./BlockedWordsManager";
 import UpdateNotificationTester from "./UpdateNotificationTester";
 import { TestNotification } from "@/components/TestNotification";
 import { Howl } from "howler";

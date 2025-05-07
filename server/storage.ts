@@ -162,6 +162,8 @@ export class MemStorage implements IStorage {
   // In-memory storage for chat moderation
   private chatModerationLogs: Map<number, ChatModerationLog>;
   private userStrikes: Map<number, UserStrike>;
+  private customBlockedWords: Map<number, CustomBlockedWord>;
+  private customBlockedWordIdCounter: number;
 
   constructor() {
     this.users = new Map();
@@ -174,6 +176,7 @@ export class MemStorage implements IStorage {
     this.termsAcceptanceLogs = new Map();
     this.chatModerationLogs = new Map();
     this.userStrikes = new Map();
+    this.customBlockedWords = new Map();
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // Prune expired entries every 24h
     });
@@ -188,6 +191,7 @@ export class MemStorage implements IStorage {
     this.termsAcceptanceLogIdCounter = 1;
     this.chatModerationLogIdCounter = 1;
     this.userStrikeIdCounter = 1;
+    this.customBlockedWordIdCounter = 1;
     
     // Initialize with admin account and load saved data
     this.initializeData();
@@ -1028,6 +1032,51 @@ export class MemStorage implements IStorage {
     const userStrike = await this.getUserStrikes(userId);
     return userStrike ? userStrike.isChatRestricted : false;
   }
+  
+  // Custom blocked words operations
+  async getCustomBlockedWords(): Promise<CustomBlockedWord[]> {
+    return Array.from(this.customBlockedWords.values())
+      .filter(word => word.active)
+      .sort((a, b) => a.word.localeCompare(b.word));
+  }
+  
+  async getCustomBlockedWord(id: number): Promise<CustomBlockedWord | undefined> {
+    return this.customBlockedWords.get(id);
+  }
+  
+  async addCustomBlockedWord(data: InsertCustomBlockedWord): Promise<CustomBlockedWord> {
+    const id = this.customBlockedWordIdCounter++;
+    const timestamp = new Date();
+    
+    const blockedWord: CustomBlockedWord = {
+      ...data,
+      id,
+      addedAt: timestamp,
+      active: true
+    };
+    
+    this.customBlockedWords.set(id, blockedWord);
+    return blockedWord;
+  }
+  
+  async updateCustomBlockedWord(id: number, updates: Partial<CustomBlockedWord>): Promise<CustomBlockedWord | undefined> {
+    const word = await this.getCustomBlockedWord(id);
+    if (!word) return undefined;
+    
+    const updatedWord = { ...word, ...updates };
+    this.customBlockedWords.set(id, updatedWord);
+    return updatedWord;
+  }
+  
+  async deleteCustomBlockedWord(id: number): Promise<boolean> {
+    // Soft delete by setting active = false
+    const word = await this.getCustomBlockedWord(id);
+    if (!word) return false;
+    
+    word.active = false;
+    this.customBlockedWords.set(id, word);
+    return true;
+  }
 }
 
 // Database storage implementation
@@ -1723,6 +1772,14 @@ export class DatabaseStorage implements IStorage {
       .from(customBlockedWords)
       .where(eq(customBlockedWords.active, true))
       .orderBy(customBlockedWords.word);
+  }
+  
+  async getCustomBlockedWord(id: number): Promise<CustomBlockedWord | undefined> {
+    const [word] = await db
+      .select()
+      .from(customBlockedWords)
+      .where(eq(customBlockedWords.id, id));
+    return word;
   }
   
   async addCustomBlockedWord(word: InsertCustomBlockedWord): Promise<CustomBlockedWord> {
