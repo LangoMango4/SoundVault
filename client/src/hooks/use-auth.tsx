@@ -7,6 +7,7 @@ import {
 import { User, InsertUser, LoginData } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { showSystemNotification } from "@/lib/utils";
 
 type AuthContextType = {
   user: User | null;
@@ -43,11 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: "Login failed",
-        description: error.message,
-        variant: "destructive",
-      });
+      showSystemNotification(error.message);
     },
   });
 
@@ -63,11 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: "Logout failed",
-        description: error.message,
-        variant: "destructive",
-      });
+      showSystemNotification(error.message);
     },
   });
   
@@ -84,11 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: "Registration failed",
-        description: error.message,
-        variant: "destructive",
-      });
+      showSystemNotification(error.message);
     },
   });
 
