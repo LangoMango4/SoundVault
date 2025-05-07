@@ -94,7 +94,7 @@ export function TermsAndConditionsDialog({ open, onAccept }: TermsAndConditionsD
             Last Updated: May 6, 2025
           </div>
           <DialogDescription>
-            Please read and accept the following terms before continuing.
+            Please read through the Terms & Conditions below and accept them to continue using the website. Scroll down to the bottom to click Accept.
           </DialogDescription>
         </DialogHeader>
         
@@ -114,11 +114,11 @@ export function TermsAndConditionsDialog({ open, onAccept }: TermsAndConditionsD
             onScroll={handleScroll}
           >
             <p>
-              By using this website, you are agreeing to the following terms and conditions:
+              By agreeing to these Terms & Conditions, you acknowledge that you are using this website at your own risk. The creator of this website is not responsible for any consequences you may face for using this.
             </p>
             
             <p>
-              <span className="font-semibold">Catholic Education Services Guideline Compliance:</span> Users agree to follow all Catholic Education Services (CES) Cairns guidelines while using this website. This includes adherence to the CES Acceptable Use Policy for technology resources, Digital Citizenship guidelines, and Catholic values and principles. Any content or activity that violates CES guidelines is strictly prohibited, and users shall be solely responsible for ensuring their usage of this site complies with all applicable school and diocesan policies.
+              <span className="font-semibold">CES Guideline Compliance:</span> Users must agree to follow all Catholic Education Services (CES) Cairns guidelines while using this website. This includes adhering to school policies, rules, and regulations.
             </p>
             
             <p>
@@ -162,7 +162,9 @@ export function TermsAndConditionsDialog({ open, onAccept }: TermsAndConditionsD
             </p>
           </div>
         </div>
-        
+        <p className="border-t border-border/40 pt-3 mt-3">
+          <span className="font-semibold">Copyright skibidi._fish 2025 - All Rights Reserved</span>
+        </p>
         <div className="flex items-center space-x-2 pt-3">
           <Checkbox 
             id="terms" 

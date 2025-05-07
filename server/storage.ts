@@ -115,6 +115,7 @@ export interface IStorage {
   logModerationAction(log: InsertChatModerationLog): Promise<ChatModerationLog>;
   getModerationLogs(limit?: number): Promise<ChatModerationLog[]>;
   getModerationLogsByUser(userId: number): Promise<ChatModerationLog[]>;
+  deleteModerationLog(id: number): Promise<boolean>;
   
   // User strikes operations
   getUserStrikes(userId: number): Promise<UserStrike | undefined>;
@@ -933,6 +934,10 @@ export class MemStorage implements IStorage {
     return logs
       .filter(log => log.userId === userId)
       .sort((a, b) => b.moderatedAt.getTime() - a.moderatedAt.getTime());
+  }
+  
+  async deleteModerationLog(id: number): Promise<boolean> {
+    return this.chatModerationLogs.delete(id);
   }
 
   // User strikes operations

@@ -1744,6 +1744,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next(error);
     }
   });
+  
+  // Delete moderation log by ID
+  app.delete('/api/moderation/logs/:id', isAdmin, async (req, res, next) => {
+    try {
+      const logId = parseInt(req.params.id);
+      if (isNaN(logId)) {
+        return res.status(400).json({ message: "Invalid log ID" });
+      }
+      
+      const success = await storage.deleteModerationLog(logId);
+      if (!success) {
+        return res.status(404).json({ message: "Moderation log not found" });
+      }
+      
+      res.sendStatus(204);
+    } catch (error) {
+      next(error);
+    }
+  });
 
   app.get('/api/moderation/strikes', isAdmin, async (req, res, next) => {
     try {
