@@ -11,6 +11,7 @@ import { WordScramble } from "./local-games/WordScramble";
 import { SnakeGame } from "./local-games/SnakeGame";
 import { TicTacToe } from "./local-games/TicTacToe";
 import { MathPuzzle } from "./local-games/MathPuzzle";
+import { ScratchGame } from "./local-games/ScratchGame";
 
 interface Game {
   id: string;
@@ -83,6 +84,14 @@ export function GamesGrid() {
       component: MathPuzzle,
       category: "educational",
       description: "Test your math skills with timed challenges at different difficulty levels.",
+      isLocal: true
+    },
+    {
+      id: "scratch-ninja",
+      name: "Ninja Run",
+      component: ScratchGame,
+      category: "arcade",
+      description: "Play as a ninja and dodge obstacles in this Scratch-powered game.",
       isLocal: true
     }
   ];
