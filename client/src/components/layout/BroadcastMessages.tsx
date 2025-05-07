@@ -220,7 +220,7 @@ export function BroadcastMessages() {
           sender=""
           open={showWindowsNotification}
           onClose={handleCloseNotification}
-          onDelete={isAdmin ? handleDeleteNotification : undefined}
+          onDelete={handleDeleteNotification}
         />
       )}
       
