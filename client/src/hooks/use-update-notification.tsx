@@ -4,12 +4,14 @@ import { useAuth } from '@/hooks/use-auth';
 // Exported interface definition moved below
 
 // Version control to show notification when version changes
-export const CURRENT_VERSION = '1.4.0'; // Last known version - will be updated from API
+export const CURRENT_VERSION = '1.5.0'; // Current version displayed in notification
 const VERSION_STORAGE_KEY = 'math-homework-version';
 const DEPLOYMENT_CHECK_KEY = 'math-homework-last-deployment-check';
+const DEPLOYMENT_TIMESTAMP_KEY = 'math-homework-deployment-timestamp';
 const LAST_ACTIVITY_KEY = 'math-homework-last-activity';
 const TERMS_SHOWN_KEY = 'math-homework-terms-shown-session';
 const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes in milliseconds
+const DEPLOYMENT_CHECK_INTERVAL = 2 * 60 * 1000; // Check for new deployment every 2 minutes
 
 // Version history with information about each update
 export const VERSION_HISTORY: Record<string, { title: string; date: string; changes: string[] }> = {
@@ -118,6 +120,50 @@ export function useUpdateNotification(): UseUpdateNotificationResult {
     }
   }, [user]);
   
+  // Check for new deployment periodically
+  useEffect(() => {
+    if (!user) return;
+    
+    // Function to check for new deployment
+    const checkForDeployment = async () => {
+      try {
+        const response = await fetch('/api/deployment');
+        if (!response.ok) return;
+        
+        const data = await response.json();
+        const storedTimestamp = localStorage.getItem(DEPLOYMENT_TIMESTAMP_KEY);
+        
+        // If we don't have a stored timestamp, store the current one
+        if (!storedTimestamp) {
+          localStorage.setItem(DEPLOYMENT_TIMESTAMP_KEY, data.timestamp);
+          return;
+        }
+        
+        // If the deployment timestamp is newer than our stored one,
+        // it means the app has been redeployed
+        if (Number(data.timestamp) > Number(storedTimestamp)) {
+          console.log('New deployment detected!', data);
+          localStorage.setItem(DEPLOYMENT_TIMESTAMP_KEY, data.timestamp);
+          // Show update notification
+          setShowUpdateNotification(true);
+        }
+      } catch (error) {
+        console.error('Failed to check for deployment:', error);
+      }
+      
+      // Update the last check time regardless of outcome
+      localStorage.setItem(DEPLOYMENT_CHECK_KEY, Date.now().toString());
+    };
+    
+    // Check immediately on load
+    checkForDeployment();
+    
+    // Then set up interval to check periodically
+    const deploymentInterval = setInterval(checkForDeployment, DEPLOYMENT_CHECK_INTERVAL);
+    
+    return () => clearInterval(deploymentInterval);
+  }, [user]);
+  
   // Track user activity and log out after inactivity
   useEffect(() => {
     if (!user) return;
@@ -178,7 +224,11 @@ export function useUpdateNotification(): UseUpdateNotificationResult {
   
   // Testing function to force show the update notification dialog
   const testShowUpdateNotification = () => {
+    console.log('Test notification triggered');
     setShowUpdateNotification(true);
+    
+    // Also manually update localStorage to simulate a first-time view of this version
+    localStorage.removeItem(VERSION_STORAGE_KEY);
   };
 
   return {
