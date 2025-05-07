@@ -46,6 +46,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Heartbeat endpoint for 24/7 uptime monitoring
   const startTime = new Date();
+  const deploymentTime = new Date(); // Use server start time as deployment time
+  
+  // Add deployment info endpoint for update detection
+  app.get("/api/deployment", (req, res) => {
+    res.status(200).json({
+      deployedAt: deploymentTime.toISOString(),
+      timestamp: deploymentTime.getTime(),
+      version: "1.5.0" // Incremented to trigger update notification
+    });
+  });
+  
   app.get("/api/heartbeat", (req, res) => {
     const uptime = Math.floor((new Date().getTime() - startTime.getTime()) / 1000);
     const days = Math.floor(uptime / 86400);

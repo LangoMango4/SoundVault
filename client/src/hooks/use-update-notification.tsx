@@ -4,14 +4,25 @@ import { useAuth } from '@/hooks/use-auth';
 // Exported interface definition moved below
 
 // Version control to show notification when version changes
-export const CURRENT_VERSION = '1.4.0'; // Incremented from 1.3.0 to test update notification
+export const CURRENT_VERSION = '1.4.0'; // Last known version - will be updated from API
 const VERSION_STORAGE_KEY = 'math-homework-version';
+const DEPLOYMENT_CHECK_KEY = 'math-homework-last-deployment-check';
 const LAST_ACTIVITY_KEY = 'math-homework-last-activity';
 const TERMS_SHOWN_KEY = 'math-homework-terms-shown-session';
 const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes in milliseconds
 
 // Version history with information about each update
 export const VERSION_HISTORY: Record<string, { title: string; date: string; changes: string[] }> = {
+  '1.5.0': {
+    title: 'Feature Update',
+    date: '2025-05-07',
+    changes: [
+      'Added automatic update notification after deployment',
+      'Changed Ninja Run game to Geometry Dash',
+      'Simplified broadcast message form',
+      'Fixed various minor bugs and improved performance'
+    ]
+  },
   '1.0.0': {
     title: 'Initial Release',
     date: '2025-04-20',
