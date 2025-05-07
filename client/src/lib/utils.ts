@@ -24,6 +24,7 @@ export function showSystemNotification(
     .replace(/\\"/g, '"')           // Replace escaped quotes
     .replace(/\\/g, '');            // Remove any remaining backslashes
   
+  // Using a string title since JSX isn't valid in .ts files
   toast({
     title: "System Notification",
     description: formattedMessage,
