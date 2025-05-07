@@ -5,7 +5,7 @@ import {
   UseMutationResult,
 } from "@tanstack/react-query";
 import { User, InsertUser, LoginData } from "@shared/schema";
-import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
+import { getQueryFn, apiRequest, queryClient, extractErrorMessage } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { showSystemNotification } from "@/lib/utils";
 
@@ -44,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
+      // Use our improved error handling system for better user feedback
       showSystemNotification(error.message);
     },
   });
@@ -60,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
+      // Use our improved error handling system for better user feedback
       showSystemNotification(error.message);
     },
   });
@@ -77,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
+      // Use our improved error handling system for better user feedback
       showSystemNotification(error.message);
     },
   });

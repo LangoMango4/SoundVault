@@ -57,10 +57,14 @@ interface State {
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
-const addToRemoveQueue = (toastId: string) => {
+const addToRemoveQueue = (toastId: string, toast?: ToasterToast) => {
   if (toastTimeouts.has(toastId)) {
     return
   }
+
+  // Use the longer delay for system notifications
+  const isSystemNotification = toast?.title === "System Notification";
+  const delay = isSystemNotification ? SYSTEM_TOAST_REMOVE_DELAY : TOAST_REMOVE_DELAY;
 
   const timeout = setTimeout(() => {
     toastTimeouts.delete(toastId)
@@ -68,7 +72,7 @@ const addToRemoveQueue = (toastId: string) => {
       type: "REMOVE_TOAST",
       toastId: toastId,
     })
-  }, TOAST_REMOVE_DELAY)
+  }, delay)
 
   toastTimeouts.set(toastId, timeout)
 }
@@ -95,10 +99,13 @@ export const reducer = (state: State, action: Action): State => {
       // ! Side effects ! - This could be extracted into a dismissToast() action,
       // but I'll keep it here for simplicity
       if (toastId) {
-        addToRemoveQueue(toastId)
+        // Find the toast by ID to pass to addToRemoveQueue
+        const toast = state.toasts.find(t => t.id === toastId);
+        addToRemoveQueue(toastId, toast)
       } else {
+        // Handle all toasts
         state.toasts.forEach((toast) => {
-          addToRemoveQueue(toast.id)
+          addToRemoveQueue(toast.id, toast)
         })
       }
 
