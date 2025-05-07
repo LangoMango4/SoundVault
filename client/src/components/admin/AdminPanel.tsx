@@ -53,7 +53,7 @@ export function AdminPanel({
   const [isUserFormOpen, setIsUserFormOpen] = useState(false);
   const [isSoundFormOpen, setIsSoundFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<{ type: "user" | "sound" | "termslog", id: number } | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<{ type: "user" | "sound" | "termslog" | "moderationlog", id: number } | null>(null);
   const [searchParams, setSearchParams] = useState<{username?: string; version?: string; method?: string}>({});
   const [isSearching, setIsSearching] = useState(false);
   
@@ -178,6 +178,27 @@ export function AdminPanel({
       });
     },
   });
+  
+  const deleteModerationLogMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/moderation/logs/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/moderation/logs"] });
+      toast({
+        title: "Success",
+        description: "Moderation log deleted successfully",
+      });
+      setDeleteDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to delete moderation log: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
 
   const deleteUserMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -281,11 +302,13 @@ export function AdminPanel({
       deleteSoundMutation.mutate(itemToDelete.id);
     } else if (itemToDelete.type === "termslog") {
       deleteTermsLogMutation.mutate(itemToDelete.id);
+    } else if (itemToDelete.type === "moderationlog") {
+      deleteModerationLogMutation.mutate(itemToDelete.id);
     }
   };
 
   // Handle opening delete dialog
-  const openDeleteDialog = (type: "user" | "sound" | "termslog", id: number) => {
+  const openDeleteDialog = (type: "user" | "sound" | "termslog" | "moderationlog", id: number) => {
     setItemToDelete({ type, id });
     setDeleteDialogOpen(true);
   };
@@ -517,6 +540,23 @@ export function AdminPanel({
           </div>
         );
       }
+    },
+    {
+      header: "Actions",
+      cell: (log: ChatModerationLog) => (
+        <div className="flex space-x-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              openDeleteDialog("moderationlog", log.id);
+            }}
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      ),
     },
   ];
 
@@ -1010,7 +1050,10 @@ export function AdminPanel({
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the {itemToDelete?.type}.
+              {itemToDelete?.type === "user" && "This action cannot be undone. This will permanently delete this user account."}
+              {itemToDelete?.type === "sound" && "This action cannot be undone. This will permanently delete this sound from the system."}
+              {itemToDelete?.type === "termslog" && "This action cannot be undone. This will permanently delete this Terms & Conditions acceptance log."}
+              {itemToDelete?.type === "moderationlog" && "This action cannot be undone. This will permanently delete this moderation log entry."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
