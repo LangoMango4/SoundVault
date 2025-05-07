@@ -12,6 +12,7 @@ import {
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import { enhancedModerationRules } from "./moderationRules";
 import { hashPassword } from "./auth";
 import fs from "fs";
 import path from "path";
