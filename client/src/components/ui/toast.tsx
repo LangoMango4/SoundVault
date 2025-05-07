@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import warningIconPath from "@assets/SecurityAndMaintenance_Alert.png"
+import greenWarningIcon from "@assets/green_warning_icon.svg"
 
 const ToastProvider = ToastPrimitives.Provider
 
@@ -50,17 +50,19 @@ const Toast = React.forwardRef<
       className={cn(toastVariants({ variant }), className)}
       {...props}
     >
-      {/* Add the warning icon at the start of all toast notifications */}
-      <div className="mr-3 flex-shrink-0 self-start mt-1">
-        <img 
-          src={warningIconPath} 
-          alt="Warning" 
-          className="h-6 w-6" 
-          style={{ filter: "drop-shadow(0 0 1px rgba(0, 0, 0, 0.5))" }}
-        />
-      </div>
-      <div className="flex-1">
-        {props.children}
+      <div className="flex-1 flex items-start">
+        {/* Add the warning icon in the middle of the toast notifications, vertically centered */}
+        <div className="flex items-center justify-center w-16 self-center">
+          <img 
+            src={greenWarningIcon} 
+            alt="Warning" 
+            className="h-9 w-9" 
+            style={{ filter: "drop-shadow(0 0 2px rgba(0, 0, 0, 0.5))" }}
+          />
+        </div>
+        <div className="flex-1">
+          {props.children}
+        </div>
       </div>
     </ToastPrimitives.Root>
   )

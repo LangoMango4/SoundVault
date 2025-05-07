@@ -91,10 +91,7 @@ export function Chat() {
       setMessage("");
       queryClient.invalidateQueries({ queryKey: ["/api/chat"] });
       
-      // Auto-delete the message after 5 seconds
-      setTimeout(() => {
-        deleteMessageMutation.mutate({ id: newMessage.id, autoDelete: true, showNotification: false });
-      }, 5000);
+      // Messages now stay permanently as requested
     },
     onError: (error: Error) => {
       toast({
