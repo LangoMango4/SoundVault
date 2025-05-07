@@ -19,6 +19,7 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { formatDistance } from 'date-fns';
 import { BroadcastMessage } from '@shared/schema';
 import warningIcon from '@/assets/warning-icon.png';
+import windowsExeIcon from '@/assets/windows-exe-icon.png';
 import { WindowsNotification } from './WindowsNotification';
 
 export function BroadcastMessages() {
@@ -281,12 +282,14 @@ export function BroadcastMessages() {
                       <CardHeader className="pb-2">
                         <div className="flex justify-between items-start">
                           <div className="flex items-center gap-2">
-                            <img 
-                              src={warningIcon} 
-                              alt="Warning" 
-                              className="h-5 w-5"
-                            />
-                            <CardTitle className="text-base">{message.title}</CardTitle>
+                            <div className="flex items-center gap-1.5">
+                              <img 
+                                src={windowsExeIcon} 
+                                alt="Windows" 
+                                className="h-4 w-4"
+                              />
+                              <CardTitle className="text-base">{message.title}</CardTitle>
+                            </div>
                           </div>
                           {getPriorityBadge(message.priority)}
                         </div>
