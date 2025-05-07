@@ -1,4 +1,4 @@
-import { db, pool } from '../server/db.js';
+import { db, pool } from '../server/db.ts';
 
 async function addIsSystemToChatMessages() {
   console.log('Adding is_system column to chat_messages table...');

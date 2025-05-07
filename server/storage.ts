@@ -1593,6 +1593,20 @@ export class DatabaseStorage implements IStorage {
       .where(eq(chatModerationLogs.userId, userId))
       .orderBy(desc(chatModerationLogs.moderatedAt));
   }
+  
+  async deleteModerationLog(id: number): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(chatModerationLogs)
+        .where(eq(chatModerationLogs.id, id))
+        .returning();
+      
+      return result.length > 0;
+    } catch (error) {
+      console.error("Error deleting moderation log:", error);
+      return false;
+    }
+  }
 
   // User strikes operations
   async getUserStrikes(userId: number): Promise<UserStrike | undefined> {
