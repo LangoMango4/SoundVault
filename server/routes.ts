@@ -1805,6 +1805,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next(error);
     }
   });
+  
+  // Add endpoint that matches the frontend's expected path
+  app.post('/api/moderation/strikes/user/:userId/clear', isAdmin, async (req, res, next) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const updatedStrikes = await storage.resetUserStrikes(userId);
+      if (!updatedStrikes) {
+        return res.status(404).json({ message: "User strikes record not found" });
+      }
+      
+      res.json(updatedStrikes);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Add endpoint for restricting chat access
+  app.post('/api/moderation/strikes/user/:userId/restrict', isAdmin, async (req, res, next) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const { restrict } = req.body;
+      if (typeof restrict !== 'boolean') {
+        return res.status(400).json({ message: "Missing or invalid restrict parameter" });
+      }
+      
+      const updatedStrikes = await storage.updateChatRestriction(userId, restrict);
+      if (!updatedStrikes) {
+        return res.status(404).json({ message: "User strikes record not found" });
+      }
+      
+      res.json(updatedStrikes);
+    } catch (error) {
+      next(error);
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

@@ -121,6 +121,7 @@ export interface IStorage {
   getUserStrikes(userId: number): Promise<UserStrike | undefined>;
   incrementUserStrikes(userId: number, username: string): Promise<UserStrike>;
   resetUserStrikes(userId: number): Promise<UserStrike | undefined>;
+  updateChatRestriction(userId: number, restrict: boolean): Promise<UserStrike | undefined>;
   getUsersWithStrikes(): Promise<UserStrike[]>;
   isUserChatRestricted(userId: number): Promise<boolean>;
 }
@@ -994,6 +995,20 @@ export class MemStorage implements IStorage {
     this.userStrikes.set(existingStrikes.id, updatedStrike);
     return updatedStrike;
   }
+  
+  async updateChatRestriction(userId: number, restrict: boolean): Promise<UserStrike | undefined> {
+    const existingStrikes = await this.getUserStrikes(userId);
+    if (!existingStrikes) return undefined;
+    
+    const updatedStrike: UserStrike = {
+      ...existingStrikes,
+      isChatRestricted: restrict,
+      lastStrikeAt: new Date()
+    };
+    
+    this.userStrikes.set(existingStrikes.id, updatedStrike);
+    return updatedStrike;
+  }
 
   async getUsersWithStrikes(): Promise<UserStrike[]> {
     return Array.from(this.userStrikes.values())
@@ -1662,6 +1677,22 @@ export class DatabaseStorage implements IStorage {
       .set({
         strikesCount: 0,
         isChatRestricted: false,
+        lastStrikeAt: new Date()
+      })
+      .where(eq(userStrikes.userId, userId))
+      .returning();
+    
+    return updated;
+  }
+  
+  async updateChatRestriction(userId: number, restrict: boolean): Promise<UserStrike | undefined> {
+    const existingStrikes = await this.getUserStrikes(userId);
+    if (!existingStrikes) return undefined;
+    
+    const [updated] = await db
+      .update(userStrikes)
+      .set({
+        isChatRestricted: restrict,
         lastStrikeAt: new Date()
       })
       .where(eq(userStrikes.userId, userId))
