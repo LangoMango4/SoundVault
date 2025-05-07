@@ -19,7 +19,7 @@ import { SoundForm } from "./SoundForm";
 import { ScreenLockControl } from "./ScreenLockControl";
 import { BatchSoundImport } from "./BatchSoundImport";
 import UpdateNotificationTester from "./UpdateNotificationTester";
-import NotificationTester from "./NotificationTester";
+import { TestNotification } from "@/components/TestNotification";
 import { Howl } from "howler";
 import {
   AlertDialog,
@@ -1024,6 +1024,15 @@ export function AdminPanel({
                       <p className="text-sm text-muted-foreground">{VERSION_HISTORY[CURRENT_VERSION]?.date || 'Unknown'}</p>
                     </div>
                   </div>
+                </div>
+                
+                {/* Test Notifications */}
+                <div className="bg-card rounded-md border shadow-sm p-6 mt-4">
+                  <h4 className="font-medium text-lg mb-3">Test Notifications</h4>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Use the buttons below to test different types of notifications with the warning icon.
+                  </p>
+                  <TestNotification />
                 </div>
               </div>
             </TabsContent>
