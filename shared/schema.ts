@@ -196,3 +196,21 @@ export const insertUserStrikeSchema = createInsertSchema(userStrikes).omit({
 
 export type UserStrike = typeof userStrikes.$inferSelect;
 export type InsertUserStrike = z.infer<typeof insertUserStrikeSchema>;
+
+// Custom blocked words for moderation
+export const customBlockedWords = pgTable("custom_blocked_words", {
+  id: serial("id").primaryKey(),
+  word: text("word").notNull().unique(),
+  type: text("type").notNull(), // 'profanity', 'hate_speech', 'inappropriate', 'concerning', 'personal_info'
+  addedBy: integer("added_by").notNull(), // User ID who added the word
+  addedAt: timestamp("added_at").defaultNow().notNull(),
+  active: boolean("active").default(true).notNull(),
+});
+
+export const insertCustomBlockedWordSchema = createInsertSchema(customBlockedWords).omit({
+  id: true,
+  addedAt: true,
+});
+
+export type CustomBlockedWord = typeof customBlockedWords.$inferSelect;
+export type InsertCustomBlockedWord = z.infer<typeof insertCustomBlockedWordSchema>;

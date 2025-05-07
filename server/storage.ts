@@ -8,7 +8,8 @@ import {
   gameData, GameData, InsertGameData,
   termsAcceptanceLogs, TermsAcceptanceLog, InsertTermsAcceptanceLog,
   chatModerationLogs, ChatModerationLog, InsertChatModerationLog,
-  userStrikes, UserStrike, InsertUserStrike
+  userStrikes, UserStrike, InsertUserStrike,
+  customBlockedWords, CustomBlockedWord, InsertCustomBlockedWord
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -1706,6 +1707,57 @@ export class DatabaseStorage implements IStorage {
   async isUserChatRestricted(userId: number): Promise<boolean> {
     const userStrike = await this.getUserStrikes(userId);
     return userStrike ? userStrike.isChatRestricted : false;
+  }
+  
+  // Custom blocked words operations
+  async getCustomBlockedWords(): Promise<CustomBlockedWord[]> {
+    return db
+      .select()
+      .from(customBlockedWords)
+      .where(eq(customBlockedWords.active, true))
+      .orderBy(customBlockedWords.word);
+  }
+  
+  async addCustomBlockedWord(word: InsertCustomBlockedWord): Promise<CustomBlockedWord> {
+    try {
+      const [newWord] = await db
+        .insert(customBlockedWords)
+        .values(word)
+        .returning();
+      return newWord;
+    } catch (error) {
+      console.error("Error adding custom blocked word:", error);
+      throw new Error("Failed to add custom blocked word");
+    }
+  }
+  
+  async updateCustomBlockedWord(id: number, updates: Partial<CustomBlockedWord>): Promise<CustomBlockedWord | undefined> {
+    try {
+      const [updatedWord] = await db
+        .update(customBlockedWords)
+        .set(updates)
+        .where(eq(customBlockedWords.id, id))
+        .returning();
+      return updatedWord;
+    } catch (error) {
+      console.error("Error updating custom blocked word:", error);
+      return undefined;
+    }
+  }
+  
+  async deleteCustomBlockedWord(id: number): Promise<boolean> {
+    try {
+      // Soft delete by setting active = false
+      const [result] = await db
+        .update(customBlockedWords)
+        .set({ active: false })
+        .where(eq(customBlockedWords.id, id))
+        .returning();
+      return !!result;
+    } catch (error) {
+      console.error("Error deleting custom blocked word:", error);
+      return false;
+    }
   }
 }
 
