@@ -87,11 +87,11 @@ export function GamesGrid() {
       isLocal: true
     },
     {
-      id: "scratch-ninja",
-      name: "Ninja Run",
+      id: "scratch-geometry",
+      name: "Geometry Dash",
       component: ScratchGame,
       category: "arcade",
-      description: "Play as a ninja and dodge obstacles in this Scratch-powered game.",
+      description: "Jump and fly your way through obstacles in this rhythm-based Scratch game.",
       isLocal: true
     }
   ];
