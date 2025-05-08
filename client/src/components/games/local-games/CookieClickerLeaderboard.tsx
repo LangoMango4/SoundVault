@@ -1,84 +1,112 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Trophy, Medal, Award, Cookie } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
 
+// Simplified interfaces - we only declare what we're actually using
 interface User {
-  id: number;
   username: string;
-  fullName: string;
-  role: string;
-  accessLevel: string;
 }
 
 interface LeaderboardEntry {
   id: number;
-  userId: number;
   cookies: number;
-  clickPower: number;
-  autoClickers: number;
-  grandmas: number;
-  factories: number;
-  background: string;
-  lastUpdated: string;
-  user: User;
+  user?: User;
 }
 
 export function CookieClickerLeaderboard() {
-  const { user } = useAuth();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string>('');
+  // Use a ref to track if component is mounted
+  const mountedRef = useRef<boolean>(true);
+  // Use another ref to store the interval ID
   const intervalRef = useRef<number | null>(null);
   
-  const fetchLeaderboard = async () => {
-    // Don't fetch if not logged in
-    if (!user) {
-      setError('Please log in to view the leaderboard');
-      setLoading(false);
-      return;
-    }
+  // Use useCallback to memoize the fetch function
+  const fetchLeaderboard = useCallback(async () => {
+    // Skip if component is unmounted
+    if (!mountedRef.current) return;
     
     try {
-      setError(null);
       const res = await fetch('/api/games/cookie-clicker/leaderboard', {
-        credentials: 'include'
+        credentials: 'include', 
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
       });
       
+      // Skip processing if component is unmounted during the fetch
+      if (!mountedRef.current) return;
+      
+      if (res.status === 401) {
+        setError('Please log in to view the leaderboard');
+        setLoading(false);
+        return;
+      }
+      
       if (!res.ok) {
-        throw new Error('Failed to fetch leaderboard');
+        throw new Error(`Error: ${res.status} ${res.statusText}`);
       }
       
       const data = await res.json();
-      setLeaderboard(data);
+      
+      // Skip processing if component is unmounted during JSON parsing
+      if (!mountedRef.current) return;
+      
+      setLeaderboard(data || []);
       setLastUpdated(new Date().toLocaleTimeString());
+      setError(null);
     } catch (err) {
+      // Skip error handling if component is unmounted
+      if (!mountedRef.current) return;
+      
       console.error('Failed to fetch cookie clicker leaderboard:', err);
       setError('Failed to load leaderboard data');
     } finally {
+      // Skip state updates if component is unmounted
+      if (!mountedRef.current) return;
+      
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
+    // Set mounted ref to true
+    mountedRef.current = true;
+    
     // Initial fetch
-    fetchLeaderboard();
+    fetchLeaderboard().catch(err => {
+      if (mountedRef.current) {
+        console.error('Error in initial leaderboard fetch:', err);
+        setError('Failed to load leaderboard data');
+        setLoading(false);
+      }
+    });
 
-    // Set up auto-refresh every 3 seconds only if logged in
-    if (user) {
-      intervalRef.current = window.setInterval(fetchLeaderboard, 3000);
-    }
+    // Set up auto-refresh every 3 seconds
+    intervalRef.current = window.setInterval(() => {
+      fetchLeaderboard().catch(err => {
+        if (mountedRef.current) {
+          console.error('Error in interval leaderboard fetch:', err);
+        }
+      });
+    }, 3000);
 
     // Clean up on unmount
     return () => {
+      // Mark component as unmounted
+      mountedRef.current = false;
+      
+      // Clear interval
       if (intervalRef.current !== null) {
         window.clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
     };
-  }, [user]);
+  }, [fetchLeaderboard]);
 
   const formatNumber = (num: number): string => {
     if (num >= 1000000) {

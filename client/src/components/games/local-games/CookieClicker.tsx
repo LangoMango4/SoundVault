@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { 
@@ -19,9 +19,10 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Crown, Bug, Sparkles, Gift as GiftIcon, RotateCcw } from 'lucide-react';
+import { Crown, Bug, Sparkles, Gift as GiftIcon, RotateCcw, Cookie } from 'lucide-react';
 import { ErrorMessage } from './ErrorMessage';
 import { CookieClickerLeaderboard } from './CookieClickerLeaderboard';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 
 export function CookieClicker() {
   // Game state
@@ -710,7 +711,21 @@ export function CookieClicker() {
         
         {/* Right side - Leaderboard */}
         <div className="mt-6 lg:mt-0 lg:w-1/4">
-          <CookieClickerLeaderboard />
+          <ErrorBoundary fallback={
+            <Card className="shadow-md">
+              <CardHeader>
+                <CardTitle className="text-xl font-bold flex items-center">
+                  <Cookie className="w-5 h-5 mr-2 text-amber-500" />
+                  Cookie Clicker Leaderboard
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-red-500">Unable to load the leaderboard.</p>
+              </CardContent>
+            </Card>
+          }>
+            <CookieClickerLeaderboard />
+          </ErrorBoundary>
         </div>
       </div>
     </div>
