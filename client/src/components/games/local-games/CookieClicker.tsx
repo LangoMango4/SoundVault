@@ -576,15 +576,8 @@ export function CookieClicker() {
     return bg?.color || "";
   };
   
-  // Render falling cookies - keeping this empty since we're already rendering in the cookie-container
-  const renderFallingCookies = () => {
-    return null;
-  };
-
   return (
     <div className={`min-h-screen p-6 rounded-lg ${getBackgroundClass()}`}>
-      {/* Falling cookies animation */}
-      {renderFallingCookies()}
       
       {/* Main game content */}
       <div className="flex flex-col lg:flex-row lg:items-start lg:gap-6">
@@ -846,12 +839,12 @@ export function CookieClicker() {
             />
           </div>
           
-          <div className="cookie-container mb-8 relative group overflow-hidden" style={{ minHeight: "250px", position: "relative", width: "100%", maxWidth: "400px", margin: "0 auto" }}>
+          <div className="cookie-container mb-8">
             {/* Render falling cookies */}
             {fallingCookies.map(cookie => (
               <div 
                 key={cookie.id}
-                className="absolute pointer-events-none animate-fall"
+                className="animate-fall"
                 style={{
                   left: `${cookie.x}px`,
                   top: `${cookie.y}px`,
