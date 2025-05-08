@@ -140,41 +140,73 @@ export function useUpdateNotification(): UseUpdateNotificationResult {
         // Update the check time before making the request
         localStorage.setItem(DEPLOYMENT_CHECK_KEY, currentTime.toString());
         
-        const response = await fetch('/api/deployment');
-        if (!response.ok) return;
+        // Add timeout to the fetch request to prevent hanging
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
         
-        const data = await response.json();
-        const storedTimestamp = localStorage.getItem(DEPLOYMENT_TIMESTAMP_KEY);
-        
-        // If we don't have a stored timestamp, store the current one
-        if (!storedTimestamp) {
-          localStorage.setItem(DEPLOYMENT_TIMESTAMP_KEY, data.timestamp);
-          // Also store the current version to prevent duplicate notifications
-          localStorage.setItem(VERSION_STORAGE_KEY, CURRENT_VERSION);
-          return;
-        }
-        
-        // If the deployment timestamp is newer than our stored one and the difference is
-        // significant (more than 5 seconds to avoid false triggers)
-        const timeDifference = Number(data.timestamp) - Number(storedTimestamp);
-        if (timeDifference > 5000) {
-          localStorage.setItem(DEPLOYMENT_TIMESTAMP_KEY, data.timestamp);
+        try {
+          const response = await fetch('/api/deployment', {
+            signal: controller.signal,
+            cache: 'no-store' // Prevent caching issues
+          });
           
-          // Check if we've already shown a notification for this version within this session
-          const hasShownUpdateThisSession = sessionStorage.getItem('update-notification-shown');
-          if (!hasShownUpdateThisSession) {
-            // Mark as shown in this session
-            sessionStorage.setItem('update-notification-shown', 'true');
+          clearTimeout(timeoutId);
+          
+          if (!response.ok) return;
+          
+          const data = await response.json();
+          const storedTimestamp = localStorage.getItem(DEPLOYMENT_TIMESTAMP_KEY);
+          
+          // If we don't have a stored timestamp, store the current one
+          if (!storedTimestamp) {
+            localStorage.setItem(DEPLOYMENT_TIMESTAMP_KEY, data.timestamp);
+            // Also store the current version to prevent duplicate notifications
+            localStorage.setItem(VERSION_STORAGE_KEY, CURRENT_VERSION);
+            return;
+          }
+          
+          // If the deployment timestamp is newer than our stored one and the difference is
+          // significant (more than 5 seconds to avoid false triggers)
+          const timeDifference = Number(data.timestamp) - Number(storedTimestamp);
+          if (timeDifference > 5000) {
+            localStorage.setItem(DEPLOYMENT_TIMESTAMP_KEY, data.timestamp);
             
-            // Clear the version storage key to force showing update notification
-            localStorage.removeItem(VERSION_STORAGE_KEY);
-            
-            // Show update notification
-            setShowUpdateNotification(true);
+            // Check if we've already shown a notification for this version within this session
+            const hasShownUpdateThisSession = sessionStorage.getItem('update-notification-shown');
+            if (!hasShownUpdateThisSession) {
+              // Mark as shown in this session
+              sessionStorage.setItem('update-notification-shown', 'true');
+              
+              // Clear the version storage key to force showing update notification
+              localStorage.removeItem(VERSION_STORAGE_KEY);
+              
+              // Show update notification
+              setShowUpdateNotification(true);
+            }
+          }
+        } catch (error) {
+          clearTimeout(timeoutId);
+          
+          // Handle fetch timeout silently
+          if (error instanceof Error && error.name === 'AbortError') {
+            // Request timed out - we'll try again next time
+            return;
+          }
+          
+          // For other fetch errors, update the timestamp to avoid spam in error logs
+          const errorCheckKey = 'last-deployment-error-logged';
+          const lastErrorTime = localStorage.getItem(errorCheckKey);
+          const currentTime = Date.now();
+          
+          // Only log errors once per hour to prevent console spam
+          if (!lastErrorTime || currentTime - Number(lastErrorTime) > 3600000) {
+            localStorage.setItem(errorCheckKey, currentTime.toString());
+            console.warn('Deployment check temporary error - will retry later');
           }
         }
       } catch (error) {
-        console.error('Failed to check for deployment:', error);
+        // Silent catch for any other unexpected errors
+        // No logging to avoid console spam
       }
     };
     
@@ -272,40 +304,67 @@ export function useUpdateNotification(): UseUpdateNotificationResult {
       // Update the check time before making the request
       localStorage.setItem(DEPLOYMENT_CHECK_KEY, currentTime.toString());
       
-      const response = await fetch('/api/deployment');
-      if (!response.ok) return;
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
       
-      const data = await response.json();
-      const storedTimestamp = localStorage.getItem(DEPLOYMENT_TIMESTAMP_KEY);
-      
-      // If we don't have a stored timestamp, store the current one
-      if (!storedTimestamp) {
-        console.log('Initial deployment timestamp stored:', data.timestamp);
-        localStorage.setItem(DEPLOYMENT_TIMESTAMP_KEY, data.timestamp);
-        return;
-      }
-      
-      // If the deployment timestamp is newer than our stored one, 
-      // and the difference is significant (more than 5 seconds to avoid false triggers)
-      const timeDifference = Number(data.timestamp) - Number(storedTimestamp);
-      
-      if (timeDifference > 5000) {
-        console.log('New deployment detected in manual check!');
-        localStorage.setItem(DEPLOYMENT_TIMESTAMP_KEY, data.timestamp);
+      try {
+        const response = await fetch('/api/deployment', {
+          signal: controller.signal,
+          cache: 'no-store' // Prevent caching issues
+        });
         
-        // Since this is a manual check, always show the notification
-        // Clear the version storage key to force showing update notification
-        localStorage.removeItem(VERSION_STORAGE_KEY);
+        clearTimeout(timeoutId);
         
-        // Show update notification
-        setShowUpdateNotification(true);
-        return true;
-      } else {
-        console.log('No new deployment detected');
+        if (!response.ok) {
+          console.log('Deployment endpoint returned non-success status:', response.status);
+          return;
+        }
+        
+        const data = await response.json();
+        const storedTimestamp = localStorage.getItem(DEPLOYMENT_TIMESTAMP_KEY);
+        
+        // If we don't have a stored timestamp, store the current one
+        if (!storedTimestamp) {
+          console.log('Initial deployment timestamp stored:', data.timestamp);
+          localStorage.setItem(DEPLOYMENT_TIMESTAMP_KEY, data.timestamp);
+          return;
+        }
+        
+        // If the deployment timestamp is newer than our stored one, 
+        // and the difference is significant (more than 5 seconds to avoid false triggers)
+        const timeDifference = Number(data.timestamp) - Number(storedTimestamp);
+        
+        if (timeDifference > 5000) {
+          console.log('New deployment detected in manual check!');
+          localStorage.setItem(DEPLOYMENT_TIMESTAMP_KEY, data.timestamp);
+          
+          // Since this is a manual check, always show the notification
+          // Clear the version storage key to force showing update notification
+          localStorage.removeItem(VERSION_STORAGE_KEY);
+          
+          // Show update notification
+          setShowUpdateNotification(true);
+          return true;
+        } else {
+          console.log('No new deployment detected');
+          return false;
+        }
+      } catch (error) {
+        clearTimeout(timeoutId);
+        
+        if (error instanceof Error && error.name === 'AbortError') {
+          console.log('Deployment check timed out after 5 seconds');
+        } else if (error instanceof Error) {
+          console.warn('Temporary error checking for deployment:', error.message);
+        } else {
+          console.warn('Unknown error during deployment check');
+        }
         return false;
       }
     } catch (error) {
-      console.error('Failed to check for deployment:', error);
+      // Catch any other unexpected errors silently
+      return false;
     }
   }, []);
 
