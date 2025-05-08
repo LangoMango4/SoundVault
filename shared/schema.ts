@@ -111,6 +111,11 @@ export const cookieClickerData = pgTable("cookie_clicker_data", {
   autoClickers: integer("auto_clickers").notNull().default(0),
   grandmas: integer("grandmas").notNull().default(0),
   factories: integer("factories").notNull().default(0),
+  mines: integer("mines").notNull().default(0),
+  temples: integer("temples").notNull().default(0),
+  wizardTowers: integer("wizard_towers").notNull().default(0),
+  shipments: integer("shipments").notNull().default(0),
+  alchemyLabs: integer("alchemy_labs").notNull().default(0),
   background: text("background").notNull().default("none"),
   lastUpdated: timestamp("last_updated").defaultNow().notNull(),
 });

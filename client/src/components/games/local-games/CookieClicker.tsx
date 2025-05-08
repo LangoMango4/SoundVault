@@ -31,6 +31,14 @@ export function CookieClicker() {
   const [autoClickers, setAutoClickers] = useState<number>(0);
   const [grandmas, setGrandmas] = useState<number>(0);
   const [factories, setFactories] = useState<number>(0);
+  const [mines, setMines] = useState<number>(0);
+  const [temples, setTemples] = useState<number>(0);
+  const [wizardTowers, setWizardTowers] = useState<number>(0);
+  const [shipments, setShipments] = useState<number>(0);
+  const [alchemyLabs, setAlchemyLabs] = useState<number>(0);
+  
+  // Animation state for falling cookies
+  const [fallingCookies, setFallingCookies] = useState<{ id: number; x: number; y: number; size: number; rotation: number; speed: number }[]>([]);
   
   // Admin panel
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
@@ -62,8 +70,22 @@ export function CookieClicker() {
   const grandmaCost = Math.floor(100 * Math.pow(1.2, grandmas));
   const factoryCost = Math.floor(1000 * Math.pow(1.3, factories));
   
+  // Upgrade costs for new buildings
+  const mineCost = Math.floor(5000 * Math.pow(1.25, mines));
+  const templeCost = Math.floor(20000 * Math.pow(1.3, temples));
+  const wizardTowerCost = Math.floor(100000 * Math.pow(1.35, wizardTowers));
+  const shipmentCost = Math.floor(500000 * Math.pow(1.4, shipments));
+  const alchemyLabCost = Math.floor(2000000 * Math.pow(1.45, alchemyLabs));
+
   // Cookie production per second
-  const cookiesPerSecond = autoClickers + (grandmas * 5) + (factories * 50);
+  const cookiesPerSecond = autoClickers + 
+                         (grandmas * 5) + 
+                         (factories * 50) + 
+                         (mines * 250) + 
+                         (temples * 1000) + 
+                         (wizardTowers * 5000) + 
+                         (shipments * 25000) + 
+                         (alchemyLabs * 100000);
   
   // Load game data from the server
   useEffect(() => {
@@ -81,6 +103,11 @@ export function CookieClicker() {
           setAutoClickers(data.autoClickers || 0);
           setGrandmas(data.grandmas || 0);
           setFactories(data.factories || 0);
+          setMines(data.mines || 0);
+          setTemples(data.temples || 0);
+          setWizardTowers(data.wizardTowers || 0);
+          setShipments(data.shipments || 0);
+          setAlchemyLabs(data.alchemyLabs || 0);
           setBackground(data.background || "none");
           console.log('Loaded game data:', data);
         } else {
@@ -171,6 +198,11 @@ export function CookieClicker() {
             autoClickers,
             grandmas,
             factories,
+            mines,
+            temples,
+            wizardTowers,
+            shipments,
+            alchemyLabs,
             background
           }),
         });
@@ -188,8 +220,35 @@ export function CookieClicker() {
     return () => clearTimeout(saveTimeout);
   }, [cookies, clickPower, autoClickers, grandmas, factories, background]);
   
+  // Create falling cookie effect
+  const createFallingCookie = (x: number, y: number) => {
+    const id = Date.now() + Math.random();
+    const size = Math.random() * 20 + 15; // Random size between 15-35px
+    const rotation = Math.random() * 360; // Random rotation
+    const speed = Math.random() * 3 + 2; // Random fall speed
+    
+    setFallingCookies(prev => [...prev, { id, x, y, size, rotation, speed }]);
+    
+    // Remove cookie after animation (3 seconds)
+    setTimeout(() => {
+      setFallingCookies(prev => prev.filter(cookie => cookie.id !== id));
+    }, 3000);
+  };
+  
   // Handle cookie click
-  const handleCookieClick = () => {
+  const handleCookieClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    // Get click position relative to the button
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    // Create multiple falling cookies based on click power
+    for (let i = 0; i < Math.min(clickPower, 10); i++) {
+      const offsetX = x + (Math.random() * 50 - 25);
+      const offsetY = y + (Math.random() * 50 - 25);
+      createFallingCookie(offsetX, offsetY);
+    }
+    
     // Use functional update to ensure we always use the latest state
     setCookies(prevCookies => {
       const newCookieValue = prevCookies + clickPower;
@@ -207,6 +266,11 @@ export function CookieClicker() {
             autoClickers,
             grandmas,
             factories,
+            mines,
+            temples,
+            wizardTowers,
+            shipments,
+            alchemyLabs,
             background
           }),
         })
@@ -280,6 +344,61 @@ export function CookieClicker() {
     }
   };
   
+  // Purchase mine
+  const buyMine = () => {
+    if (cookies >= mineCost) {
+      setCookies(prevCookies => prevCookies - mineCost);
+      setMines(prevMines => prevMines + 1);
+    } else {
+      setErrorMessage(`You are not authorized to build 'Cookie Mine'\nNeed ${mineCost} cookies. You have ${Math.floor(cookies)}.`);
+      setShowError(true);
+    }
+  };
+  
+  // Purchase temple
+  const buyTemple = () => {
+    if (cookies >= templeCost) {
+      setCookies(prevCookies => prevCookies - templeCost);
+      setTemples(prevTemples => prevTemples + 1);
+    } else {
+      setErrorMessage(`You are not authorized to build 'Cookie Temple'\nNeed ${templeCost} cookies. You have ${Math.floor(cookies)}.`);
+      setShowError(true);
+    }
+  };
+  
+  // Purchase wizard tower
+  const buyWizardTower = () => {
+    if (cookies >= wizardTowerCost) {
+      setCookies(prevCookies => prevCookies - wizardTowerCost);
+      setWizardTowers(prevWizardTowers => prevWizardTowers + 1);
+    } else {
+      setErrorMessage(`You are not authorized to build 'Wizard Tower'\nNeed ${wizardTowerCost} cookies. You have ${Math.floor(cookies)}.`);
+      setShowError(true);
+    }
+  };
+  
+  // Purchase shipment
+  const buyShipment = () => {
+    if (cookies >= shipmentCost) {
+      setCookies(prevCookies => prevCookies - shipmentCost);
+      setShipments(prevShipments => prevShipments + 1);
+    } else {
+      setErrorMessage(`You are not authorized to build 'Cookie Shipment'\nNeed ${shipmentCost} cookies. You have ${Math.floor(cookies)}.`);
+      setShowError(true);
+    }
+  };
+  
+  // Purchase alchemy lab
+  const buyAlchemyLab = () => {
+    if (cookies >= alchemyLabCost) {
+      setCookies(prevCookies => prevCookies - alchemyLabCost);
+      setAlchemyLabs(prevAlchemyLabs => prevAlchemyLabs + 1);
+    } else {
+      setErrorMessage(`You are not authorized to build 'Alchemy Lab'\nNeed ${alchemyLabCost} cookies. You have ${Math.floor(cookies)}.`);
+      setShowError(true);
+    }
+  };
+  
   // Give cookies or upgrades as admin
   const handleAdminGift = async () => {
     if (!isAdmin) return;
@@ -302,6 +421,21 @@ export function CookieClicker() {
           break;
         case "factories":
           setFactories(prevFactories => prevFactories + Math.floor(giftAmount));
+          break;
+        case "mines":
+          setMines(prevMines => prevMines + Math.floor(giftAmount));
+          break;
+        case "temples":
+          setTemples(prevTemples => prevTemples + Math.floor(giftAmount));
+          break;
+        case "wizardTowers":
+          setWizardTowers(prevWizardTowers => prevWizardTowers + Math.floor(giftAmount));
+          break;
+        case "shipments":
+          setShipments(prevShipments => prevShipments + Math.floor(giftAmount));
+          break;
+        case "alchemyLabs":
+          setAlchemyLabs(prevAlchemyLabs => prevAlchemyLabs + Math.floor(giftAmount));
           break;
         default:
           break;
@@ -358,6 +492,11 @@ export function CookieClicker() {
           setAutoClickers(0);
           setGrandmas(0);
           setFactories(0);
+          setMines(0);
+          setTemples(0);
+          setWizardTowers(0);
+          setShipments(0);
+          setAlchemyLabs(0);
           setBackground("none");
           setErrorMessage("Game has been reset! Starting fresh with 0 cookies.");
           setShowError(true);
@@ -391,8 +530,30 @@ export function CookieClicker() {
     return bg?.color || "";
   };
   
+  // Render falling cookies
+  const renderFallingCookies = () => {
+    return fallingCookies.map(cookie => (
+      <div 
+        key={cookie.id}
+        className="absolute text-2xl pointer-events-none animate-fall"
+        style={{
+          left: `${cookie.x}px`,
+          top: `${cookie.y}px`,
+          fontSize: `${cookie.size}px`,
+          transform: `rotate(${cookie.rotation}deg)`,
+          animationDuration: `${3 / cookie.speed}s`
+        }}
+      >
+        🍪
+      </div>
+    ));
+  };
+
   return (
     <div className={`min-h-screen p-6 rounded-lg ${getBackgroundClass()}`}>
+      {/* Falling cookies animation */}
+      {renderFallingCookies()}
+      
       {/* Main game content */}
       <div className="flex flex-col lg:flex-row lg:items-start lg:gap-6">
         {/* Left side - Game */}
@@ -487,6 +648,51 @@ export function CookieClicker() {
                             onChange={(e) => setFactories(Number(e.target.value))}
                           />
                         </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <Label>Mines:</Label>
+                          <Input 
+                            type="number" 
+                            value={mines} 
+                            onChange={(e) => setMines(Number(e.target.value))}
+                          />
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <Label>Temples:</Label>
+                          <Input 
+                            type="number" 
+                            value={temples} 
+                            onChange={(e) => setTemples(Number(e.target.value))}
+                          />
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <Label>Wizard Towers:</Label>
+                          <Input 
+                            type="number" 
+                            value={wizardTowers} 
+                            onChange={(e) => setWizardTowers(Number(e.target.value))}
+                          />
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <Label>Shipments:</Label>
+                          <Input 
+                            type="number" 
+                            value={shipments} 
+                            onChange={(e) => setShipments(Number(e.target.value))}
+                          />
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <Label>Alchemy Labs:</Label>
+                          <Input 
+                            type="number" 
+                            value={alchemyLabs} 
+                            onChange={(e) => setAlchemyLabs(Number(e.target.value))}
+                          />
+                        </div>
                       </div>
                       
                       <DialogFooter>
@@ -529,6 +735,11 @@ export function CookieClicker() {
                       <SelectItem value="power">Click Power</SelectItem>
                       <SelectItem value="grandmas">Grandmas</SelectItem>
                       <SelectItem value="factories">Factories</SelectItem>
+                      <SelectItem value="mines">Mines</SelectItem>
+                      <SelectItem value="temples">Temples</SelectItem>
+                      <SelectItem value="wizardTowers">Wizard Towers</SelectItem>
+                      <SelectItem value="shipments">Shipments</SelectItem>
+                      <SelectItem value="alchemyLabs">Alchemy Labs</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -699,6 +910,126 @@ export function CookieClicker() {
                 </Button>
               </div>
             </Card>
+
+            {/* Mine */}
+            {factories > 0 && (
+              <Card className="p-4 hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-bold">Cookie Mine</h3>
+                  <span className="text-xs bg-primary/10 px-2 py-1 rounded-full">+250/sec</span>
+                </div>
+                <p className="text-sm mb-2">Extract cookie ore from deep underground</p>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <span className="text-xs">You have: {mines}</span>
+                  </div>
+                  <Button 
+                    onClick={buyMine} 
+                    disabled={cookies < mineCost}
+                    size="sm"
+                    variant={cookies >= mineCost ? "default" : "outline"}
+                  >
+                    Build for {formatNumber(mineCost)} cookies
+                  </Button>
+                </div>
+              </Card>
+            )}
+
+            {/* Temple */}
+            {mines > 0 && (
+              <Card className="p-4 hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-bold">Cookie Temple</h3>
+                  <span className="text-xs bg-primary/10 px-2 py-1 rounded-full">+1K/sec</span>
+                </div>
+                <p className="text-sm mb-2">Ancient temples dedicated to cookie deities</p>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <span className="text-xs">You have: {temples}</span>
+                  </div>
+                  <Button 
+                    onClick={buyTemple} 
+                    disabled={cookies < templeCost}
+                    size="sm"
+                    variant={cookies >= templeCost ? "default" : "outline"}
+                  >
+                    Build for {formatNumber(templeCost)} cookies
+                  </Button>
+                </div>
+              </Card>
+            )}
+
+            {/* Wizard Tower */}
+            {temples > 0 && (
+              <Card className="p-4 hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-bold">Wizard Tower</h3>
+                  <span className="text-xs bg-primary/10 px-2 py-1 rounded-full">+5K/sec</span>
+                </div>
+                <p className="text-sm mb-2">Summons cookies through arcane magic</p>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <span className="text-xs">You have: {wizardTowers}</span>
+                  </div>
+                  <Button 
+                    onClick={buyWizardTower} 
+                    disabled={cookies < wizardTowerCost}
+                    size="sm"
+                    variant={cookies >= wizardTowerCost ? "default" : "outline"}
+                  >
+                    Build for {formatNumber(wizardTowerCost)} cookies
+                  </Button>
+                </div>
+              </Card>
+            )}
+
+            {/* Shipment */}
+            {wizardTowers > 0 && (
+              <Card className="p-4 hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-bold">Cookie Shipment</h3>
+                  <span className="text-xs bg-primary/10 px-2 py-1 rounded-full">+25K/sec</span>
+                </div>
+                <p className="text-sm mb-2">Brings cookies from the cookie planet</p>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <span className="text-xs">You have: {shipments}</span>
+                  </div>
+                  <Button 
+                    onClick={buyShipment} 
+                    disabled={cookies < shipmentCost}
+                    size="sm"
+                    variant={cookies >= shipmentCost ? "default" : "outline"}
+                  >
+                    Build for {formatNumber(shipmentCost)} cookies
+                  </Button>
+                </div>
+              </Card>
+            )}
+
+            {/* Alchemy Lab */}
+            {shipments > 0 && (
+              <Card className="p-4 hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-bold">Alchemy Lab</h3>
+                  <span className="text-xs bg-primary/10 px-2 py-1 rounded-full">+100K/sec</span>
+                </div>
+                <p className="text-sm mb-2">Turns gold into cookies through alchemy</p>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <span className="text-xs">You have: {alchemyLabs}</span>
+                  </div>
+                  <Button 
+                    onClick={buyAlchemyLab} 
+                    disabled={cookies < alchemyLabCost}
+                    size="sm"
+                    variant={cookies >= alchemyLabCost ? "default" : "outline"}
+                  >
+                    Build for {formatNumber(alchemyLabCost)} cookies
+                  </Button>
+                </div>
+              </Card>
+            )}
           </div>
           
           <div className="mt-6 text-sm text-gray-600 dark:text-gray-400">
