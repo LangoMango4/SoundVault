@@ -121,13 +121,25 @@ export function useUpdateNotification(): UseUpdateNotificationResult {
     }
   }, [user]);
   
-  // Check for new deployment periodically
+  // Check for new deployment periodically - with rate limiting
   useEffect(() => {
     if (!user) return;
     
     // Function to check for new deployment
     const checkForDeployment = async () => {
       try {
+        // Prevent spamming by checking when we last checked
+        const lastCheck = Number(localStorage.getItem(DEPLOYMENT_CHECK_KEY) || '0');
+        const currentTime = Date.now();
+        
+        // Only check if it's been at least 2 minutes since the last check
+        if (currentTime - lastCheck < DEPLOYMENT_CHECK_INTERVAL) {
+          return;
+        }
+        
+        // Update the check time before making the request
+        localStorage.setItem(DEPLOYMENT_CHECK_KEY, currentTime.toString());
+        
         const response = await fetch('/api/deployment');
         if (!response.ok) return;
         
@@ -136,45 +148,46 @@ export function useUpdateNotification(): UseUpdateNotificationResult {
         
         // If we don't have a stored timestamp, store the current one
         if (!storedTimestamp) {
-          console.log('Initial deployment timestamp stored:', data.timestamp);
           localStorage.setItem(DEPLOYMENT_TIMESTAMP_KEY, data.timestamp);
           // Also store the current version to prevent duplicate notifications
           localStorage.setItem(VERSION_STORAGE_KEY, CURRENT_VERSION);
           return;
         }
         
-        // If the deployment timestamp is newer than our stored one,
-        // it means the app has been redeployed
-        if (Number(data.timestamp) > Number(storedTimestamp)) {
-          console.log('New deployment detected!', {
-            stored: Number(storedTimestamp),
-            current: Number(data.timestamp),
-            difference: Number(data.timestamp) - Number(storedTimestamp)
-          });
-          
+        // If the deployment timestamp is newer than our stored one and the difference is
+        // significant (more than 5 seconds to avoid false triggers)
+        const timeDifference = Number(data.timestamp) - Number(storedTimestamp);
+        if (timeDifference > 5000) {
           localStorage.setItem(DEPLOYMENT_TIMESTAMP_KEY, data.timestamp);
           
-          // Clear the version storage key to force showing update notification
-          localStorage.removeItem(VERSION_STORAGE_KEY);
-          
-          // Show update notification
-          setShowUpdateNotification(true);
+          // Check if we've already shown a notification for this version within this session
+          const hasShownUpdateThisSession = sessionStorage.getItem('update-notification-shown');
+          if (!hasShownUpdateThisSession) {
+            // Mark as shown in this session
+            sessionStorage.setItem('update-notification-shown', 'true');
+            
+            // Clear the version storage key to force showing update notification
+            localStorage.removeItem(VERSION_STORAGE_KEY);
+            
+            // Show update notification
+            setShowUpdateNotification(true);
+          }
         }
       } catch (error) {
         console.error('Failed to check for deployment:', error);
       }
-      
-      // Update the last check time regardless of outcome
-      localStorage.setItem(DEPLOYMENT_CHECK_KEY, Date.now().toString());
     };
     
-    // Check immediately on load
-    checkForDeployment();
+    // Check once on load with a slight delay to avoid the initial load rush
+    const initialCheckTimeout = setTimeout(checkForDeployment, 5000);
     
-    // Then set up interval to check periodically
-    const deploymentInterval = setInterval(checkForDeployment, DEPLOYMENT_CHECK_INTERVAL);
+    // Then set up interval to check periodically - using a longer interval
+    const deploymentInterval = setInterval(checkForDeployment, DEPLOYMENT_CHECK_INTERVAL * 2);
     
-    return () => clearInterval(deploymentInterval);
+    return () => {
+      clearTimeout(initialCheckTimeout);
+      clearInterval(deploymentInterval);
+    };
   }, [user]);
   
   // Track user activity and log out after inactivity
@@ -247,17 +260,23 @@ export function useUpdateNotification(): UseUpdateNotificationResult {
   // Extract checkForDeployment function for manual testing
   const checkForDeploymentManually = useCallback(async () => {
     try {
+      // Add rate-limiting for the manual check too (5 seconds between checks)
+      const lastCheck = Number(localStorage.getItem(DEPLOYMENT_CHECK_KEY) || '0');
+      const currentTime = Date.now();
+      
+      if (currentTime - lastCheck < 5000) {
+        console.log('Rate limited: Can only check for deployments every 5 seconds');
+        return;
+      }
+      
+      // Update the check time before making the request
+      localStorage.setItem(DEPLOYMENT_CHECK_KEY, currentTime.toString());
+      
       const response = await fetch('/api/deployment');
       if (!response.ok) return;
       
       const data = await response.json();
       const storedTimestamp = localStorage.getItem(DEPLOYMENT_TIMESTAMP_KEY);
-      
-      console.log('Manual deployment check:', {
-        current: data,
-        stored: storedTimestamp ? Number(storedTimestamp) : null,
-        difference: storedTimestamp ? Number(data.timestamp) - Number(storedTimestamp) : null
-      });
       
       // If we don't have a stored timestamp, store the current one
       if (!storedTimestamp) {
@@ -266,21 +285,25 @@ export function useUpdateNotification(): UseUpdateNotificationResult {
         return;
       }
       
-      // If the deployment timestamp is newer than our stored one,
-      // it means the app has been redeployed
-      if (Number(data.timestamp) > Number(storedTimestamp)) {
+      // If the deployment timestamp is newer than our stored one, 
+      // and the difference is significant (more than 5 seconds to avoid false triggers)
+      const timeDifference = Number(data.timestamp) - Number(storedTimestamp);
+      
+      if (timeDifference > 5000) {
         console.log('New deployment detected in manual check!');
         localStorage.setItem(DEPLOYMENT_TIMESTAMP_KEY, data.timestamp);
         
+        // Since this is a manual check, always show the notification
         // Clear the version storage key to force showing update notification
         localStorage.removeItem(VERSION_STORAGE_KEY);
         
         // Show update notification
         setShowUpdateNotification(true);
         return true;
+      } else {
+        console.log('No new deployment detected');
+        return false;
       }
-      
-      return false;
     } catch (error) {
       console.error('Failed to check for deployment:', error);
     }

@@ -82,8 +82,17 @@ export function useOnlineStatus() {
       });
     };
     
-    // Send heartbeat to keep server alive
+    // Send heartbeat to keep server alive - with rate limiting
     const sendHeartbeat = async () => {
+      // Rate limit heartbeats
+      const lastHeartbeatSent = localStorage.getItem('last-heartbeat-time');
+      const currentTime = Date.now();
+      
+      // Only send a heartbeat if it's been at least 30 seconds since the last one
+      if (lastHeartbeatSent && currentTime - Number(lastHeartbeatSent) < 30000) {
+        return;
+      }
+      
       try {
         // Send heartbeat to let server know application is active
         await fetch('/api/heartbeat', { 
@@ -91,18 +100,20 @@ export function useOnlineStatus() {
           cache: 'no-cache',
           signal: AbortSignal.timeout(3000)
         });
+        // Store the time of the last successful heartbeat
+        localStorage.setItem('last-heartbeat-time', currentTime.toString());
       } catch (error) {
         console.log("Heartbeat failed - server may be restarting");
       }
     };
     
-    // Send heartbeat immediately
-    sendHeartbeat();
+    // Send heartbeat with a delay to avoid startup rush
+    const initialHeartbeatTimeout = setTimeout(sendHeartbeat, 3000);
     
-    // Set up regular ping check - every 15 seconds (reduced from 5 seconds to avoid too many requests)
-    const pingIntervalId = setInterval(checkRealConnectivity, 15000);
+    // Set up regular ping check - every 30 seconds (further reduced to avoid too many requests)
+    const pingIntervalId = setInterval(checkRealConnectivity, 30000);
     
-    // Set up heartbeat interval - every 60 seconds
+    // Set up heartbeat interval - every 60 seconds but with rate limiting applied in the function
     const heartbeatIntervalId = setInterval(sendHeartbeat, 60000);
 
     // Add event listeners
@@ -130,6 +141,7 @@ export function useOnlineStatus() {
 
     // Cleanup function to remove event listeners and intervals
     return () => {
+      clearTimeout(initialHeartbeatTimeout);
       clearInterval(pingIntervalId);
       clearInterval(heartbeatIntervalId);
       window.removeEventListener('online', handleOnline);

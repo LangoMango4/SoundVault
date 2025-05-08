@@ -64,19 +64,33 @@ function ConnectivityChecker() {
   useEffect(() => {
     // Alternates between heartbeat and keepalive to maintain connection
     const sendKeepAliveSignals = async () => {
-      // Alternate between endpoints for redundancy
-      const endpoint = Math.random() > 0.5 ? '/api/heartbeat' : '/api/keepalive';
+      // Get the last time we sent a keepalive
+      const lastKeepalive = Number(localStorage.getItem('last-keepalive-time') || '0');
+      const currentTime = Date.now();
+      
+      // Only send keepalive if at least 15 seconds have passed since the last one
+      if (currentTime - lastKeepalive < 15000) {
+        return;
+      }
+      
+      // Store the current time as the last keepalive time
+      localStorage.setItem('last-keepalive-time', currentTime.toString());
+      
+      // Use keepalive endpoint primarily since it's more lightweight
+      const endpoint = '/api/keepalive';
       
       try {
         await fetch(endpoint);
-        console.log(`Connection maintenance ping sent to ${endpoint}`, new Date().toLocaleTimeString());
+        // Reduced logging to avoid console spam
+        if (Math.random() < 0.1) { // Only log ~10% of successful pings
+          console.log(`Connection maintenance ping sent to ${endpoint}`, new Date().toLocaleTimeString());
+        }
       } catch (error) {
         console.error("Failed to send keep-alive signal:", error);
         
-        // If first attempt fails, try the other endpoint as backup
-        const primaryEndpoint = endpoint;
+        // Only try backup endpoint if first attempt failed
         try {
-          const backupEndpoint = primaryEndpoint === '/api/heartbeat' ? '/api/keepalive' : '/api/heartbeat';
+          const backupEndpoint = '/api/heartbeat';
           await fetch(backupEndpoint);
           console.log(`Backup ping sent to ${backupEndpoint}`, new Date().toLocaleTimeString());
         } catch (backupError) {
@@ -85,17 +99,16 @@ function ConnectivityChecker() {
       }
     };
     
-    // Initial keepalive
-    sendKeepAliveSignals();
+    // Initial keepalive (with a short delay to avoid startup rush)
+    const initialPingTimeout = setTimeout(sendKeepAliveSignals, 3000);
     
-    // Set up multiple intervals at different times for redundancy
-    const primaryInterval = setInterval(sendKeepAliveSignals, 2 * 60 * 1000); // Every 2 minutes
-    const secondaryInterval = setInterval(sendKeepAliveSignals, 5 * 60 * 1000); // Every 5 minutes
+    // Set up a single interval with a longer time (15 seconds is plenty for keepalive)
+    const keepaliveInterval = setInterval(sendKeepAliveSignals, 15 * 1000); 
     
     // Cleanup on unmount
     return () => {
-      clearInterval(primaryInterval);
-      clearInterval(secondaryInterval);
+      clearTimeout(initialPingTimeout);
+      clearInterval(keepaliveInterval);
     };
   }, []);
   
