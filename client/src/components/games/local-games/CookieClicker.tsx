@@ -175,13 +175,17 @@ export function CookieClicker() {
         // Occasionally create falling cookies for passive generation
         // The more buildings you have, the more chances of cookie animations
         const totalBuildings = autoClickers + grandmas + factories + mines + temples + wizardTowers + shipments + alchemyLabs;
-        if (Math.random() < totalBuildings / 200) { // Chance increases with more buildings
-          const buttonElement = document.querySelector('.cookie-button');
-          if (buttonElement) {
-            const rect = buttonElement.getBoundingClientRect();
+        if (Math.random() < totalBuildings / 500) { // Lower chance to avoid too many cookies
+          const cookieContainer = document.querySelector('.cookie-container');
+          if (cookieContainer) {
+            const rect = cookieContainer.getBoundingClientRect();
+            // Position cookies around the container, not just in the button
             const x = Math.random() * rect.width;
-            const y = Math.random() * rect.height;
-            createFallingCookie(x, y);
+            const y = Math.random() * 100; // Start near the top of the container
+            
+            setTimeout(() => {
+              createFallingCookie(x, y);
+            }, Math.random() * 500); // Add a bit of delay for variety
           }
         }
       }
@@ -238,9 +242,19 @@ export function CookieClicker() {
     const id = Date.now() + Math.random();
     const size = Math.random() * 20 + 15; // Random size between 15-35px
     const rotation = Math.random() * 360; // Random rotation
-    const speed = Math.random() * 3 + 2; // Random fall speed
+    const speed = Math.random() * 1.5 + 1; // Random fall speed (slower for better visibility)
     
-    setFallingCookies(prev => [...prev, { id, x, y, size, rotation, speed }]);
+    // Add the new cookie with a delayed state update to avoid batching issues
+    setTimeout(() => {
+      setFallingCookies(prev => {
+        // Limit to 50 cookies max to prevent performance issues
+        const newCookies = [...prev, { id, x, y, size, rotation, speed }];
+        if (newCookies.length > 50) {
+          return newCookies.slice(-50); // Keep only the 50 most recent cookies
+        }
+        return newCookies;
+      });
+    }, 0);
     
     // Remove cookie after animation (3 seconds)
     setTimeout(() => {
@@ -543,23 +557,9 @@ export function CookieClicker() {
     return bg?.color || "";
   };
   
-  // Render falling cookies
+  // Render falling cookies - keeping this empty since we're already rendering in the cookie-container
   const renderFallingCookies = () => {
-    return fallingCookies.map(cookie => (
-      <div 
-        key={cookie.id}
-        className="absolute text-2xl pointer-events-none animate-fall"
-        style={{
-          left: `${cookie.x}px`,
-          top: `${cookie.y}px`,
-          fontSize: `${cookie.size}px`,
-          transform: `rotate(${cookie.rotation}deg)`,
-          animationDuration: `${3 / cookie.speed}s`
-        }}
-      >
-        🍪
-      </div>
-    ));
+    return null;
   };
 
   return (
