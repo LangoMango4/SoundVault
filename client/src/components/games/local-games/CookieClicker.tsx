@@ -827,7 +827,7 @@ export function CookieClicker() {
             />
           </div>
           
-          <div className="cookie-container mb-8 relative group overflow-hidden" style={{ minHeight: "200px" }}>
+          <div className="cookie-container mb-8 relative group overflow-hidden" style={{ minHeight: "250px", position: "relative", width: "100%", maxWidth: "400px", margin: "0 auto" }}>
             {/* Render falling cookies */}
             {fallingCookies.map(cookie => (
               <div 
@@ -838,21 +838,25 @@ export function CookieClicker() {
                   top: `${cookie.y}px`,
                   fontSize: `${cookie.size}px`,
                   transform: `rotate(${cookie.rotation}deg)`,
-                  animationDuration: `${3 / cookie.speed}s`
+                  animationDuration: `${3 / cookie.speed}s`,
+                  zIndex: 5
                 }}
               >
                 🍪
               </div>
             ))}
             
-            <button 
-              className="cookie-button w-40 h-40 bg-amber-200 hover:bg-amber-300 rounded-full flex items-center justify-center transform transition-transform hover:scale-105 active:scale-95 border-4 border-amber-300 shadow-lg relative z-10"
-              onClick={handleCookieClick}
-            >
-              <span role="img" aria-label="cookie" className="text-8xl group-hover:animate-pulse">🍪</span>
-            </button>
-            <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-              <Sparkles className="text-yellow-500 h-8 w-8 animate-bounce" />
+            <div className="flex justify-center items-center h-full">
+              <button 
+                className="cookie-button w-40 h-40 bg-amber-200 hover:bg-amber-300 rounded-full flex items-center justify-center transform transition-transform hover:scale-105 active:scale-95 border-4 border-amber-300 shadow-lg relative"
+                onClick={handleCookieClick}
+                style={{ zIndex: 10 }}
+              >
+                <span role="img" aria-label="cookie" className="text-8xl group-hover:animate-pulse">🍪</span>
+              </button>
+              <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity" style={{ zIndex: 20 }}>
+                <Sparkles className="text-yellow-500 h-8 w-8 animate-bounce" />
+              </div>
             </div>
           </div>
           
