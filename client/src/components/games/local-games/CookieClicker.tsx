@@ -169,13 +169,26 @@ export function CookieClicker() {
   // Auto-clickers functionality
   useEffect(() => {
     const timer = setInterval(() => {
-      if (autoClickers > 0 || grandmas > 0 || factories > 0) {
+      if (autoClickers > 0 || grandmas > 0 || factories > 0 || mines > 0 || temples > 0 || wizardTowers > 0 || shipments > 0 || alchemyLabs > 0) {
         setCookies(prev => prev + cookiesPerSecond / 10); // Divide by 10 since we update 10 times per second
+        
+        // Occasionally create falling cookies for passive generation
+        // The more buildings you have, the more chances of cookie animations
+        const totalBuildings = autoClickers + grandmas + factories + mines + temples + wizardTowers + shipments + alchemyLabs;
+        if (Math.random() < totalBuildings / 200) { // Chance increases with more buildings
+          const buttonElement = document.querySelector('.cookie-button');
+          if (buttonElement) {
+            const rect = buttonElement.getBoundingClientRect();
+            const x = Math.random() * rect.width;
+            const y = Math.random() * rect.height;
+            createFallingCookie(x, y);
+          }
+        }
       }
     }, 100);
     
     return () => clearInterval(timer);
-  }, [autoClickers, grandmas, factories, cookiesPerSecond]);
+  }, [autoClickers, grandmas, factories, mines, temples, wizardTowers, shipments, alchemyLabs, cookiesPerSecond]);
   
   // Save game data to the server
   useEffect(() => {
@@ -218,7 +231,7 @@ export function CookieClicker() {
     }, 2000); // Save every 2 seconds when data changes
     
     return () => clearTimeout(saveTimeout);
-  }, [cookies, clickPower, autoClickers, grandmas, factories, background]);
+  }, [cookies, clickPower, autoClickers, grandmas, factories, mines, temples, wizardTowers, shipments, alchemyLabs, background]);
   
   // Create falling cookie effect
   const createFallingCookie = (x: number, y: number) => {
@@ -814,14 +827,31 @@ export function CookieClicker() {
             />
           </div>
           
-          <div className="cookie-container mb-8 relative group">
+          <div className="cookie-container mb-8 relative group overflow-hidden" style={{ minHeight: "200px" }}>
+            {/* Render falling cookies */}
+            {fallingCookies.map(cookie => (
+              <div 
+                key={cookie.id}
+                className="absolute pointer-events-none animate-fall"
+                style={{
+                  left: `${cookie.x}px`,
+                  top: `${cookie.y}px`,
+                  fontSize: `${cookie.size}px`,
+                  transform: `rotate(${cookie.rotation}deg)`,
+                  animationDuration: `${3 / cookie.speed}s`
+                }}
+              >
+                🍪
+              </div>
+            ))}
+            
             <button 
-              className="cookie-button w-40 h-40 bg-amber-200 hover:bg-amber-300 rounded-full flex items-center justify-center transform transition-transform hover:scale-105 active:scale-95 border-4 border-amber-300 shadow-lg"
+              className="cookie-button w-40 h-40 bg-amber-200 hover:bg-amber-300 rounded-full flex items-center justify-center transform transition-transform hover:scale-105 active:scale-95 border-4 border-amber-300 shadow-lg relative z-10"
               onClick={handleCookieClick}
             >
               <span role="img" aria-label="cookie" className="text-8xl group-hover:animate-pulse">🍪</span>
             </button>
-            <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
               <Sparkles className="text-yellow-500 h-8 w-8 animate-bounce" />
             </div>
           </div>
