@@ -8,45 +8,79 @@ export function useOnlineStatus() {
 
   // Advanced connectivity check function
   const checkRealConnectivity = async (): Promise<boolean> => {
+    // Add rate limiting to avoid excessive checks
+    const lastConnectivityCheck = localStorage.getItem('last-connectivity-check');
+    const currentTime = Date.now();
+    
+    // Only perform the check if it's been at least 5 seconds since the last one
+    // This helps prevent a cascade of checks during network issues
+    if (lastConnectivityCheck && currentTime - Number(lastConnectivityCheck) < 5000) {
+      // Return the current known state without performing a new check
+      return isOnline;
+    }
+    
+    // Update the timestamp for the check
+    localStorage.setItem('last-connectivity-check', currentTime.toString());
+    
     try {
-      // Try to fetch a small resource from the server with a longer timeout
-      const response = await fetch('/api/ping', { 
-        method: 'GET',
-        // Use cache: 'no-cache' to prevent getting cached responses
-        cache: 'no-cache',
-        // Set a longer timeout (15 seconds instead of 5) to account for network latency
-        signal: AbortSignal.timeout(15000)
-      });
+      // Create a controller for timeout management
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout (reduced from 15)
       
-      // Only consider offline if we get an actual error response
-      if (response.status >= 200 && response.status < 500) {
-        // Any successful or redirect response, or even 4xx client errors
-        // means the server is reachable, so the client is online
-        setIsOnline(true);
-        return true;
-      } else {
-        // 500+ server errors might indicate server issues
-        setIsOnline(false);
-        return false;
-      }
-    } catch (error) {
-      // Network error or timeout - we can try a second endpoint before deciding we're offline
       try {
-        // Attempt backup connectivity check
-        const backupResponse = await fetch('/api/heartbeat', { 
+        // Try to fetch a small resource from the server
+        const response = await fetch('/api/ping', { 
           method: 'GET',
-          cache: 'no-cache',
-          signal: AbortSignal.timeout(10000)
+          // Use cache: 'no-store' to prevent getting cached responses
+          cache: 'no-store',
+          signal: controller.signal
         });
         
-        const isConnected = backupResponse.status < 500;
-        setIsOnline(isConnected);
-        return isConnected;
-      } catch (backupError) {
-        // Both checks failed, now we can determine we're offline
-        setIsOnline(false);
-        return false;
+        clearTimeout(timeoutId);
+        
+        // Only consider offline if we get an actual error response
+        if (response.status >= 200 && response.status < 500) {
+          // Any successful or redirect response, or even 4xx client errors
+          // means the server is reachable, so the client is online
+          setIsOnline(true);
+          return true;
+        } else {
+          // 500+ server errors might indicate server issues
+          setIsOnline(false);
+          return false;
+        }
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        
+        // Network error or timeout - we can try a second endpoint before deciding we're offline
+        try {
+          // Create a new controller for backup attempt
+          const backupController = new AbortController();
+          const backupTimeoutId = setTimeout(() => backupController.abort(), 5000); // Shorter timeout for backup
+          
+          // Attempt backup connectivity check
+          const backupResponse = await fetch('/api/heartbeat', { 
+            method: 'GET',
+            cache: 'no-store',
+            signal: backupController.signal
+          });
+          
+          clearTimeout(backupTimeoutId);
+          
+          const isConnected = backupResponse.status < 500;
+          setIsOnline(isConnected);
+          return isConnected;
+        } catch (backupError) {
+          // Both checks failed, now we can determine we're offline
+          setIsOnline(false);
+          return false;
+        }
       }
+    } catch (error) {
+      // Top level catch for any other unexpected errors
+      // Default to offline in this case to be safe
+      setIsOnline(false);
+      return false;
     }
   };
 
@@ -94,16 +128,35 @@ export function useOnlineStatus() {
       }
       
       try {
-        // Send heartbeat to let server know application is active
-        await fetch('/api/heartbeat', { 
-          method: 'GET',
-          cache: 'no-cache',
-          signal: AbortSignal.timeout(3000)
-        });
-        // Store the time of the last successful heartbeat
-        localStorage.setItem('last-heartbeat-time', currentTime.toString());
+        // Create a controller for timeout management
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        
+        try {
+          // Send heartbeat to let server know application is active
+          await fetch('/api/heartbeat', { 
+            method: 'GET',
+            cache: 'no-store', // More reliable than no-cache
+            signal: controller.signal
+          });
+          
+          clearTimeout(timeoutId);
+          
+          // Store the time of the last successful heartbeat
+          localStorage.setItem('last-heartbeat-time', currentTime.toString());
+        } catch (fetchError) {
+          clearTimeout(timeoutId);
+          
+          // Don't log AbortError (timeout) to avoid console spam
+          if (!(fetchError instanceof Error && fetchError.name === 'AbortError')) {
+            // Use silent failure in production, only log in development
+            if (process.env.NODE_ENV === 'development') {
+              console.log("Heartbeat failed - server may be restarting");
+            }
+          }
+        }
       } catch (error) {
-        console.log("Heartbeat failed - server may be restarting");
+        // Silent catch for any other unexpected errors
       }
     };
     

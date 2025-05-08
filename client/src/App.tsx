@@ -80,22 +80,51 @@ function ConnectivityChecker() {
       const endpoint = '/api/keepalive';
       
       try {
-        await fetch(endpoint);
-        // Reduced logging to avoid console spam
-        if (Math.random() < 0.1) { // Only log ~10% of successful pings
-          console.log(`Connection maintenance ping sent to ${endpoint}`, new Date().toLocaleTimeString());
+        // Create a controller for timeout management
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        
+        try {
+          await fetch(endpoint, {
+            signal: controller.signal,
+            cache: 'no-store' // Prevent caching issues
+          });
+          
+          clearTimeout(timeoutId);
+          
+          // Reduced logging to avoid console spam
+          if (Math.random() < 0.1) { // Only log ~10% of successful pings
+            console.log(`Connection maintenance ping sent to ${endpoint}`, new Date().toLocaleTimeString());
+          }
+        } catch (fetchError) {
+          clearTimeout(timeoutId);
+          
+          // Don't log timeout errors to avoid console spam
+          if (!(fetchError instanceof Error && fetchError.name === 'AbortError')) {
+            // Only try backup endpoint if first attempt failed and wasn't a timeout
+            try {
+              const backupController = new AbortController();
+              const backupTimeoutId = setTimeout(() => backupController.abort(), 5000);
+              
+              const backupEndpoint = '/api/heartbeat';
+              await fetch(backupEndpoint, {
+                signal: backupController.signal,
+                cache: 'no-store'
+              });
+              
+              clearTimeout(backupTimeoutId);
+              
+              // Only log successful backup attempts in development
+              if (process.env.NODE_ENV === 'development') {
+                console.log(`Backup ping sent to ${backupEndpoint}`, new Date().toLocaleTimeString());
+              }
+            } catch (backupError) {
+              // Silent fail for backup attempt - will try again on next interval
+            }
+          }
         }
       } catch (error) {
-        console.error("Failed to send keep-alive signal:", error);
-        
-        // Only try backup endpoint if first attempt failed
-        try {
-          const backupEndpoint = '/api/heartbeat';
-          await fetch(backupEndpoint);
-          console.log(`Backup ping sent to ${backupEndpoint}`, new Date().toLocaleTimeString());
-        } catch (backupError) {
-          console.error("Both keep-alive attempts failed:", backupError);
-        }
+        // Silent catch for any other unexpected errors
       }
     };
     

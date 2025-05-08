@@ -40,24 +40,48 @@ export function OfflineScreen() {
   // Send heartbeat to keep server alive even when offline screen is shown
   useEffect(() => {
     const sendHeartbeat = async () => {
+      // Add rate limiting like in the main app
+      const lastHeartbeatSent = localStorage.getItem('offline-screen-heartbeat-time');
+      const currentTime = Date.now();
+      
+      // Only send a heartbeat if it's been at least 30 seconds since the last one
+      if (lastHeartbeatSent && currentTime - Number(lastHeartbeatSent) < 30000) {
+        return;
+      }
+      
       try {
-        await fetch('/api/heartbeat', {
-          method: 'GET',
-          cache: 'no-cache',
-          signal: AbortSignal.timeout(3000)
-        });
+        // Create a controller for timeout management
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        
+        try {
+          await fetch('/api/heartbeat', {
+            method: 'GET',
+            cache: 'no-store', // More reliable than no-cache
+            signal: controller.signal
+          });
+          
+          clearTimeout(timeoutId);
+          
+          // Store the time of the last successful heartbeat
+          localStorage.setItem('offline-screen-heartbeat-time', currentTime.toString());
+        } catch (fetchError) {
+          clearTimeout(timeoutId);
+          // Silent failure is expected when offline - no logging needed
+        }
       } catch (error) {
-        // Heartbeat failed but that's expected when offline
+        // Silent catch for any other unexpected errors
       }
     };
     
-    // Initial heartbeat
-    sendHeartbeat();
+    // Initial heartbeat with a delay to avoid startup rush
+    const initialHeartbeatTimeout = setTimeout(sendHeartbeat, 3000);
     
     // Send heartbeat every minute to keep server running 24/7
     const heartbeatInterval = setInterval(sendHeartbeat, 60000);
     
     return () => {
+      clearTimeout(initialHeartbeatTimeout);
       clearInterval(heartbeatInterval);
     };
   }, []);
