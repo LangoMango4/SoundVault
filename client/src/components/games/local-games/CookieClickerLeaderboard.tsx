@@ -4,14 +4,25 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Trophy, Medal, Award, Cookie } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
+interface User {
+  id: number;
+  username: string;
+  fullName: string;
+  role: string;
+  accessLevel: string;
+}
+
 interface LeaderboardEntry {
   id: number;
   userId: number;
-  username: string;
-  fullName: string;
-  score: number;
-  gameType: string;
-  lastPlayed: string;
+  cookies: number;
+  clickPower: number;
+  autoClickers: number;
+  grandmas: number;
+  factories: number;
+  background: string;
+  lastUpdated: string;
+  user: User;
 }
 
 export function CookieClickerLeaderboard() {
@@ -140,11 +151,11 @@ export function CookieClickerLeaderboard() {
                 <div key={entry.id} className={rowClass}>
                   <div className="flex items-center gap-3">
                     <span className="flex items-center justify-center w-6 h-6">{icon}</span>
-                    <span className="text-sm font-medium">{entry.username}</span>
+                    <span className="text-sm font-medium">{entry.user.username}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Cookie className="w-3 h-3 text-amber-500" />
-                    <span className="text-sm font-semibold">{formatNumber(entry.score)}</span>
+                    <span className="text-sm font-semibold">{formatNumber(entry.cookies)}</span>
                   </div>
                 </div>
               );
