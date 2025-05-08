@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -54,8 +54,8 @@ export function CookieClicker() {
   const [showError, setShowError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   
-  // Save optimization
-  const [lastClickSaveTime, setLastClickSaveTime] = useState<number>(0);
+  // Save optimization - using ref instead of state to avoid render issues
+  const lastClickSaveTimeRef = useRef<number>(0);
   
   // Styling
   const [background, setBackground] = useState<string>("none");
@@ -295,10 +295,14 @@ export function CookieClicker() {
     setCookies(prevCookies => {
       const newCookieValue = prevCookies + clickPower;
       
-      // Debounce save operation to avoid too many API calls
-      const lastSaveTime = Date.now();
-      if (lastSaveTime - lastClickSaveTime > 2000) { // Only save at most every 2 seconds
-        setLastClickSaveTime(lastSaveTime);
+      // Save cookies only occasionally to avoid too many API calls
+      // Using ref for the timestamp to avoid render cycle issues
+      const currentTime = Date.now();
+      const SAVE_INTERVAL = 2000; // 2 seconds between saves
+      
+      if (currentTime - lastClickSaveTimeRef.current > SAVE_INTERVAL) {
+        // Update the ref value directly (no re-render)
+        lastClickSaveTimeRef.current = currentTime;
         
         // Save cookies asynchronously
         setTimeout(() => {
