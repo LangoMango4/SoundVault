@@ -36,15 +36,18 @@ export default function AuthPage() {
   const form = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: activeTab === "admin" ? "admin" : "",
-      password: activeTab === "admin" ? "alarms12" : "",
+      username: "",
+      password: "",
     },
   });
   
-  // Update form values when tab changes
+  // No longer auto-filling credentials when tab changes
   useEffect(() => {
-    form.setValue("username", activeTab === "admin" ? "admin" : "");
-    form.setValue("password", activeTab === "admin" ? "alarms12" : "");
+    // Reset form when tab changes
+    form.reset({
+      username: "",
+      password: ""
+    });
   }, [activeTab, form]);
   
   // Handle form submission

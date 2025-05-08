@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 
 // Exported interface definition moved below
@@ -94,7 +94,7 @@ export interface UseUpdateNotificationResult {
   refreshPage: () => void;
   currentVersionDetails: VersionDetails;
   testShowUpdateNotification: () => void; // For testing purpose only
-  checkForDeployment?: () => Promise<void>; // Manual deployment check for testing
+  checkForDeployment?: () => Promise<boolean | void | undefined>; // Manual deployment check for testing
 }
 
 export function useUpdateNotification(): UseUpdateNotificationResult {

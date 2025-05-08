@@ -43,6 +43,7 @@ export default function UpdateNotificationTester() {
   const checkDeployment = useCallback(async () => {
     setIsCheckingDeployment(true);
     try {
+      // First fetch deployment info for display
       const response = await fetch('/api/deployment');
       if (response.ok) {
         const data = await response.json();
@@ -56,6 +57,12 @@ export default function UpdateNotificationTester() {
           description: `Current timestamp: ${data.timestamp}${storedTimestamp ? `, Stored: ${storedTimestamp}` : ', No stored timestamp'}`,
           duration: 5000
         });
+        
+        // Now use our hook's deployment check function
+        if (checkForDeployment) {
+          const result = await checkForDeployment();
+          console.log('Deployment check result:', result);
+        }
       } else {
         toast({
           title: "Error",
@@ -73,7 +80,7 @@ export default function UpdateNotificationTester() {
     } finally {
       setIsCheckingDeployment(false);
     }
-  }, [toast]);
+  }, [toast, checkForDeployment]);
   
   const simulateNewDeployment = useCallback(() => {
     // Remove the stored deployment timestamp to simulate a new deployment
