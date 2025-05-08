@@ -151,11 +151,11 @@ export function CookieClickerLeaderboard() {
                 <div key={entry.id} className={rowClass}>
                   <div className="flex items-center gap-3">
                     <span className="flex items-center justify-center w-6 h-6">{icon}</span>
-                    <span className="text-sm font-medium">{entry.user.username}</span>
+                    <span className="text-sm font-medium">{entry.user?.username || 'Unknown'}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Cookie className="w-3 h-3 text-amber-500" />
-                    <span className="text-sm font-semibold">{formatNumber(entry.cookies)}</span>
+                    <span className="text-sm font-semibold">{formatNumber(entry.cookies || 0)}</span>
                   </div>
                 </div>
               );
