@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { apiRequest } from '@/lib/queryClient';
+import React, { useEffect, useState, useRef } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Trophy, Medal, Award, Cookie } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/hooks/use-auth';
 
 interface User {
   id: number;
@@ -26,18 +26,31 @@ interface LeaderboardEntry {
 }
 
 export function CookieClickerLeaderboard() {
+  const { user } = useAuth();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string>('');
+  const intervalRef = useRef<number | null>(null);
   
   const fetchLeaderboard = async () => {
+    // Don't fetch if not logged in
+    if (!user) {
+      setError('Please log in to view the leaderboard');
+      setLoading(false);
+      return;
+    }
+    
     try {
       setError(null);
-      const res = await apiRequest('GET', '/api/games/cookie-clicker/leaderboard');
+      const res = await fetch('/api/games/cookie-clicker/leaderboard', {
+        credentials: 'include'
+      });
+      
       if (!res.ok) {
         throw new Error('Failed to fetch leaderboard');
       }
+      
       const data = await res.json();
       setLeaderboard(data);
       setLastUpdated(new Date().toLocaleTimeString());
@@ -53,14 +66,19 @@ export function CookieClickerLeaderboard() {
     // Initial fetch
     fetchLeaderboard();
 
-    // Set up auto-refresh every 3 seconds
-    const intervalId = window.setInterval(fetchLeaderboard, 3000);
+    // Set up auto-refresh every 3 seconds only if logged in
+    if (user) {
+      intervalRef.current = window.setInterval(fetchLeaderboard, 3000);
+    }
 
     // Clean up on unmount
     return () => {
-      window.clearInterval(intervalId);
+      if (intervalRef.current !== null) {
+        window.clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     };
-  }, []);
+  }, [user]);
 
   const formatNumber = (num: number): string => {
     if (num >= 1000000) {
