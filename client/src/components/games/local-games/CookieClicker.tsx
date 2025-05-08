@@ -54,6 +54,9 @@ export function CookieClicker() {
   const [showError, setShowError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   
+  // Save optimization
+  const [lastClickSaveTime, setLastClickSaveTime] = useState<number>(0);
+  
   // Styling
   const [background, setBackground] = useState<string>("none");
   const backgrounds = [
@@ -173,26 +176,31 @@ export function CookieClicker() {
         setCookies(prev => prev + cookiesPerSecond / 10); // Divide by 10 since we update 10 times per second
         
         // Occasionally create falling cookies for passive generation
-        // The more buildings you have, the more chances of cookie animations
-        const totalBuildings = autoClickers + grandmas + factories + mines + temples + wizardTowers + shipments + alchemyLabs;
-        if (Math.random() < totalBuildings / 500) { // Lower chance to avoid too many cookies
-          const cookieContainer = document.querySelector('.cookie-container');
-          if (cookieContainer) {
-            const rect = cookieContainer.getBoundingClientRect();
-            // Position cookies around the container, not just in the button
-            const x = Math.random() * rect.width;
-            const y = Math.random() * 100; // Start near the top of the container
-            
-            setTimeout(() => {
-              createFallingCookie(x, y);
-            }, Math.random() * 500); // Add a bit of delay for variety
+        // Only create new cookies if we don't have too many already
+        if (fallingCookies.length < 50) {
+          // The more buildings you have, the more chances of cookie animations
+          const totalBuildings = autoClickers + grandmas + factories + mines + temples + wizardTowers + shipments + alchemyLabs;
+          if (Math.random() < totalBuildings / 1000) { // Even lower chance to avoid performance issues
+            const cookieContainer = document.querySelector('.cookie-container');
+            if (cookieContainer) {
+              const rect = cookieContainer.getBoundingClientRect();
+              // Position cookies randomly within the container
+              const x = Math.random() * rect.width;
+              const y = 0; // Start at the top
+              
+              // Use setTimeout to prevent too many cookies from appearing at once
+              setTimeout(() => {
+                createFallingCookie(x, y);
+              }, Math.random() * 500); // Randomize the delay
+            }
           }
         }
       }
     }, 100);
     
     return () => clearInterval(timer);
-  }, [autoClickers, grandmas, factories, mines, temples, wizardTowers, shipments, alchemyLabs, cookiesPerSecond]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoClickers, grandmas, factories, mines, temples, wizardTowers, shipments, alchemyLabs, cookiesPerSecond, fallingCookies.length]);
   
   // Save game data to the server
   useEffect(() => {
@@ -269,49 +277,60 @@ export function CookieClicker() {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    // Create multiple falling cookies based on click power
-    for (let i = 0; i < Math.min(clickPower, 10); i++) {
-      const offsetX = x + (Math.random() * 50 - 25);
-      const offsetY = y + (Math.random() * 50 - 25);
-      createFallingCookie(offsetX, offsetY);
+    // Get how many cookies to create based on click power (max 10 to avoid performance issues)
+    const cookiesToCreate = Math.min(clickPower, 10);
+    
+    // Create falling cookies in a staggered pattern using a loop with setTimeout
+    for (let i = 0; i < cookiesToCreate; i++) {
+      setTimeout(() => {
+        // Add some randomness to the positions
+        const offsetX = x + (Math.random() * 60 - 30);
+        const offsetY = y + (Math.random() * 60 - 30);
+        
+        createFallingCookie(offsetX, offsetY);
+      }, i * 50); // Stagger each cookie creation by 50ms
     }
     
-    // Use functional update to ensure we always use the latest state
+    // Update cookie count with functional update to ensure we always use the latest state
     setCookies(prevCookies => {
       const newCookieValue = prevCookies + clickPower;
       
-      // Save cookies immediately after updating the state
-      setTimeout(() => {
-        fetch('/api/games/cookie-clicker/save', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            cookies: newCookieValue,
-            clickPower,
-            autoClickers,
-            grandmas,
-            factories,
-            mines,
-            temples,
-            wizardTowers,
-            shipments,
-            alchemyLabs,
-            background
-          }),
-        })
-        .then(response => {
-          if (!response.ok) {
-            console.error('Failed to save game data during click');
-          } else {
-            console.log('Click saved successfully, new total:', newCookieValue);
-          }
-        })
-        .catch(error => {
-          console.error('Error saving click data:', error);
-        });
-      }, 0);
+      // Debounce save operation to avoid too many API calls
+      const lastSaveTime = Date.now();
+      if (lastSaveTime - lastClickSaveTime > 2000) { // Only save at most every 2 seconds
+        setLastClickSaveTime(lastSaveTime);
+        
+        // Save cookies asynchronously
+        setTimeout(() => {
+          fetch('/api/games/cookie-clicker/save', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              cookies: newCookieValue,
+              clickPower,
+              autoClickers,
+              grandmas,
+              factories,
+              mines,
+              temples,
+              wizardTowers,
+              shipments,
+              alchemyLabs,
+              background
+            }),
+          })
+          .then(response => {
+            if (!response.ok) {
+              console.error('Failed to save game data during click');
+            }
+          })
+          .catch(error => {
+            console.error('Error saving click data:', error);
+          });
+        }, 100);
+      }
       
       return newCookieValue;
     });
