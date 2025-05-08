@@ -22,25 +22,62 @@
     opacity: 0.9;
   }
   100% {
-    transform: translateY(400px) rotate(360deg);
+    transform: translateY(100vh) rotate(360deg);
     opacity: 0;
   }
 }
 
+@keyframes sway {
+  0% {
+    transform: translateX(0) rotate(0deg);
+  }
+  25% {
+    transform: translateX(30px) rotate(10deg);
+  }
+  50% {
+    transform: translateX(-30px) rotate(-10deg);
+  }
+  75% {
+    transform: translateX(15px) rotate(5deg);
+  }
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+}
+
 .animate-fall {
-  animation: fall 3s ease-in forwards;
+  animation: fall 3s ease-in forwards, sway 4s ease-in-out infinite;
   position: absolute;
   pointer-events: none;
   user-select: none;
   display: inline-block;
   will-change: transform;
+  font-size: 24px; /* Default size for cookies */
 }
 
+/* The cookie container now covers the entire screen */
 .cookie-container {
-  position: relative;
-  min-height: 250px;
-  width: 100%;
-  max-width: 400px;
-  margin: 0 auto;
-  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Make sure the cookie button can still be clicked */
+.cookie-button {
+  pointer-events: auto;
+  z-index: 50;
+}
+
+/* Cookie Land background */
+.bg-cookie-land {
+  background-color: #f8c170;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.2) 10%, transparent 10%),
+                    radial-gradient(circle, rgba(255,255,255,0.2) 10%, transparent 10%);
+  background-size: 40px 40px;
+  background-position: 0 0, 20px 20px;
 }

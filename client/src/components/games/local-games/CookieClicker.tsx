@@ -64,7 +64,8 @@ export function CookieClicker() {
     { id: "bakery", name: "Bakery", color: "bg-amber-50" },
     { id: "space", name: "Space", color: "bg-slate-900 text-white" },
     { id: "rainbow", name: "Rainbow", color: "bg-gradient-to-r from-red-500 to-blue-500 text-white" },
-    { id: "forest", name: "Forest", color: "bg-green-100" }
+    { id: "forest", name: "Forest", color: "bg-green-100" },
+    { id: "cookie-land", name: "Cookie Land", color: "bg-cookie-land text-amber-900" }
   ];
   
   // Upgrade costs
@@ -181,18 +182,17 @@ export function CookieClicker() {
           // The more buildings you have, the more chances of cookie animations
           const totalBuildings = autoClickers + grandmas + factories + mines + temples + wizardTowers + shipments + alchemyLabs;
           if (Math.random() < totalBuildings / 1000) { // Even lower chance to avoid performance issues
-            const cookieContainer = document.querySelector('.cookie-container');
-            if (cookieContainer) {
-              const rect = cookieContainer.getBoundingClientRect();
-              // Position cookies randomly within the container
-              const x = Math.random() * rect.width;
-              const y = 0; // Start at the top
-              
-              // Use setTimeout to prevent too many cookies from appearing at once
-              setTimeout(() => {
-                createFallingCookie(x, y);
-              }, Math.random() * 500); // Randomize the delay
-            }
+            // Get the window dimensions for full-screen cookie animation
+            const windowWidth = window.innerWidth;
+            
+            // Position cookies randomly within the entire window width
+            const x = Math.random() * windowWidth;
+            const y = 0; // Start at the top
+            
+            // Use setTimeout to prevent too many cookies from appearing at once
+            setTimeout(() => {
+              createFallingCookie(x, y);
+            }, Math.random() * 500); // Randomize the delay
           }
         }
       }
@@ -272,22 +272,34 @@ export function CookieClicker() {
   
   // Handle cookie click
   const handleCookieClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    // Get click position relative to the button
+    // Get click position relative to the button for the initial click
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
     
-    // Get how many cookies to create based on click power (max 10 to avoid performance issues)
-    const cookiesToCreate = Math.min(clickPower, 10);
+    // Get window dimensions for spreading cookies across the screen
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    // Get how many cookies to create based on click power (max 15 to avoid performance issues)
+    const cookiesToCreate = Math.min(clickPower, 15);
     
     // Create falling cookies in a staggered pattern using a loop with setTimeout
     for (let i = 0; i < cookiesToCreate; i++) {
       setTimeout(() => {
-        // Add some randomness to the positions
-        const offsetX = x + (Math.random() * 60 - 30);
-        const offsetY = y + (Math.random() * 60 - 30);
+        let x, y;
         
-        createFallingCookie(offsetX, offsetY);
+        if (i < 3) {
+          // First few cookies appear near the click point
+          x = clickX + (Math.random() * 100 - 50);
+          y = clickY + (Math.random() * 100 - 50);
+        } else {
+          // Remaining cookies appear randomly across the entire screen
+          x = Math.random() * windowWidth;
+          y = Math.random() * (windowHeight / 3); // Appear in top third so they have room to fall
+        }
+        
+        createFallingCookie(x, y);
       }, i * 50); // Stagger each cookie creation by 50ms
     }
     
@@ -843,7 +855,22 @@ export function CookieClicker() {
             />
           </div>
           
-          <div className="cookie-container mb-8">
+          {/* Main cookie clicker button */}
+          <div className="relative mb-8 flex justify-center items-center">
+            <button 
+              className="cookie-button w-40 h-40 bg-amber-200 hover:bg-amber-300 rounded-full flex items-center justify-center transform transition-transform hover:scale-105 active:scale-95 border-4 border-amber-300 shadow-lg relative"
+              onClick={handleCookieClick}
+              style={{ zIndex: 50 }}
+            >
+              <span role="img" aria-label="cookie" className="text-8xl group-hover:animate-pulse">🍪</span>
+            </button>
+            <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity" style={{ zIndex: 60 }}>
+              <Sparkles className="text-yellow-500 h-8 w-8 animate-bounce" />
+            </div>
+          </div>
+          
+          {/* Full-screen cookie container that will show cookies falling all over the screen */}
+          <div className="cookie-container">
             {/* Render falling cookies */}
             {fallingCookies.map(cookie => (
               <div 
@@ -855,25 +882,11 @@ export function CookieClicker() {
                   fontSize: `${cookie.size}px`,
                   transform: `rotate(${cookie.rotation}deg)`,
                   animationDuration: `${3 / cookie.speed}s`,
-                  zIndex: 5
                 }}
               >
                 🍪
               </div>
             ))}
-            
-            <div className="flex justify-center items-center h-full">
-              <button 
-                className="cookie-button w-40 h-40 bg-amber-200 hover:bg-amber-300 rounded-full flex items-center justify-center transform transition-transform hover:scale-105 active:scale-95 border-4 border-amber-300 shadow-lg relative"
-                onClick={handleCookieClick}
-                style={{ zIndex: 10 }}
-              >
-                <span role="img" aria-label="cookie" className="text-8xl group-hover:animate-pulse">🍪</span>
-              </button>
-              <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity" style={{ zIndex: 20 }}>
-                <Sparkles className="text-yellow-500 h-8 w-8 animate-bounce" />
-              </div>
-            </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-3xl">
