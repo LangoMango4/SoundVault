@@ -58,6 +58,10 @@ export function AdminPanel({
   const [itemToDelete, setItemToDelete] = useState<{ type: "user" | "sound" | "termslog" | "moderationlog", id: number } | null>(null);
   const [searchParams, setSearchParams] = useState<{username?: string; version?: string; method?: string}>({});
   const [isSearching, setIsSearching] = useState(false);
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [userToApprove, setUserToApprove] = useState<User | null>(null);
+  const [userToReject, setUserToReject] = useState<User | null>(null);
   
   // Moderation state
   const [moderationLogsLimit, setModerationLogsLimit] = useState(100);
@@ -441,12 +445,13 @@ export function AdminPanel({
       cell: (user: User) => (
         <div className="flex space-x-2">
           <Button
-            variant="success"
+            variant="outline"
             size="sm"
             className="bg-green-600 hover:bg-green-700 text-white"
             onClick={(e) => {
               e.stopPropagation();
-              approveUserMutation.mutate(user.id);
+              setUserToApprove(user);
+              setApproveDialogOpen(true);
             }}
           >
             <CheckCircle className="h-4 w-4 mr-2" />
@@ -457,7 +462,8 @@ export function AdminPanel({
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              openDeleteDialog("user", user.id);
+              setUserToReject(user);
+              setRejectDialogOpen(true);
             }}
           >
             <Trash2 className="h-4 w-4 mr-2" />
@@ -1208,6 +1214,62 @@ export function AdminPanel({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground">
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* Approve User Dialog */}
+      <AlertDialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Approve User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to approve {userToApprove?.fullName} ({userToApprove?.username})? 
+              This will grant the user access to the system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              className="bg-green-600 hover:bg-green-700 text-white"
+              onClick={() => {
+                if (userToApprove) {
+                  approveUserMutation.mutate(userToApprove.id);
+                  setApproveDialogOpen(false);
+                  setUserToApprove(null);
+                }
+              }}
+            >
+              Approve
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* Reject User Dialog */}
+      <AlertDialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reject User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to reject {userToReject?.fullName} ({userToReject?.username})? 
+              This will delete their account from the system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              className="bg-destructive text-destructive-foreground"
+              onClick={() => {
+                if (userToReject) {
+                  deleteUserMutation.mutate(userToReject.id);
+                  setRejectDialogOpen(false);
+                  setUserToReject(null);
+                }
+              }}
+            >
+              Reject
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
