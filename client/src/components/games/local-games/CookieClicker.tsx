@@ -37,8 +37,17 @@ export function CookieClicker() {
   const [shipments, setShipments] = useState<number>(0);
   const [alchemyLabs, setAlchemyLabs] = useState<number>(0);
   
-  // Animation state for falling cookies
-  const [fallingCookies, setFallingCookies] = useState<{ id: number; x: number; y: number; size: number; rotation: number; speed: number }[]>([]);
+  // Animation state for falling cookies with added drift (horizontal movement)
+  const [fallingCookies, setFallingCookies] = useState<{ 
+    id: number; 
+    x: number; 
+    y: number; 
+    size: number; 
+    rotation: number; 
+    speed: number;
+    drift: number;
+    isAutoClick?: boolean;
+  }[]>([]);
   
   // Admin panel
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
@@ -176,23 +185,41 @@ export function CookieClicker() {
       if (autoClickers > 0 || grandmas > 0 || factories > 0 || mines > 0 || temples > 0 || wizardTowers > 0 || shipments > 0 || alchemyLabs > 0) {
         setCookies(prev => prev + cookiesPerSecond / 10); // Divide by 10 since we update 10 times per second
         
-        // Occasionally create falling cookies for passive generation
+        // Simulate cookie clicking for auto-clickers by creating falling cookies
         // Only create new cookies if we don't have too many already
         if (fallingCookies.length < 50) {
           // The more buildings you have, the more chances of cookie animations
           const totalBuildings = autoClickers + grandmas + factories + mines + temples + wizardTowers + shipments + alchemyLabs;
-          if (Math.random() < totalBuildings / 1000) { // Even lower chance to avoid performance issues
-            // Get the window dimensions for full-screen cookie animation
-            const windowWidth = window.innerWidth;
+          
+          // Get window dimensions for cookie animations
+          const windowWidth = window.innerWidth;
+          const windowHeight = window.innerHeight;
+          
+          // Different animation strategies based on building types
+          
+          // 1. Auto-clickers: Click the main cookie
+          if (autoClickers > 0 && Math.random() < autoClickers * 0.02) {
+            // Position near the main cookie
+            const centerX = windowWidth / 2;
+            const centerY = windowHeight / 2 - 100; // Approx where cookie button is
             
-            // Position cookies randomly within the entire window width
+            // Random position near the center with some variation
+            const x = centerX + (Math.random() * 60 - 30);
+            const y = centerY + (Math.random() * 60 - 30);
+            
+            // Create a falling cookie marked as auto-click
+            createFallingCookie(x, y, true);
+          }
+          
+          // 2. Other buildings: Random cookies across the screen
+          if (totalBuildings > autoClickers && Math.random() < (totalBuildings - autoClickers) / 500) {
+            // Position cookies randomly within the entire window
             const x = Math.random() * windowWidth;
-            const y = 0; // Start at the top
+            // Start at the top or randomly in top third for variation
+            const y = Math.random() < 0.3 ? Math.random() * (windowHeight / 3) : 0;
             
-            // Use setTimeout to prevent too many cookies from appearing at once
-            setTimeout(() => {
-              createFallingCookie(x, y);
-            }, Math.random() * 500); // Randomize the delay
+            // Create a falling cookie marked as auto-click
+            createFallingCookie(x, y, true);
           }
         }
       }
@@ -246,17 +273,27 @@ export function CookieClicker() {
   }, [cookies, clickPower, autoClickers, grandmas, factories, mines, temples, wizardTowers, shipments, alchemyLabs, background]);
   
   // Create falling cookie effect
-  const createFallingCookie = (x: number, y: number) => {
+  const createFallingCookie = (x: number, y: number, isAutoClick = false) => {
     const id = Date.now() + Math.random();
-    const size = Math.random() * 20 + 15; // Random size between 15-35px
-    const rotation = Math.random() * 360; // Random rotation
-    const speed = Math.random() * 1.5 + 1; // Random fall speed (slower for better visibility)
+    // Larger cookies for manual clicks, smaller for auto-generated ones
+    const size = isAutoClick ? 
+      Math.random() * 15 + 10 : // Smaller cookies for auto-clicks (10-25px)
+      Math.random() * 20 + 20;  // Larger cookies for manual clicks (20-40px)
+    
+    const rotation = Math.random() * 360; // Random initial rotation
+    // Manual clicks fall faster than auto-generated ones
+    const speed = isAutoClick ? 
+      Math.random() * 1 + 0.5 : // Slower for auto-clicks
+      Math.random() * 2 + 1.5;  // Faster for manual clicks
+    
+    // Add some horizontal drift for more natural falling
+    const drift = (Math.random() - 0.5) * 2; // Random value between -1 and 1
     
     // Add the new cookie with a delayed state update to avoid batching issues
     setTimeout(() => {
       setFallingCookies(prev => {
         // Limit to 50 cookies max to prevent performance issues
-        const newCookies = [...prev, { id, x, y, size, rotation, speed }];
+        const newCookies = [...prev, { id, x, y, size, rotation, speed, drift, isAutoClick }];
         if (newCookies.length > 50) {
           return newCookies.slice(-50); // Keep only the 50 most recent cookies
         }
@@ -264,10 +301,11 @@ export function CookieClicker() {
       });
     }, 0);
     
-    // Remove cookie after animation (3 seconds)
+    // Remove cookie after animation (different durations based on whether it's auto or manual)
+    const animationDuration = isAutoClick ? 2500 : 3500; // Auto-clicks disappear faster
     setTimeout(() => {
       setFallingCookies(prev => prev.filter(cookie => cookie.id !== id));
-    }, 3000);
+    }, animationDuration);
   };
   
   // Handle cookie click
@@ -875,13 +913,17 @@ export function CookieClicker() {
             {fallingCookies.map(cookie => (
               <div 
                 key={cookie.id}
-                className="animate-fall"
+                className={cookie.isAutoClick ? "animate-fall-auto" : "animate-fall"}
                 style={{
                   left: `${cookie.x}px`,
                   top: `${cookie.y}px`,
                   fontSize: `${cookie.size}px`,
                   transform: `rotate(${cookie.rotation}deg)`,
                   animationDuration: `${3 / cookie.speed}s`,
+                  filter: cookie.isAutoClick ? 'opacity(0.7)' : 'none',
+                  // Apply horizontal drift
+                  // Using TypeScript-compatible approach for CSS vars
+                  ...{ "--drift": cookie.drift } as any
                 }}
               >
                 🍪

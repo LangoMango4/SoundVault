@@ -27,6 +27,41 @@
   }
 }
 
+/* More natural falling animation with horizontal drift */
+@keyframes fall-with-drift {
+  0% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+    opacity: 1;
+  }
+  30% {
+    opacity: 0.9;
+    transform: translateY(30vh) translateX(calc(var(--drift, 0) * 30px)) rotate(120deg);
+  }
+  70% {
+    transform: translateY(70vh) translateX(calc(var(--drift, 0) * 60px)) rotate(240deg);
+  }
+  100% {
+    transform: translateY(100vh) translateX(calc(var(--drift, 0) * 80px)) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Specific animation for auto-clicker cookies - more gentle, different rotation */
+@keyframes fall-auto-drift {
+  0% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 0.6;
+    transform: translateY(50vh) translateX(calc(var(--drift, 0) * 20px)) rotate(180deg);
+  }
+  100% {
+    transform: translateY(100vh) translateX(calc(var(--drift, 0) * 40px)) rotate(270deg);
+    opacity: 0;
+  }
+}
+
 @keyframes sway {
   0% {
     transform: translateX(0) rotate(0deg);
@@ -45,14 +80,28 @@
   }
 }
 
+/* Regular manual clicks - more dynamic movement */
 .animate-fall {
-  animation: fall 3s ease-in forwards, sway 4s ease-in-out infinite;
+  animation: fall-with-drift 3s ease-in forwards;
   position: absolute;
   pointer-events: none;
   user-select: none;
   display: inline-block;
   will-change: transform;
-  font-size: 24px; /* Default size for cookies */
+  z-index: 20;
+}
+
+/* Auto-clicker generated cookies - gentler motion */
+.animate-fall-auto {
+  animation: fall-auto-drift 3s ease-in-out forwards;
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+  display: inline-block;
+  will-change: transform;
+  z-index: 15; /* Lower z-index than manual clicks */
+  opacity: 0.8; /* Slightly more transparent */
+  filter: brightness(0.9) contrast(0.95); /* Make auto-cookies slightly different in appearance */
 }
 
 /* The cookie container now covers the entire screen */
