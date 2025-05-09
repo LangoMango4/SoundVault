@@ -244,14 +244,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   app.post("/api/logout", (req, res, next) => {
+    // Get user ID before logout
+    const userId = req.user?.id;
+    
     req.logout((err) => {
       if (err) return next(err);
+      
+      // Remove user from online users list if they were logged in
+      if (userId) {
+        storage.removeOnlineUser(userId);
+      }
+      
       res.sendStatus(200);
     });
   });
   
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    // Update user activity if they're currently on a page (optional query parameter)
+    if (req.query.page) {
+      storage.updateUserActivity(req.user.id, req.query.page as string);
+    }
+    
     res.json(req.user);
   });
   
