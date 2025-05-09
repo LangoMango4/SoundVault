@@ -266,6 +266,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Online users endpoint
+  app.get("/api/online-users", isAuthenticated, (req, res) => {
+    try {
+      // Update the current user's activity with their current page
+      if (req.user && req.query.page) {
+        storage.updateUserActivity(req.user.id, req.query.page as string);
+      } else if (req.user) {
+        storage.updateUserActivity(req.user.id);
+      }
+      
+      // Get all online users
+      const onlineUsers = storage.getOnlineUsers();
+      res.status(200).json(onlineUsers);
+    } catch (error) {
+      console.error("Error fetching online users:", error);
+      res.status(500).json({ error: "Failed to fetch online users" });
+    }
+  });
+  
   // Endpoint to get plaintext passwords (admin only)
   app.get("/api/users/plaintext-passwords", isAdmin, (req, res) => {
     const passwordData = Array.from(plaintextPasswords.entries()).map(([username, password]) => ({
