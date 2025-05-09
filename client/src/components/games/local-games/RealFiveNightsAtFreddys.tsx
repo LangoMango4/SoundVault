@@ -598,31 +598,31 @@ export function RealFiveNightsAtFreddys() {
       
       case "2A": // West Hall
         if (animatronics.foxy.running)
-          return "/fnaf_assets/cam2a_foxy.png"; // Foxy running
+          return "/src/assets/fnaf/images/cam2a_foxy.png"; // Foxy running
         else if (animatronicsInRoom.includes("bonnie"))
-          return "/fnaf_assets/cam2a_bonnie.png"; // Bonnie in west hall
+          return "/src/assets/fnaf/images/cam2a_bonnie.png"; // Bonnie in west hall
         else
-          return "/fnaf_assets/cam2a.png"; // Empty west hall
+          return "/src/assets/fnaf/images/cam2a.png"; // Empty west hall
           
       case "2B": // West Hall Corner
         if (animatronicsInRoom.includes("bonnie"))
-          return "/fnaf_assets/cam2b_bonnie.png"; // Bonnie in corner
+          return "/src/assets/fnaf/images/cam2b_bonnie.png"; // Bonnie in corner
         else
-          return "/fnaf_assets/cam2b.png"; // Empty corner
+          return "/src/assets/fnaf/images/cam2b.png"; // Empty corner
       
       case "3": // Supply Closet
         if (animatronicsInRoom.includes("bonnie"))
-          return "/fnaf_assets/cam3_bonnie.png"; // Bonnie in closet
+          return "/src/assets/fnaf/images/cam3_bonnie.png"; // Bonnie in closet
         else
-          return "/fnaf_assets/cam3.png"; // Empty closet
+          return "/src/assets/fnaf/images/cam3.png"; // Empty closet
       
       case "4A": // East Hall
         if (animatronicsInRoom.includes("chica"))
-          return "/fnaf_assets/cam4a_chica.png"; // Chica in east hall
+          return "/src/assets/fnaf/images/cam4a_chica.png"; // Chica in east hall
         else if (animatronicsInRoom.includes("freddy"))
-          return "/fnaf_assets/cam4a_freddy.png"; // Freddy in east hall
+          return "/src/assets/fnaf/images/cam4a_freddy.png"; // Freddy in east hall
         else
-          return "/fnaf_assets/cam4a.png"; // Empty east hall
+          return "/src/assets/fnaf/images/cam4a.png"; // Empty east hall
       
       case "4B": // East Hall Corner
         if (animatronicsInRoom.includes("chica"))
@@ -671,7 +671,7 @@ export function RealFiveNightsAtFreddys() {
         <h1 className="fnaf-title text-5xl mb-8">Five Nights at Freddy's</h1>
         
         <div className="w-[500px] h-[300px] bg-cover bg-center mb-8" 
-             style={{ backgroundImage: "url('/fnaf_assets/menu.jpg')" }}>
+             style={{ backgroundImage: "url('/src/assets/fnaf/images/menu.jpg')" }}>
         </div>
         
         <div className="flex flex-col gap-4 w-64">
@@ -733,7 +733,7 @@ export function RealFiveNightsAtFreddys() {
         {jumpscareAnimatronic && (
           <>
             <img 
-              src={`/fnaf_assets/${jumpscareAnimatronic}_jumpscare.gif`} 
+              src={`/src/assets/fnaf/images/${jumpscareAnimatronic}_jumpscare.gif`} 
               alt="Jumpscare" 
               className="w-full h-full object-contain"
             />
@@ -986,7 +986,7 @@ export function RealFiveNightsAtFreddys() {
               {/* Show animatronic if at door and light is on */}
               {rightLightOn && isDoorwayOccupied("right") && (
                 <img 
-                  src="/fnaf_assets/chica_door.png" 
+                  src="/src/assets/fnaf/images/chica_door.png" 
                   alt="Chica" 
                   className="absolute bottom-0 right-0 h-3/4"
                 />
