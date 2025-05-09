@@ -44,12 +44,24 @@ export function FiveNightsAtFreddys() {
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
   const [powerDrain, setPowerDrain] = useState(1);
+  const [killerAnimatronic, setKillerAnimatronic] = useState<string>("freddy");
   const [animatronics, setAnimatronics] = useState({
     freddy: { room: "1A", active: false, danger: false },
     bonnie: { room: "1A", active: false, danger: false },
     chica: { room: "1A", active: false, danger: false },
     foxy: { room: "1C", active: false, danger: false }
   });
+  
+  // Sound effect player for FNAF sounds
+  const playSound = useCallback((sound: string) => {
+    try {
+      const audio = new Audio(sound);
+      audio.volume = 0.5;
+      audio.play().catch(err => console.error("Error playing sound:", err));
+    } catch (err) {
+      console.error("Error creating audio:", err);
+    }
+  }, []);
   
   const gameLoopRef = useRef<number | null>(null);
   const powerIntervalRef = useRef<number | null>(null);
@@ -409,60 +421,52 @@ export function FiveNightsAtFreddys() {
               {/* Render animatronics in the current room with glitch effects */}
               {animatronicsInRoom.map(name => (
                 <div key={name} className="absolute" style={{
-                  animation: 'power-flicker 3s infinite',
-                  filter: 'brightness(0.4) contrast(1.5)',
-                  transform: 'scale(0.9)',
-                  zIndex: 5,
+                  bottom: '20px',
+                  left: name === "bonnie" ? '30%' : name === "chica" ? '70%' : '50%',
+                  transform: 'translate(-50%, 0%)',
                 }}>
                   <img 
                     src={
-                      name === 'freddy' ? freddy1 : 
-                      name === 'bonnie' ? bonnie : 
-                      name === 'chica' ? chica : foxy
+                      name === "freddy" ? freddy1 :
+                      name === "bonnie" ? bonnie :
+                      name === "chica" ? chica :
+                      name === "foxy" ? foxy : freddy1
                     } 
-                    alt={name.charAt(0).toUpperCase() + name.slice(1)} 
-                    className="h-[300px] object-contain"
+                    alt={name} 
+                    className="h-[200px] object-contain"
+                    style={{ 
+                      filter: 'brightness(0.6) grayscale(0.5)', 
+                      animation: 'camera-static 1s infinite'
+                    }}
                   />
                 </div>
               ))}
               
-              {/* Empty room message if no animatronics */}
-              {animatronicsInRoom.length === 0 && !getCameraBackground() && (
-                <div className="text-gray-500 text-sm italic">
-                  {currentCam === "6" ? "AUDIO ONLY" : "No activity detected"}
+              {/* No signal message when camera is out */}
+              {currentCam === "6" && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70">
+                  <div className="text-center">
+                    <div className="text-red-500 text-xl mb-2 font-mono animate-pulse">AUDIO ONLY</div>
+                    <div className="text-gray-400 text-sm">Camera disabled - Check Audio</div>
+                  </div>
                 </div>
               )}
             </div>
           </div>
-          
-          {/* Camera UI overlay */}
-          <div className="absolute bottom-2 right-2 text-yellow-500 text-xs">
-            NIGHT 1 - {hour}:00 AM
-          </div>
         </div>
         
-        {/* Camera selection panel with FNAF camera map */}
-        <div className="mt-4 bg-gray-900 p-3 border-2 border-gray-800">
-          <div className="text-yellow-500 text-xs uppercase mb-2 text-center">Camera Selection</div>
-          
-          {/* FNAF camera map UI */}
-          <div className="relative mb-3">
-            <img src={cameraMap} alt="Camera Map" className="w-full h-auto opacity-60 max-h-[120px] object-contain" />
-            
-            {/* Camera selection buttons positioned on the map */}
-            <div className="absolute inset-0 grid grid-cols-3 grid-rows-3">
+        {/* Camera map and controls */}
+        <div className="mt-4 grid grid-cols-2 gap-4">
+          <div className="bg-gray-900 p-2 border-2 border-gray-800">
+            <div className="text-yellow-500 text-xs mb-2 font-mono">SELECT CAMERA:</div>
+            <div className="grid grid-cols-3 gap-1">
               {rooms.map(room => (
                 <Button 
                   key={room}
+                  onClick={() => switchCamera(room)}
+                  className={`security-btn text-xs py-1 ${currentCam === room ? 'bg-yellow-900 text-white' : ''}`}
                   variant="outline"
-                  onClick={() => {
-                    switchCamera(room);
-                    playSound(cameraSound);
-                  }}
-                  className={`security-btn text-xs py-1 px-1 m-1 opacity-70 hover:opacity-100 ${currentCam === room ? 'active opacity-100' : ''}`}
-                  style={{
-                    fontSize: '0.65rem',
-                  }}
+                  disabled={power <= 0}
                 >
                   {room}
                 </Button>
@@ -470,17 +474,19 @@ export function FiveNightsAtFreddys() {
             </div>
           </div>
           
-          <div className="mt-3 text-center">
-            <Button 
-              onClick={() => {
-                toggleCamera();
-                playSound(cameraSound);
-              }}
-              variant="outline" 
-              className="security-btn uppercase text-sm w-full"
-            >
-              Back to Office
-            </Button>
+          <div className="bg-gray-900 p-2 border-2 border-gray-800 flex flex-col">
+            <div className="text-yellow-500 text-xs mb-2 font-mono">POWER STATUS:</div>
+            <div className="text-sm text-white mb-1">Remaining: {power}%</div>
+            <Progress value={power} className="h-2 mb-2" />
+            <div className="mt-auto flex">
+              <Button 
+                onClick={toggleCamera} 
+                className="security-btn flex-grow mt-2"
+                variant="destructive"
+              >
+                Close Cameras
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -488,14 +494,48 @@ export function FiveNightsAtFreddys() {
   };
   
   // Render office view - the main gameplay screen
+  
+  // Play door sound when toggling doors
+  useEffect(() => {
+    if (leftDoorClosed || rightDoorClosed) {
+      playSound(doorSound);
+    }
+  }, [leftDoorClosed, rightDoorClosed, playSound]);
+  
+  // Play ambient sound for FNAF atmosphere
+  useEffect(() => {
+    let ambientAudio: HTMLAudioElement | null = null;
+    
+    if (power > 0 && !gameOver && !gameWon) {
+      ambientAudio = new Audio(ambientSound);
+      ambientAudio.volume = 0.2;
+      ambientAudio.loop = true;
+      ambientAudio.play().catch(err => console.error("Error playing ambient sound:", err));
+    }
+    
+    return () => {
+      if (ambientAudio) {
+        ambientAudio.pause();
+        ambientAudio.currentTime = 0;
+      }
+    };
+  }, [power <= 0, gameOver, gameWon]);
+  
   const renderOfficeView = () => {
     return (
-      <div className="relative h-full bg-gray-900 flex flex-col fnaf-container">
-        {/* FNAF Office view with flickering effects */}
+      <div className="relative h-full flex flex-col fnaf-container">
+        {/* FNAF Office view with authentic styling and effects */}
         <div className="flex-grow relative">
-          <div className="office-background h-full w-full relative overflow-hidden">
-            {/* Main office scene - a dark environment */}
-            <div className="h-full w-full bg-gray-950 flex items-center justify-between">
+          <div className="h-full w-full relative overflow-hidden">
+            {/* Main office scene with authentic FNAF office background */}
+            <div 
+              className="h-full w-full flex items-center justify-between"
+              style={{
+                backgroundImage: `url(${officeBackground})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                filter: power <= 20 ? 'brightness(0.4)' : 'brightness(0.6)',
+              }}>
               {/* Left side - door, light and warning */}
               <div className="w-1/3 flex flex-col justify-center items-center relative">
                 {/* Door area */}
@@ -566,7 +606,10 @@ export function FiveNightsAtFreddys() {
                   {/* Camera button positioned at the bottom */}
                   <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
                     <Button 
-                      onClick={toggleCamera} 
+                      onClick={() => {
+                        toggleCamera();
+                        playSound(cameraSound);
+                      }} 
                       variant="outline" 
                       className="security-btn px-8 py-4 text-lg uppercase"
                     >
@@ -675,20 +718,6 @@ export function FiveNightsAtFreddys() {
       </div>
     );
   };
-  
-  // Sound effect player for FNAF sounds
-  const playSound = useCallback((sound: string) => {
-    try {
-      const audio = new Audio(sound);
-      audio.volume = 0.5;
-      audio.play().catch(err => console.error("Error playing sound:", err));
-    } catch (err) {
-      console.error("Error creating audio:", err);
-    }
-  }, []);
-  
-  // Track which animatronic caused game over
-  const [killerAnimatronic, setKillerAnimatronic] = useState<string>("freddy");
   
   // Play jumpscare sound on game over
   useEffect(() => {
