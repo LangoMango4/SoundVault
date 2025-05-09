@@ -2,6 +2,18 @@ import { pgTable, text, serial, integer, boolean, jsonb, timestamp, real } from 
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Types for online users system (these don't need DB tables as they're stored in memory)
+export interface OnlineUser {
+  id: number;
+  username: string;
+  fullName: string;
+  lastActivity: Date;
+  currentPage?: string;
+  role: string;
+}
+
+export type OnlineUsersMap = Map<number, OnlineUser>;
+
 // User model with role information
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),

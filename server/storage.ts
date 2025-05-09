@@ -48,6 +48,12 @@ export interface IStorage {
   // Session store
   sessionStore: session.Store;
   
+  // Online users tracking
+  onlineUsers: OnlineUsersMap;
+  updateUserActivity(userId: number, page?: string): void;
+  getOnlineUsers(): OnlineUser[];
+  removeOnlineUser(userId: number): void;
+  
   // Data persistence
   saveDataToFiles(): void;
 
@@ -166,6 +172,53 @@ export class MemStorage implements IStorage {
   private customBlockedWords: Map<number, CustomBlockedWord>;
   private customBlockedWordIdCounter: number;
 
+  // Online users tracking
+  onlineUsers: OnlineUsersMap = new Map();
+  
+  // Online users tracking methods
+  updateUserActivity(userId: number, page?: string): void {
+    const user = this.users.get(userId);
+    if (!user) return;
+    
+    const onlineUser = this.onlineUsers.get(userId) || {
+      id: user.id,
+      username: user.username,
+      fullName: user.fullName,
+      role: user.role,
+      lastActivity: new Date(),
+      currentPage: page
+    };
+    
+    // Update last activity and current page (if provided)
+    onlineUser.lastActivity = new Date();
+    if (page) onlineUser.currentPage = page;
+    
+    this.onlineUsers.set(userId, onlineUser);
+    
+    // Clean up inactive users (more than 5 minutes inactive)
+    this.cleanInactiveUsers();
+  }
+  
+  getOnlineUsers(): OnlineUser[] {
+    return Array.from(this.onlineUsers.values());
+  }
+  
+  removeOnlineUser(userId: number): void {
+    this.onlineUsers.delete(userId);
+  }
+  
+  private cleanInactiveUsers(): void {
+    const now = new Date();
+    const inactiveThreshold = 5 * 60 * 1000; // 5 minutes in milliseconds
+    
+    for (const [userId, user] of this.onlineUsers.entries()) {
+      const timeSinceLastActivity = now.getTime() - user.lastActivity.getTime();
+      if (timeSinceLastActivity > inactiveThreshold) {
+        this.onlineUsers.delete(userId);
+      }
+    }
+  }
+  
   constructor() {
     this.users = new Map();
     this.categories = new Map();
@@ -1087,6 +1140,57 @@ export class MemStorage implements IStorage {
 // Database storage implementation
 export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
+  
+  // Online users tracking
+  onlineUsers: OnlineUsersMap = new Map();
+  
+  // Online users tracking methods
+  updateUserActivity(userId: number, page?: string): void {
+    // Get the user from the database and update their online status
+    this.getUser(userId).then(user => {
+      if (!user) return;
+      
+      const onlineUser = this.onlineUsers.get(userId) || {
+        id: user.id,
+        username: user.username,
+        fullName: user.fullName,
+        role: user.role,
+        lastActivity: new Date(),
+        currentPage: page
+      };
+      
+      // Update last activity and current page (if provided)
+      onlineUser.lastActivity = new Date();
+      if (page) onlineUser.currentPage = page;
+      
+      this.onlineUsers.set(userId, onlineUser);
+      
+      // Clean up inactive users (more than 5 minutes inactive)
+      this.cleanInactiveUsers();
+    }).catch(err => {
+      console.error('Error updating user activity:', err);
+    });
+  }
+  
+  getOnlineUsers(): OnlineUser[] {
+    return Array.from(this.onlineUsers.values());
+  }
+  
+  removeOnlineUser(userId: number): void {
+    this.onlineUsers.delete(userId);
+  }
+  
+  private cleanInactiveUsers(): void {
+    const now = new Date();
+    const inactiveThreshold = 5 * 60 * 1000; // 5 minutes in milliseconds
+    
+    for (const [userId, user] of this.onlineUsers.entries()) {
+      const timeSinceLastActivity = now.getTime() - user.lastActivity.getTime();
+      if (timeSinceLastActivity > inactiveThreshold) {
+        this.onlineUsers.delete(userId);
+      }
+    }
+  }
 
   constructor() {
     const PostgresSessionStore = connectPg(session);
