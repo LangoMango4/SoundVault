@@ -70,6 +70,16 @@ export function AdminPanel({
     queryKey: ["/api/users"],
     enabled: open && activeTab === "users",
   });
+  
+  // Pending users query
+  const {
+    data: pendingUsers,
+    isLoading: pendingUsersLoading,
+    refetch: refetchPendingUsers
+  } = useQuery<User[]>({
+    queryKey: ["/api/users/pending"],
+    enabled: open && activeTab === "approvals",
+  });
 
   // Sounds and categories queries
   const { 
@@ -284,6 +294,29 @@ export function AdminPanel({
       });
     },
   });
+  
+  // User approval mutation
+  const approveUserMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      return await apiRequest("POST", `/api/users/${userId}/approve`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      refetchPendingUsers();
+      toast({
+        title: "Success",
+        description: "User approved successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to approve user: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
 
   // Close forms when panel closes
   useEffect(() => {
@@ -374,6 +407,61 @@ export function AdminPanel({
             disabled={user.role === "admin"}
           >
             <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+  
+  // Pending user approval columns
+  const pendingUserColumns = [
+    {
+      accessorKey: "username",
+      header: "Username",
+    },
+    {
+      accessorKey: "fullName",
+      header: "Full Name",
+    },
+    {
+      accessorKey: "registrationDate",
+      header: "Registration Date",
+      cell: (user: User) => {
+        const date = new Date(user.registrationDate);
+        return (
+          <div className="flex flex-col">
+            <span>{date.toLocaleDateString()}</span>
+            <span className="text-xs text-muted-foreground">{date.toLocaleTimeString()}</span>
+          </div>
+        );
+      }
+    },
+    {
+      header: "Actions",
+      cell: (user: User) => (
+        <div className="flex space-x-2">
+          <Button
+            variant="success"
+            size="sm"
+            className="bg-green-600 hover:bg-green-700 text-white"
+            onClick={(e) => {
+              e.stopPropagation();
+              approveUserMutation.mutate(user.id);
+            }}
+          >
+            <CheckCircle className="h-4 w-4 mr-2" />
+            Approve
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              openDeleteDialog("user", user.id);
+            }}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Reject
           </Button>
         </div>
       ),
@@ -735,6 +823,7 @@ export function AdminPanel({
           >
             <TabsList className="border-b rounded-none justify-start">
               <TabsTrigger value="users">Users</TabsTrigger>
+              <TabsTrigger value="approvals">Account Approvals</TabsTrigger>
               <TabsTrigger value="sounds">Sounds</TabsTrigger>
               <TabsTrigger value="termslogs">Terms & Conditions Logs</TabsTrigger>
               <TabsTrigger value="moderation">Moderation</TabsTrigger>
@@ -761,6 +850,49 @@ export function AdminPanel({
               ) : (
                 <DataTable columns={userColumns} data={users || []} />
               )}
+            </TabsContent>
+            
+            <TabsContent value="approvals" className="flex-1 overflow-auto p-1">
+              <div className="flex justify-between mb-6">
+                <h3 className="text-lg font-medium">Pending Account Approvals</h3>
+                <Button 
+                  variant="outline"
+                  onClick={() => refetchPendingUsers()}
+                >
+                  <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                    <path d="M21 3v5h-5"/>
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                    <path d="M8 16H3v5"/>
+                  </svg>
+                  Refresh
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  This section shows users who have registered but are awaiting admin approval.
+                  Approve or reject users to manage access to the system.
+                </p>
+                
+                {pendingUsersLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : pendingUsers && pendingUsers.length > 0 ? (
+                  <DataTable columns={pendingUserColumns} data={pendingUsers} />
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-center border rounded-md">
+                    <div className="mb-2 rounded-full bg-muted p-3">
+                      <CheckCircle className="h-6 w-6 text-green-500" />
+                    </div>
+                    <h3 className="text-lg font-medium">No pending approvals</h3>
+                    <p className="text-sm text-muted-foreground">
+                      All user accounts have been approved. New registrations will appear here.
+                    </p>
+                  </div>
+                )}
+              </div>
             </TabsContent>
             
             <TabsContent value="sounds" className="flex-1 overflow-auto p-1">
