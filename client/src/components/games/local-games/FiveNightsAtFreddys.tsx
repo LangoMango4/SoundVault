@@ -7,15 +7,30 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
 // Authentic FNAF assets from the original game
-const freddy1 = "https://i.imgur.com/zRD2b0v.png"; // Freddy Fazbear
-const bonnie = "https://i.imgur.com/yGAh1Xf.png"; // Bonnie
-const chica = "https://i.imgur.com/NyxuGDr.png"; // Chica
-const foxy = "https://i.imgur.com/kLfPzQs.png"; // Foxy
+const freddy1 = "https://i.imgur.com/JWwmJJT.png"; // Freddy Fazbear
+const bonnie = "https://i.imgur.com/Y8Vce6E.png"; // Bonnie
+const chica = "https://i.imgur.com/lkOLyY0.png"; // Chica 
+const foxy = "https://i.imgur.com/1THViSv.png"; // Foxy
 const door = "https://i.imgur.com/19j1JQ9.png"; // Door
 const officeBackground = "https://i.imgur.com/jvDJdVQ.png"; // Office background
 const staticImage = "https://i.imgur.com/rA8AY7l.gif"; // Static effect
 const cameraMap = "https://i.imgur.com/X4Qez5X.png"; // Camera map
+// Jumpscare images
 const freddyJumpscareImage = "https://i.imgur.com/vNfAS0P.png"; // Freddy jumpscare
+const bonnieJumpscareImage = "https://i.imgur.com/83UaJfv.png"; // Bonnie jumpscare
+const chicaJumpscareImage = "https://i.imgur.com/WfA5T7S.png"; // Chica jumpscare
+const foxyJumpscareImage = "https://i.imgur.com/Qi7HTUJ.png"; // Foxy jumpscare
+// Camera room images
+const stage = "https://i.imgur.com/AQDENbl.png"; // Stage - 1A
+const diningArea = "https://i.imgur.com/ZNYcn65.png"; // Dining Area - 1B
+const pirateCove = "https://i.imgur.com/Zg1krn9.png"; // Pirate Cove - 1C
+const westHall = "https://i.imgur.com/oTVIulJ.png"; // West Hall - 2A
+const eastHall = "https://i.imgur.com/L11JEvF.png"; // East Hall - 4A
+// Sound effects
+const doorSound = "https://www.myinstants.com/media/sounds/fnaf-metal-door.mp3";
+const cameraSound = "https://www.myinstants.com/media/sounds/camera-change-fnaf.mp3";
+const jumpscareSound = "https://www.myinstants.com/media/sounds/fnaf-scream5.mp3";
+const ambientSound = "https://www.myinstants.com/media/sounds/fnaf_background_music_low_power.mp3";
 
 export function FiveNightsAtFreddys() {
   const [power, setPower] = useState(100);
@@ -313,6 +328,25 @@ export function FiveNightsAtFreddys() {
       .filter(([_, data]) => data.room === currentCam)
       .map(([name]) => name);
     
+    // Get camera background image based on current camera
+    const getCameraBackground = () => {
+      switch (currentCam) {
+        case "1A": return stage;
+        case "1B": return diningArea;
+        case "1C": return pirateCove;
+        case "2A": return westHall;
+        case "4A": return eastHall;
+        default: return null; // Use default dark room for other cameras
+      }
+    };
+    
+    // Play camera sound when switching to camera view
+    useEffect(() => {
+      if (camera) {
+        playSound(cameraSound);
+      }
+    }, [camera, currentCam, playSound]);
+    
     return (
       <div className="bg-black p-4 h-full fnaf-container">
         {/* Camera header with recording indicator */}
@@ -344,9 +378,17 @@ export function FiveNightsAtFreddys() {
                }}>
           </div>
           
-          {/* Room background - dark, indistinct area */}
+          {/* Room background - using authentic FNAF camera backgrounds */}
           <div className="absolute inset-0 bg-gray-950 flex items-center justify-center">
-            <div className="relative w-full h-full flex items-center justify-center">
+            <div 
+              className="relative w-full h-full flex items-center justify-center"
+              style={{
+                backgroundImage: getCameraBackground() ? `url(${getCameraBackground()})` : 'none',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                filter: 'brightness(0.3) contrast(1.2) grayscale(0.4)',
+              }}
+            >
               {/* Room identifier */}
               <div className="absolute top-2 left-2 text-white text-xs opacity-50">
                 CAM {currentCam} - {
@@ -368,8 +410,9 @@ export function FiveNightsAtFreddys() {
               {animatronicsInRoom.map(name => (
                 <div key={name} className="absolute" style={{
                   animation: 'power-flicker 3s infinite',
-                  filter: 'brightness(0.3) contrast(1.5) grayscale(0.5)',
+                  filter: 'brightness(0.4) contrast(1.5)',
                   transform: 'scale(0.9)',
+                  zIndex: 5,
                 }}>
                   <img 
                     src={
@@ -384,7 +427,7 @@ export function FiveNightsAtFreddys() {
               ))}
               
               {/* Empty room message if no animatronics */}
-              {animatronicsInRoom.length === 0 && (
+              {animatronicsInRoom.length === 0 && !getCameraBackground() && (
                 <div className="text-gray-500 text-sm italic">
                   {currentCam === "6" ? "AUDIO ONLY" : "No activity detected"}
                 </div>
@@ -398,25 +441,41 @@ export function FiveNightsAtFreddys() {
           </div>
         </div>
         
-        {/* Camera selection panel */}
+        {/* Camera selection panel with FNAF camera map */}
         <div className="mt-4 bg-gray-900 p-3 border-2 border-gray-800">
           <div className="text-yellow-500 text-xs uppercase mb-2 text-center">Camera Selection</div>
-          <div className="grid grid-cols-4 gap-2">
-            {rooms.map(room => (
-              <Button 
-                key={room}
-                variant="outline"
-                onClick={() => switchCamera(room)}
-                className={`security-btn text-xs py-1 px-2 ${currentCam === room ? 'active' : ''}`}
-              >
-                {room}
-              </Button>
-            ))}
+          
+          {/* FNAF camera map UI */}
+          <div className="relative mb-3">
+            <img src={cameraMap} alt="Camera Map" className="w-full h-auto opacity-60 max-h-[120px] object-contain" />
+            
+            {/* Camera selection buttons positioned on the map */}
+            <div className="absolute inset-0 grid grid-cols-3 grid-rows-3">
+              {rooms.map(room => (
+                <Button 
+                  key={room}
+                  variant="outline"
+                  onClick={() => {
+                    switchCamera(room);
+                    playSound(cameraSound);
+                  }}
+                  className={`security-btn text-xs py-1 px-1 m-1 opacity-70 hover:opacity-100 ${currentCam === room ? 'active opacity-100' : ''}`}
+                  style={{
+                    fontSize: '0.65rem',
+                  }}
+                >
+                  {room}
+                </Button>
+              ))}
+            </div>
           </div>
           
           <div className="mt-3 text-center">
             <Button 
-              onClick={toggleCamera} 
+              onClick={() => {
+                toggleCamera();
+                playSound(cameraSound);
+              }}
               variant="outline" 
               className="security-btn uppercase text-sm w-full"
             >
@@ -617,19 +676,61 @@ export function FiveNightsAtFreddys() {
     );
   };
   
+  // Sound effect player for FNAF sounds
+  const playSound = useCallback((sound: string) => {
+    try {
+      const audio = new Audio(sound);
+      audio.volume = 0.5;
+      audio.play().catch(err => console.error("Error playing sound:", err));
+    } catch (err) {
+      console.error("Error creating audio:", err);
+    }
+  }, []);
+  
+  // Track which animatronic caused game over
+  const [killerAnimatronic, setKillerAnimatronic] = useState<string>("freddy");
+  
+  // Play jumpscare sound on game over
+  useEffect(() => {
+    if (gameOver) {
+      // Find animatronic in the office if any
+      const officeAnimatronics = Object.entries(animatronics)
+        .filter(([_, data]) => data.room === "Office")
+        .map(([name]) => name);
+      
+      // Default to Freddy if power ran out
+      const killer = officeAnimatronics.length > 0 ? officeAnimatronics[0] : "freddy";
+      setKillerAnimatronic(killer);
+      
+      // Play jumpscare sound
+      playSound(jumpscareSound);
+    }
+  }, [gameOver, animatronics, playSound]);
+  
   // Game over screen with authentic jumpscare
   const renderGameOver = () => {
+    // Get the correct jumpscare image based on which animatronic caught the player
+    const getJumpscareImage = () => {
+      switch (killerAnimatronic) {
+        case "freddy": return freddyJumpscareImage;
+        case "bonnie": return bonnieJumpscareImage;
+        case "chica": return chicaJumpscareImage;
+        case "foxy": return foxyJumpscareImage;
+        default: return freddyJumpscareImage;
+      }
+    };
+    
     return (
       <div className="h-full bg-black flex flex-col items-center justify-center">
         <div className="relative w-full h-full flex flex-col items-center justify-center">
           {/* Full screen jumpscare image */}
           <div className="absolute inset-0 flex items-center justify-center bg-black">
             <img 
-              src={freddy1} 
-              alt="Freddy Jumpscare" 
+              src={getJumpscareImage()} 
+              alt={`${killerAnimatronic.charAt(0).toUpperCase() + killerAnimatronic.slice(1)} Jumpscare`} 
               className="max-h-full max-w-full object-contain"
               style={{ 
-                animation: 'jumpScare 0.5s forwards',
+                animation: 'jumpScare 0.3s forwards',
               }}
             />
           </div>
