@@ -164,7 +164,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     })(req, res, next);
   });
   
-  app.post("/api/register", isAdmin, async (req, res, next) => {
+  // Public registration endpoint
+  app.post("/api/register", async (req, res, next) => {
     try {
       const validation = insertUserSchema.safeParse(req.body);
       if (!validation.success) {
@@ -185,15 +186,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Record the plaintext password for admin use
       recordPlaintextPassword(username, password);
       
-      // Create user
+      // Create user (not yet approved)
       const user = await storage.createUser({
         username,
         password: hashedPassword,
+        approved: false, // Users need admin approval
         ...rest
       });
       
       const { password: _, ...safeUser } = user;
-      return res.status(201).json(safeUser);
+      return res.status(201).json({ 
+        ...safeUser,
+        message: "Registration successful! Your account is pending approval by an administrator." 
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Admin endpoint to approve users
+  app.post("/api/users/:id/approve", isAdmin, async (req, res, next) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Update user approval status
+      const updatedUser = await storage.updateUser(userId, { approved: true });
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const { password: _, ...safeUser } = updatedUser;
+      return res.status(200).json({
+        ...safeUser,
+        message: "User approved successfully"
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Admin endpoint to get pending users
+  app.get("/api/users/pending", isAdmin, async (req, res, next) => {
+    try {
+      const users = await storage.getPendingUsers();
+      
+      // Remove passwords from response
+      const safeUsers = users.map(user => {
+        const { password: _, ...safeUser } = user;
+        return safeUser;
+      });
+      
+      return res.status(200).json(safeUsers);
     } catch (error) {
       next(error);
     }

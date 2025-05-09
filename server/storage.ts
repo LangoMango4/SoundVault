@@ -58,6 +58,7 @@ export interface IStorage {
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
   deleteUser(id: number): Promise<boolean>;
   getUsers(): Promise<User[]>;
+  getPendingUsers(): Promise<User[]>;
 
   // Category operations
   getCategory(id: number): Promise<Category | undefined>;
@@ -372,6 +373,10 @@ export class MemStorage implements IStorage {
   
   async getUsers(): Promise<User[]> {
     return Array.from(this.users.values());
+  }
+  
+  async getPendingUsers(): Promise<User[]> {
+    return Array.from(this.users.values()).filter(user => user.approved === false);
   }
 
   // Category CRUD operations
@@ -1134,6 +1139,10 @@ export class DatabaseStorage implements IStorage {
 
   async getUsers(): Promise<User[]> {
     return db.select().from(users);
+  }
+  
+  async getPendingUsers(): Promise<User[]> {
+    return db.select().from(users).where(eq(users.approved, false));
   }
 
   // Category operations

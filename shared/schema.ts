@@ -11,6 +11,8 @@ export const users = pgTable("users", {
   role: text("role").notNull().default("user"),
   accessLevel: text("access_level").notNull().default("basic"),
   // possible values: "basic", "limited", "full"
+  approved: boolean("approved").notNull().default(false),
+  registrationDate: timestamp("registration_date").defaultNow().notNull(),
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
