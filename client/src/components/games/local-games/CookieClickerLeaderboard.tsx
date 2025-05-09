@@ -175,37 +175,39 @@ export function CookieClickerLeaderboard() {
           </div>
         ) : (
           <div className="divide-y flex-1 overflow-auto">
-            {leaderboard.map((entry, i) => {
-              let icon = null;
-              let rowClass = "py-2 flex justify-between items-center";
-              
-              if (i === 0) {
-                icon = <Trophy className="w-5 h-5 text-yellow-500" />;
-                rowClass += " bg-yellow-50";
-              }
-              else if (i === 1) {
-                icon = <Medal className="w-5 h-5 text-gray-400" />;
-                rowClass += " bg-gray-50";
-              }
-              else if (i === 2) {
-                icon = <Medal className="w-5 h-5 text-amber-700" />;
-                rowClass += " bg-amber-50";
-              }
-              else icon = <Award className="w-4 h-4 text-blue-400" />;
-              
-              return (
-                <div key={entry.id} className={rowClass}>
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center justify-center w-6 h-6">{icon}</span>
-                    <span className="text-sm font-medium">{entry.user?.username || 'Unknown'}</span>
+            {leaderboard
+              .filter(entry => entry.user?.username !== 'Unknown' && entry.user?.username !== undefined)
+              .map((entry, i) => {
+                let icon = null;
+                let rowClass = "py-2 flex justify-between items-center";
+                
+                if (i === 0) {
+                  icon = <Trophy className="w-5 h-5 text-yellow-500" />;
+                  rowClass += " bg-yellow-50";
+                }
+                else if (i === 1) {
+                  icon = <Medal className="w-5 h-5 text-gray-400" />;
+                  rowClass += " bg-gray-50";
+                }
+                else if (i === 2) {
+                  icon = <Medal className="w-5 h-5 text-amber-700" />;
+                  rowClass += " bg-amber-50";
+                }
+                else icon = <Award className="w-4 h-4 text-blue-400" />;
+                
+                return (
+                  <div key={entry.id} className={rowClass}>
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center justify-center w-6 h-6">{icon}</span>
+                      <span className="text-sm font-medium">{entry.user?.username}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Cookie className="w-3 h-3 text-amber-500" />
+                      <span className="text-sm font-semibold">{formatNumber(entry.cookies || 0)}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Cookie className="w-3 h-3 text-amber-500" />
-                    <span className="text-sm font-semibold">{formatNumber(entry.cookies || 0)}</span>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         )}
       </CardContent>
