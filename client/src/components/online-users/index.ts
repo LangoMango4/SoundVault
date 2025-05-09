@@ -1,1 +1,1 @@
-export * from "./OnlineUsersList";
+export { OnlineUsersList } from "./OnlineUsersList";

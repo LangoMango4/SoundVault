@@ -10,7 +10,6 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { useChatNotification } from "@/hooks/use-chat-notification";
-import { OnlineUsersList } from "@/components/online-users";
 
 interface ChatMessage {
   id: number;
@@ -205,7 +204,7 @@ export function Chat() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-full gap-4">
+    <div className="flex flex-col h-full gap-4">
       {/* Main chat area */}
       <div className="flex-1 flex flex-col">
         <div className="flex-1 mb-4">
@@ -321,11 +320,6 @@ export function Chat() {
             </Button>
           </div>
         </div>
-      </div>
-      
-      {/* Online users sidebar */}
-      <div className="md:w-64 w-full shrink-0">
-        <OnlineUsersList currentPage="Chat" maxHeight="60vh" />
       </div>
     </div>
   );

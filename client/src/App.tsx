@@ -11,6 +11,7 @@ import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import { useOnlineStatus } from "./hooks/use-online-status";
 import { OfflineScreen } from "./components/layout/OfflineScreen";
+import { GlobalLayout } from "./components/layout/GlobalLayout";
 import { UpdateNotificationDialog } from "./components/dialogs/UpdateNotificationDialog";
 import { TermsAndConditionsDialog } from "./components/dialogs/TermsAndConditionsDialog";
 import { useUpdateNotification } from "./hooks/use-update-notification";
@@ -207,7 +208,9 @@ function App() {
       <AuthProvider>
         <ConnectivityChecker />
         <NotificationManager />
-        <Router />
+        <GlobalLayout>
+          <Router />
+        </GlobalLayout>
         <Toaster />
       </AuthProvider>
     </QueryClientProvider>
