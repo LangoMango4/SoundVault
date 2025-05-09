@@ -1,0 +1,154 @@
+/* FNAF authentic CSS */
+@font-face {
+  font-family: 'Five Nights at Freddy\'s';
+  src: url('fnaf_font.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* Original FNAF color scheme */
+:root {
+  --fnaf-black: #000000;
+  --fnaf-dark-gray: #1c1c1c;
+  --fnaf-gray: #333333;
+  --fnaf-light-gray: #666666;
+  --fnaf-white: #ffffff;
+  --fnaf-red: #b30000;
+  --fnaf-green: #004d00;
+  --fnaf-blue: #000066;
+  --fnaf-yellow: #e6e600;
+}
+
+.fnaf-title {
+  font-family: 'Five Nights at Freddy\'s', Arial, sans-serif;
+  color: var(--fnaf-white);
+  text-shadow: 
+    0 0 5px var(--fnaf-red),
+    0 0 10px var(--fnaf-red);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.fnaf-office {
+  background-color: var(--fnaf-black);
+  background-image: url('office.jpg');
+  background-size: cover;
+  background-position: center;
+}
+
+.fnaf-camera {
+  position: relative;
+  border: 4px solid var(--fnaf-dark-gray);
+  background-color: var(--fnaf-black);
+  overflow: hidden;
+}
+
+.fnaf-static {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('static.gif');
+  opacity: 0.3;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+.fnaf-button {
+  background-color: var(--fnaf-dark-gray);
+  color: var(--fnaf-white);
+  border: 2px solid var(--fnaf-light-gray);
+  padding: 8px 16px;
+  text-transform: uppercase;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.fnaf-button:hover {
+  background-color: var(--fnaf-light-gray);
+}
+
+.fnaf-button.active {
+  background-color: var(--fnaf-red);
+  border-color: var(--fnaf-red);
+}
+
+.fnaf-jumpscare {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--fnaf-black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.fnaf-power-bar {
+  width: 100%;
+  height: 20px;
+  background-color: var(--fnaf-dark-gray);
+  border: 2px solid var(--fnaf-light-gray);
+}
+
+.fnaf-power-level {
+  height: 100%;
+  background-color: var(--fnaf-green);
+  transition: width 0.5s;
+}
+
+.fnaf-scanner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: rgba(255, 255, 255, 0.3);
+  animation: scan 3s linear infinite;
+}
+
+@keyframes scan {
+  0% { top: 0; }
+  100% { top: 100%; }
+}
+
+.fnaf-door {
+  position: absolute;
+  width: 20px;
+  height: 100%;
+  background-color: var(--fnaf-dark-gray);
+  transition: transform 0.3s;
+}
+
+.fnaf-door.closed {
+  transform: scaleY(1);
+}
+
+.fnaf-door.open {
+  transform: scaleY(0);
+}
+
+.fnaf-light {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 0, 0.2);
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+.fnaf-light.on {
+  opacity: 1;
+}
+
+.fnaf-animatronic {
+  position: absolute;
+  bottom: 0;
+  transform: translateX(-50%);
+  z-index: 10;
+  transition: opacity 0.5s;
+}
