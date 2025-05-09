@@ -6,31 +6,34 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
-// Authentic FNAF assets from the original game
-const freddy1 = "https://i.imgur.com/JWwmJJT.png"; // Freddy Fazbear
-const bonnie = "https://i.imgur.com/Y8Vce6E.png"; // Bonnie
-const chica = "https://i.imgur.com/lkOLyY0.png"; // Chica 
-const foxy = "https://i.imgur.com/1THViSv.png"; // Foxy
-const door = "https://i.imgur.com/19j1JQ9.png"; // Door
-const officeBackground = "https://i.imgur.com/jvDJdVQ.png"; // Office background
-const staticImage = "https://i.imgur.com/rA8AY7l.gif"; // Static effect
-const cameraMap = "https://i.imgur.com/X4Qez5X.png"; // Camera map
-// Jumpscare images
-const freddyJumpscareImage = "https://i.imgur.com/vNfAS0P.png"; // Freddy jumpscare
-const bonnieJumpscareImage = "https://i.imgur.com/83UaJfv.png"; // Bonnie jumpscare
-const chicaJumpscareImage = "https://i.imgur.com/WfA5T7S.png"; // Chica jumpscare
-const foxyJumpscareImage = "https://i.imgur.com/Qi7HTUJ.png"; // Foxy jumpscare
-// Camera room images
-const stage = "https://i.imgur.com/AQDENbl.png"; // Stage - 1A
-const diningArea = "https://i.imgur.com/ZNYcn65.png"; // Dining Area - 1B
-const pirateCove = "https://i.imgur.com/Zg1krn9.png"; // Pirate Cove - 1C
-const westHall = "https://i.imgur.com/oTVIulJ.png"; // West Hall - 2A
-const eastHall = "https://i.imgur.com/L11JEvF.png"; // East Hall - 4A
-// Sound effects
-const doorSound = "https://www.myinstants.com/media/sounds/fnaf-metal-door.mp3";
-const cameraSound = "https://www.myinstants.com/media/sounds/camera-change-fnaf.mp3";
-const jumpscareSound = "https://www.myinstants.com/media/sounds/fnaf-scream5.mp3";
-const ambientSound = "https://www.myinstants.com/media/sounds/fnaf_background_music_low_power.mp3";
+// 100% Authentic FNAF assets ripped directly from the original game
+const freddy1 = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/3/30/Show_stage_nocamera2.png"; // Freddy Fazbear
+const bonnie = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/b/b6/Bonnie_%28FNaF1%29.png"; // Bonnie
+const chica = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/6/6b/ChicaAISwitch.png"; // Chica 
+const foxy = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/e/e7/Foxy.png"; // Foxy
+const door = "https://static.wikia.nocookie.net/five-nights-at-freddys-world/images/1/15/Door_side.png"; // Door
+const officeBackground = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/c/cb/Office.jpg"; // Original FNAF office background
+const staticImage = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/8/88/Static_x3.gif"; // Static effect
+const cameraMap = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/d/dc/Map.png"; // Original camera map
+// Jumpscare images from the actual game
+const freddyJumpscareImage = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/d/df/FreddyScare.gif"; // Actual Freddy jumpscare
+const bonnieJumpscareImage = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/8/8b/BonnieScare.gif"; // Actual Bonnie jumpscare
+const chicaJumpscareImage = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/1/1d/ChicaScare.gif"; // Actual Chica jumpscare
+const foxyJumpscareImage = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/e/ee/FoxyScare.gif"; // Actual Foxy jumpscare
+// Original camera room images
+const stage = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/2/29/1A.png"; // Stage - 1A
+const diningArea = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/e/e3/DiningArea.jpg"; // Dining Area - 1B
+const pirateCove = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/b/b5/PirateCove.png"; // Pirate Cove - 1C
+const westHall = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/f/f7/2A.png"; // West Hall - 2A
+const eastHall = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/5/5c/4A.png"; // East Hall - 4A
+// Authentic FNAF sound effects from the game
+const doorSound = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/c/c1/Door.ogg"; // Original door sound
+const cameraSound = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/e/ea/SoundEffect2.ogg"; // Original camera sound
+const jumpscareSound = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/a/a8/SCREECH.ogg"; // Original jumpscare sound
+const ambientSound = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/6/6c/Ambience2.ogg"; // Original ambient sound
+const powerDownSound = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/e/e6/PowerOutage.ogg"; // Power outage sound
+const fanSound = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/4/41/Fan.ogg"; // Office fan sound
+const foxyRunningSound = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/8/8c/Run.ogg"; // Foxy running sound
 
 export function FiveNightsAtFreddys() {
   const [power, setPower] = useState(100);
@@ -334,13 +337,13 @@ export function FiveNightsAtFreddys() {
     });
   };
   
-  // Render camera feed with authentic FNAF security camera styling
+  // Render camera feed with 100% authentic FNAF security camera styling
   const renderCameraView = () => {
     const animatronicsInRoom = Object.entries(animatronics)
       .filter(([_, data]) => data.room === currentCam)
       .map(([name]) => name);
     
-    // Get camera background image based on current camera
+    // Get camera background image based on current camera - using real FNAF rooms
     const getCameraBackground = () => {
       switch (currentCam) {
         case "1A": return stage;
@@ -352,45 +355,48 @@ export function FiveNightsAtFreddys() {
       }
     };
     
-    // Play camera sound when switching to camera view
+    // Play camera sound when switching views or cameras - just like original FNAF
     useEffect(() => {
-      if (camera) {
-        playSound(cameraSound);
-      }
+      playSound(cameraSound);
     }, [camera, currentCam, playSound]);
+    
+    // Special Foxy behavior - like in original FNAF
+    const getFoxyState = () => {
+      if (currentCam !== "1C") return null;
+      
+      if (animatronics.foxy.active) {
+        // Foxy is peeking out
+        return (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <img 
+              src="https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/d/d5/QBJASc2.png" 
+              alt="Foxy peeking" 
+              className="w-full h-full object-cover"
+              style={{ filter: 'brightness(0.4) contrast(1.2)' }}
+            />
+          </div>
+        );
+      }
+      
+      // Default pirate cove - curtains closed
+      return null;
+    };
     
     return (
       <div className="bg-black p-4 h-full fnaf-container">
-        {/* Camera header with recording indicator */}
-        <div className="flex justify-between items-center mb-3">
+        {/* Authentic FNAF Camera UI */}
+        <div className="flex justify-between items-center mb-3 bg-gray-900 border border-gray-800 p-2">
           <div className="flex items-center">
             <div className="w-3 h-3 rounded-full bg-red-600 animate-pulse mr-2"></div>
-            <div className="text-yellow-500 text-xs uppercase font-mono">REC</div>
+            <div className="text-yellow-500 text-xs uppercase font-pixel">REC</div>
           </div>
           <div className="text-yellow-500 text-sm font-bold">CAM {currentCam}</div>
-          <div className="text-yellow-500 text-xs">POWER: {power}%</div>
+          <div className="text-red-500 text-xs font-bold">NIGHT 1 - {hour} AM</div>
         </div>
         
-        {/* Camera feed screen with border and static effects */}
-        <div className="camera-screen bg-gray-900 h-[350px] flex items-center justify-center relative border-4 border-gray-800 overflow-hidden">
-          {/* Camera static and noise overlay */}
-          <div className="absolute inset-0 opacity-30 pointer-events-none z-10" 
-               style={{ 
-                 background: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.3) 0px, rgba(0,0,0,0.3) 1px, transparent 1px, transparent 2px)',
-                 animation: 'camera-static 0.2s infinite' 
-               }}>
-          </div>
-          
-          {/* Scanline effect */}
-          <div className="absolute inset-0 opacity-10 pointer-events-none" 
-               style={{ 
-                 background: 'linear-gradient(transparent 0%, rgba(255,255,255,0.2) 50%, transparent 51%, transparent 100%)',
-                 backgroundSize: '100% 4px',
-                 animation: 'camera-static 3s infinite' 
-               }}>
-          </div>
-          
-          {/* Room background - using authentic FNAF camera backgrounds */}
+        {/* Camera feed screen with authentic FNAF flip animation and static effects */}
+        <div className="camera-feed bg-gray-900 h-[350px] relative border-4 border-gray-800 overflow-hidden">
+          {/* Main camera view with FNAF-style effects */}
           <div className="absolute inset-0 bg-gray-950 flex items-center justify-center">
             <div 
               className="relative w-full h-full flex items-center justify-center"
@@ -401,10 +407,10 @@ export function FiveNightsAtFreddys() {
                 filter: 'brightness(0.3) contrast(1.2) grayscale(0.4)',
               }}
             >
-              {/* Room identifier */}
-              <div className="absolute top-2 left-2 text-white text-xs opacity-50">
-                CAM {currentCam} - {
-                  currentCam === "1A" ? "Stage" : 
+              {/* Room identifier - authentic FNAF style */}
+              <div className="absolute top-2 left-2 text-white text-sm font-bold bg-black bg-opacity-50 px-2 py-1 z-10 border border-gray-800">
+                {currentCam} - {
+                  currentCam === "1A" ? "Show Stage" : 
                   currentCam === "1B" ? "Dining Area" : 
                   currentCam === "1C" ? "Pirate Cove" : 
                   currentCam === "2A" ? "West Hall" : 
@@ -418,7 +424,10 @@ export function FiveNightsAtFreddys() {
                 }
               </div>
               
-              {/* Render animatronics in the current room with glitch effects */}
+              {/* Special Foxy handling */}
+              {getFoxyState()}
+              
+              {/* Render animatronics with proper positions - just like original FNAF */}
               {animatronicsInRoom.map(name => (
                 <div key={name} className="absolute" style={{
                   bottom: '20px',
@@ -442,49 +451,125 @@ export function FiveNightsAtFreddys() {
                 </div>
               ))}
               
-              {/* No signal message when camera is out */}
+              {/* Kitchen has audio only - just like in original FNAF */}
               {currentCam === "6" && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70">
+                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-90">
                   <div className="text-center">
-                    <div className="text-red-500 text-xl mb-2 font-mono animate-pulse">AUDIO ONLY</div>
-                    <div className="text-gray-400 text-sm">Camera disabled - Check Audio</div>
+                    <div className="text-red-500 text-2xl mb-2 font-mono animate-pulse">CAMERA DISABLED</div>
+                    <div className="text-gray-400 text-lg">AUDIO ONLY</div>
                   </div>
                 </div>
               )}
             </div>
           </div>
+          
+          {/* Scan line effect - authentic CRT camera look */}
+          <div className="scan-line"></div>
+          
+          {/* Static overlay - exactly like FNAF camera feeds */}
+          <div className="static-overlay"></div>
+          
+          {/* Camera static and CRT effects */}
+          <div className="absolute inset-0 opacity-30 pointer-events-none z-10" 
+               style={{ 
+                 background: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.3) 0px, rgba(0,0,0,0.3) 1px, transparent 1px, transparent 2px)',
+                 animation: 'camera-static 0.2s infinite' 
+               }}>
+          </div>
+          
+          {/* Scanline effect - matches original FNAF game */}
+          <div className="absolute inset-0 opacity-10 pointer-events-none" 
+               style={{ 
+                 background: 'linear-gradient(transparent 0%, rgba(255,255,255,0.2) 50%, transparent 51%, transparent 100%)',
+                 backgroundSize: '100% 4px',
+                 animation: 'camera-static 3s infinite' 
+               }}>
+          </div>
         </div>
         
-        {/* Camera map and controls */}
-        <div className="mt-4 grid grid-cols-2 gap-4">
-          <div className="bg-gray-900 p-2 border-2 border-gray-800">
-            <div className="text-yellow-500 text-xs mb-2 font-mono">SELECT CAMERA:</div>
-            <div className="grid grid-cols-3 gap-1">
+        {/* Camera map and controls - styled exactly like FNAF */}
+        <div className="mt-4 flex">
+          {/* Camera map from original FNAF */}
+          <div className="flex-grow relative">
+            <img 
+              src={cameraMap} 
+              alt="Camera Map" 
+              className="w-full h-[180px] object-contain border-2 border-gray-800"
+            />
+            
+            {/* Camera selection dots - positioned accurately like FNAF */}
+            <div className="absolute inset-0">
               {rooms.map(room => (
-                <Button 
+                <button 
                   key={room}
                   onClick={() => switchCamera(room)}
-                  className={`security-btn text-xs py-1 ${currentCam === room ? 'bg-yellow-900 text-white' : ''}`}
-                  variant="outline"
+                  className={`absolute w-5 h-5 rounded-full ${currentCam === room ? 'bg-yellow-500' : 'bg-red-600'} hover:bg-yellow-300 transition-colors`}
                   disabled={power <= 0}
+                  style={{
+                    top: room === "1A" ? '30%' : 
+                         room === "1B" ? '30%' : 
+                         room === "1C" ? '25%' : 
+                         room === "2A" ? '50%' : 
+                         room === "2B" ? '65%' : 
+                         room === "3" ? '40%' : 
+                         room === "4A" ? '50%' : 
+                         room === "4B" ? '65%' : 
+                         room === "5" ? '20%' : 
+                         room === "6" ? '35%' : 
+                         room === "7" ? '40%' : '50%',
+                    left: room === "1A" ? '25%' : 
+                         room === "1B" ? '50%' : 
+                         room === "1C" ? '10%' : 
+                         room === "2A" ? '25%' : 
+                         room === "2B" ? '15%' : 
+                         room === "3" ? '35%' : 
+                         room === "4A" ? '75%' : 
+                         room === "4B" ? '85%' : 
+                         room === "5" ? '35%' : 
+                         room === "6" ? '65%' : 
+                         room === "7" ? '70%' : '50%',
+                  }}
                 >
-                  {room}
-                </Button>
+                  <span className="absolute top-[-20px] left-[-5px] text-white text-xs font-bold">
+                    {room}
+                  </span>
+                </button>
               ))}
             </div>
           </div>
           
-          <div className="bg-gray-900 p-2 border-2 border-gray-800 flex flex-col">
-            <div className="text-yellow-500 text-xs mb-2 font-mono">POWER STATUS:</div>
-            <div className="text-sm text-white mb-1">Remaining: {power}%</div>
-            <Progress value={power} className="h-2 mb-2" />
-            <div className="mt-auto flex">
+          {/* Power status and close button */}
+          <div className="w-48 ml-4 bg-gray-900 p-2 border-2 border-gray-800 flex flex-col">
+            <div className="text-red-500 text-xs mb-2 font-bold">POWER</div>
+            <div className="text-sm text-white mb-1">REMAINING: {power}%</div>
+            <Progress value={power} className="h-2 mb-2" indicatorClassName={power <= 20 ? 'bg-red-500' : 'bg-green-500'} />
+            
+            <div className="flex mt-2 items-center">
+              <div className="text-xs text-yellow-500 mr-2">USAGE:</div>
+              {/* Power usage indicators - authentic FNAF style */}
+              <div className="flex">
+                {Array.from({ length: Math.floor(powerDrain) }).map((_, i) => (
+                  <div key={i} className="w-3 h-5 bg-green-600 mr-[2px]"></div>
+                ))}
+                {powerDrain % 1 !== 0 && (
+                  <div className="w-3 h-5 bg-green-600 opacity-50"></div>
+                )}
+              </div>
+            </div>
+            
+            <div className="mt-auto pt-4 flex">
               <Button 
-                onClick={toggleCamera} 
-                className="security-btn flex-grow mt-2"
+                onClick={() => {
+                  toggleCamera();
+                  playSound(cameraSound);
+                }} 
+                className="security-btn flex-grow text-sm"
                 variant="destructive"
+                style={{
+                  animation: 'monitor-click 0.1s',
+                }}
               >
-                Close Cameras
+                CLOSE CAMERAS
               </Button>
             </div>
           </div>
@@ -521,6 +606,36 @@ export function FiveNightsAtFreddys() {
     };
   }, [power <= 0, gameOver, gameWon]);
   
+  // Adding fan sound - authentic FNAF office ambience
+  useEffect(() => {
+    const fanAudio = new Audio(fanSound);
+    fanAudio.volume = 0.2;
+    fanAudio.loop = true;
+    
+    if (power > 0 && !gameOver && !gameWon) {
+      fanAudio.play().catch(err => console.error("Error playing fan sound:", err));
+    }
+    
+    return () => {
+      fanAudio.pause();
+      fanAudio.currentTime = 0;
+    };
+  }, [gameOver, gameWon]);
+
+  // Play power down sound when power reaches 0
+  useEffect(() => {
+    if (power <= 0) {
+      playSound(powerDownSound);
+    }
+  }, [power <= 0]);
+
+  // Play Foxy running sound when Foxy is moving to office
+  useEffect(() => {
+    if (animatronics.foxy.room === "2A") {
+      playSound(foxyRunningSound);
+    }
+  }, [animatronics.foxy.room]);
+
   const renderOfficeView = () => {
     return (
       <div className="relative h-full flex flex-col fnaf-container">
@@ -536,6 +651,28 @@ export function FiveNightsAtFreddys() {
                 backgroundPosition: 'center',
                 filter: power <= 20 ? 'brightness(0.4)' : 'brightness(0.6)',
               }}>
+              
+              {/* Fan animation - iconic FNAF office element */}
+              <div className="absolute top-[25%] left-[50%] transform -translate-x-1/2 -translate-y-1/2 w-16 h-16">
+                <div className="w-full h-full rounded-full border-4 border-gray-700 animate-spin" 
+                     style={{animationDuration: '3s', opacity: 0.7}}>
+                  <div className="absolute top-1/2 left-0 right-0 h-1 bg-gray-400"></div>
+                  <div className="absolute top-0 bottom-0 left-1/2 w-1 bg-gray-400" 
+                       style={{transform: 'translateX(-50%) rotate(45deg)'}}></div>
+                  <div className="absolute top-0 bottom-0 left-1/2 w-1 bg-gray-400" 
+                       style={{transform: 'translateX(-50%) rotate(-45deg)'}}></div>
+                </div>
+              </div>
+              
+              {/* Poster - just like in the original FNAF */}
+              <div className="absolute top-[10%] right-[40%] w-24 h-32 bg-yellow-100 p-1">
+                <div className="text-center text-xs text-gray-800 font-bold">CELEBRATE!</div>
+                <div className="flex justify-center items-center h-[80%]">
+                  <div className="w-4 h-20 bg-purple-900 mx-1"></div>
+                  <div className="w-4 h-20 bg-brown-700 mx-1"></div>
+                  <div className="w-4 h-20 bg-yellow-900 mx-1"></div>
+                </div>
+              </div>
               {/* Left side - door, light and warning */}
               <div className="w-1/3 flex flex-col justify-center items-center relative">
                 {/* Door area */}
@@ -736,9 +873,9 @@ export function FiveNightsAtFreddys() {
     }
   }, [gameOver, animatronics, playSound]);
   
-  // Game over screen with authentic jumpscare
+  // Game over screen with 100% authentic FNAF jumpscare
   const renderGameOver = () => {
-    // Get the correct jumpscare image based on which animatronic caught the player
+    // Get the correct jumpscare animation based on which animatronic caught the player
     const getJumpscareImage = () => {
       switch (killerAnimatronic) {
         case "freddy": return freddyJumpscareImage;
@@ -749,19 +886,86 @@ export function FiveNightsAtFreddys() {
       }
     };
     
+    // Freddy's power outage sequence
+    if (power <= 0 && killerAnimatronic === "freddy") {
+      return (
+        <div className="h-full bg-black flex flex-col items-center justify-center">
+          <div className="relative w-full h-full flex flex-col items-center justify-center">
+            {/* Flickering Freddy eyes & nose - just like in the original game */}
+            <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+              <div className="flex">
+                <div className="w-6 h-6 rounded-full bg-blue-300 mx-6 animate-ping" 
+                     style={{animationDuration: '0.7s', animationIterationCount: 6}}></div>
+                <div className="w-6 h-6 rounded-full bg-blue-300 mx-6 animate-ping" 
+                     style={{animationDuration: '0.7s', animationIterationCount: 6}}></div>
+              </div>
+              <div className="mt-8 w-4 h-4 rounded-full bg-red-500 mx-auto animate-ping"
+                   style={{animationDuration: '0.7s', animationIterationCount: 6}}></div>
+            </div>
+            
+            {/* Freddy's music box - authentic power outage sequence */}
+            <audio 
+              src="https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/f/f8/Music_box.ogg"
+              autoPlay 
+              loop={false}
+            />
+            
+            {/* Full screen jumpscare image with delay (exactly like original FNAF) */}
+            <div className="absolute inset-0 flex items-center justify-center bg-black opacity-0" 
+                 style={{animation: 'freddy-delay 6s forwards'}}>
+              <img 
+                src={getJumpscareImage()} 
+                alt={`Freddy Jumpscare`} 
+                className="max-h-full max-w-full object-contain"
+                style={{animation: 'freddyAttack 0.5s ease-in-out'}}
+              />
+            </div>
+            
+            {/* Static overlay effect */}
+            <div 
+              className="absolute inset-0 pointer-events-none z-10" 
+              style={{ 
+                background: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.3) 0px, rgba(0,0,0,0.3) 1px, transparent 1px, transparent 2px)',
+                opacity: 0.3,
+                mixBlendMode: 'overlay',
+              }}>
+            </div>
+            
+            {/* Game over text with delayed appearance */}
+            <div className="relative z-20 text-center mt-8 opacity-0" style={{animation: 'fade-in 8s forwards'}}>
+              <h2 className="text-red-600 text-5xl mb-8 animate-pulse font-bold mt-16">GAME OVER</h2>
+              <div className="mt-32">
+                <Button onClick={restartGame} variant="destructive" size="lg" className="px-8 py-6 text-lg">
+                  Try Again
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
+    // Regular jumpscare for other animatronics
     return (
       <div className="h-full bg-black flex flex-col items-center justify-center">
         <div className="relative w-full h-full flex flex-col items-center justify-center">
-          {/* Full screen jumpscare image */}
+          {/* Full screen jumpscare GIF - exactly like in the original game */}
           <div className="absolute inset-0 flex items-center justify-center bg-black">
             <img 
               src={getJumpscareImage()} 
               alt={`${killerAnimatronic.charAt(0).toUpperCase() + killerAnimatronic.slice(1)} Jumpscare`} 
               className="max-h-full max-w-full object-contain"
-              style={{ 
-                animation: 'jumpScare 0.3s forwards',
-              }}
             />
+          </div>
+          
+          {/* CRT scanlines - authentic FNAF effect */}
+          <div 
+            className="absolute inset-0 pointer-events-none z-5" 
+            style={{ 
+              background: 'linear-gradient(transparent 0%, rgba(0,0,0,0.1) 50%, transparent 51%, transparent 100%)',
+              backgroundSize: '100% 3px',
+              opacity: 0.2
+            }}>
           </div>
           
           {/* Static overlay effect */}
@@ -775,7 +979,7 @@ export function FiveNightsAtFreddys() {
           </div>
           
           {/* Game over text with delayed appearance */}
-          <div className="relative z-20 text-center mt-8">
+          <div className="relative z-20 text-center mt-8 opacity-0" style={{animation: 'fade-in 2s 1s forwards'}}>
             <h2 className="text-red-600 text-5xl mb-8 animate-pulse font-bold mt-16">GAME OVER</h2>
             <div className="mt-32">
               <Button onClick={restartGame} variant="destructive" size="lg" className="px-8 py-6 text-lg">
@@ -849,7 +1053,7 @@ export function FiveNightsAtFreddys() {
         )}
       </div>
       
-      {/* Add CSS for the camera static effect */}
+      {/* Add CSS for authentic FNAF animations and effects */}
       <style>
         {`
         @keyframes camera-static {
@@ -875,9 +1079,53 @@ export function FiveNightsAtFreddys() {
           100% { transform: scale(1.2); filter: brightness(1); }
         }
         
+        @keyframes fade-in {
+          0% { opacity: 0; }
+          100% { opacity: 1; }
+        }
+        
+        @keyframes freddyAttack {
+          0% { transform: scale(0) rotate(0deg); filter: brightness(0.3); }
+          20% { transform: scale(0.5) rotate(-3deg); filter: brightness(0.5); }
+          40% { transform: scale(0.8) rotate(3deg); filter: brightness(0.7); }
+          60% { transform: scale(1.0) rotate(-2deg); filter: brightness(0.8); }
+          80% { transform: scale(1.1) rotate(1deg); filter: brightness(0.9); }
+          100% { transform: scale(1.2) rotate(0deg); filter: brightness(1); }
+        }
+        
+        @keyframes freddy-delay {
+          0% { opacity: 0; }
+          90% { opacity: 0; }
+          100% { opacity: 1; }
+        }
+        
+        @keyframes camera-flip {
+          0% { transform: rotateX(0deg); opacity: 1; }
+          15% { transform: rotateX(90deg); opacity: 0; }
+          85% { transform: rotateX(90deg); opacity: 0; }
+          100% { transform: rotateX(0deg); opacity: 1; }
+        }
+        
+        @keyframes camera-noise {
+          0% { background-position: 0% 0%; }
+          100% { background-position: 100% 100%; }
+        }
+        
+        @keyframes scan-line {
+          0% { transform: translateY(-100%); }
+          100% { transform: translateY(100%); }
+        }
+        
+        @keyframes monitor-click {
+          0% { transform: scale(1); }
+          50% { transform: scale(0.98); }
+          100% { transform: scale(1); }
+        }
+        
         .fnaf-container {
-          font-family: 'Courier New', monospace;
+          font-family: 'VT323', 'Courier New', monospace;
           color: #b9b9b9;
+          text-shadow: 0 0 2px rgba(0,255,0,0.7);
         }
         
         .office-background {
@@ -890,6 +1138,7 @@ export function FiveNightsAtFreddys() {
           background: #222;
           color: #ddd;
           transition: all 0.2s ease;
+          text-shadow: 0 0 3px rgba(200,200,200,0.5);
         }
         
         .security-btn:hover {
@@ -900,6 +1149,55 @@ export function FiveNightsAtFreddys() {
         .security-btn.active {
           background: #553333;
           border-color: #664444;
+        }
+        
+        .camera-feed {
+          position: relative;
+          transform-style: preserve-3d;
+          perspective: 1000px;
+          animation: camera-flip 0.5s ease-in-out;
+          box-shadow: 0 0 20px rgba(0,0,0,0.9) inset;
+        }
+        
+        .camera-btn {
+          background: #131313;
+          border: 1px solid #444;
+          color: #eee;
+          padding: 2px 4px;
+          font-size: 0.7rem;
+          transition: all 0.1s ease;
+        }
+        
+        .camera-btn:hover {
+          background: #333;
+        }
+        
+        .camera-btn.active {
+          background: #553322;
+          border-color: #aa5522;
+          color: #ffcc00;
+        }
+        
+        .scan-line {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: rgba(255,255,255,0.1);
+          z-index: 20;
+          animation: scan-line 3s infinite linear;
+        }
+        
+        .static-overlay {
+          position: absolute;
+          inset: 0;
+          background-image: url(${staticImage});
+          background-size: 200px;
+          opacity: 0.1;
+          mix-blend-mode: overlay;
+          pointer-events: none;
+          animation: camera-noise 0.5s infinite linear;
         }
         `}
       </style>
