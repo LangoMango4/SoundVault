@@ -21,6 +21,7 @@ import { BatchSoundImport } from "./BatchSoundImport";
 import BlockedWordsManager from "./BlockedWordsManager";
 import UpdateNotificationTester from "./UpdateNotificationTester";
 import { TestNotification } from "@/components/TestNotification";
+import { PageTracker } from "@/components/common/PageTracker";
 import { Howl } from "howler";
 import {
   AlertDialog,
@@ -802,6 +803,28 @@ export function AdminPanel({
     },
   ];
 
+  // Use the PageTracker component in a useEffect instead
+  useEffect(() => {
+    if (open) {
+      const updatePageStatus = async () => {
+        try {
+          await fetch(`/api/online-users?page=Admin`, {
+            method: 'GET',
+            credentials: 'include'
+          });
+        } catch (error) {
+          console.error("Failed to update status with Admin page:", error);
+        }
+      };
+      
+      // Update immediately and then on an interval
+      updatePageStatus();
+      const interval = setInterval(updatePageStatus, 30000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [open]);
+  
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>

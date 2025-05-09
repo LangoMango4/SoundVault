@@ -286,8 +286,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Update the current user's activity with their current page
       if (req.user && req.query.page) {
-        // If the page is a game name, prefix it for clarity
+        // Process the page name based on what it is
         const page = req.query.page as string;
+        
+        // For games
         if (page === "Cookie Clicker" || 
             page === "Dino Dash" || 
             page === "Memory Match" ||
@@ -297,7 +299,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
             page === "Math Challenge" ||
             page === "Geometry Dash") {
           storage.updateUserActivity(req.user.id, `Playing: ${page}`);
-        } else {
+        }
+        // For specific page names that need better descriptions
+        else if (page === "Home") {
+          storage.updateUserActivity(req.user.id, "Soundboard");
+        }
+        else if (page === "Admin") {
+          storage.updateUserActivity(req.user.id, "Admin Panel");
+        }
+        else if (page === "Chat") {
+          storage.updateUserActivity(req.user.id, "Chat Room");
+        }
+        else if (page === "Games") {
+          storage.updateUserActivity(req.user.id, "Games Menu");
+        }
+        else if (page === "Settings") {
+          storage.updateUserActivity(req.user.id, "Settings");
+        }
+        else if (page === "Approvals") {
+          storage.updateUserActivity(req.user.id, "User Approvals");
+        }
+        else {
+          // Keep the original name for other pages
           storage.updateUserActivity(req.user.id, page);
         }
       } else if (req.user) {
