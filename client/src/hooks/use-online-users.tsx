@@ -1,6 +1,7 @@
 import { useQuery, UseQueryOptions } from "@tanstack/react-query";
 import { OnlineUser } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 export function useOnlineUsers(currentPage?: string) {
   const { toast } = useToast();
@@ -25,19 +26,28 @@ export function useOnlineUsers(currentPage?: string) {
     },
     // Refresh every 15 seconds to keep the list updated
     refetchInterval: 15000,
+    // Don't throw errors to the UI
+    useErrorBoundary: false,
+    // Retry fewer times
+    retry: 2,
   };
   
   const query = useQuery<OnlineUser[]>(queryOptions);
   
-  // Handle error outside useQuery options
-  if (query.error) {
-    console.error("Error fetching online users:", query.error);
-    toast({
-      title: "Error",
-      description: "Failed to load online users list",
-      variant: "destructive",
-    });
-  }
+  // Handle error through an effect to avoid render loops
+  useEffect(() => {
+    if (query.error) {
+      console.error("Error fetching online users:", query.error);
+      // We'll only show an error toast on the first error
+      if (query.failureCount === 1) {
+        toast({
+          title: "Error",
+          description: "Failed to load online users list",
+          variant: "destructive",
+        });
+      }
+    }
+  }, [query.error, query.failureCount, toast]);
   
   return query;
 }
