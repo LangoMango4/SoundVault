@@ -12,6 +12,7 @@ import { SnakeGame } from "./local-games/SnakeGame";
 import { TicTacToe } from "./local-games/TicTacToe";
 import { MathPuzzle } from "./local-games/MathPuzzle";
 import { ScratchGame } from "./local-games/ScratchGame";
+import { FiveNightsAtFreddys } from "./local-games/FiveNightsAtFreddys";
 
 interface Game {
   id: string;
@@ -92,6 +93,14 @@ export function GamesGrid() {
       component: ScratchGame,
       category: "arcade",
       description: "Jump and fly your way through obstacles in this rhythm-based Scratch game.",
+      isLocal: true
+    },
+    {
+      id: "five-nights",
+      name: "Five Nights at Freddy's",
+      component: FiveNightsAtFreddys,
+      category: "horror",
+      description: "Survive five nights as a security guard monitoring animatronic characters that move at night.",
       isLocal: true
     }
   ];

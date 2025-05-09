@@ -9,7 +9,7 @@ const VERSION_STORAGE_KEY = 'math-homework-version';
 const DEPLOYMENT_CHECK_KEY = 'math-homework-last-deployment-check';
 const DEPLOYMENT_TIMESTAMP_KEY = 'math-homework-deployment-timestamp';
 const LAST_ACTIVITY_KEY = 'math-homework-last-activity';
-const TERMS_SHOWN_KEY = 'math-homework-terms-shown-session';
+const TERMS_SHOWN_KEY = 'math-homework-terms-shown-date';
 const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes in milliseconds
 const DEPLOYMENT_CHECK_INTERVAL = 2 * 60 * 1000; // Check for new deployment every 2 minutes
 
@@ -102,11 +102,20 @@ export function useUpdateNotification(): UseUpdateNotificationResult {
   const [showTermsAndConditions, setShowTermsAndConditions] = useState(false);
   const { user, logoutMutation } = useAuth();
   
-  // Show terms and conditions every time user logs in
+  // Show terms and conditions once per day
   useEffect(() => {
     if (user) {
-      // Always show Terms & Conditions on login
-      setShowTermsAndConditions(true);
+      // Check when terms were last shown
+      const lastTermsShownStr = localStorage.getItem(TERMS_SHOWN_KEY);
+      const currentDate = new Date().toISOString().split('T')[0]; // Get current date in YYYY-MM-DD format
+      
+      if (!lastTermsShownStr || lastTermsShownStr !== currentDate) {
+        // If not shown today, show it
+        setShowTermsAndConditions(true);
+      } else {
+        // Already shown today
+        setShowTermsAndConditions(false);
+      }
     }
   }, [user]);
   
@@ -270,7 +279,9 @@ export function useUpdateNotification(): UseUpdateNotificationResult {
   
   const hideTermsAndConditions = () => {
     setShowTermsAndConditions(false);
-    // Don't store in session storage since we want it to show every login
+    // Store today's date to prevent showing again today
+    const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    localStorage.setItem(TERMS_SHOWN_KEY, currentDate);
   };
   
   const refreshPage = () => {
