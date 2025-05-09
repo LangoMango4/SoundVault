@@ -117,6 +117,7 @@ export const cookieClickerData = pgTable("cookie_clicker_data", {
   shipments: integer("shipments").notNull().default(0),
   alchemyLabs: integer("alchemy_labs").notNull().default(0),
   background: text("background").notNull().default("none"),
+  reachedMilestones: jsonb("reached_milestones").default("[]").notNull(), // Array of milestone values reached by player
   lastUpdated: timestamp("last_updated").defaultNow().notNull(),
 });
 

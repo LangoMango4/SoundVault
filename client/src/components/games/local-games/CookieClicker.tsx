@@ -63,6 +63,11 @@ export function CookieClicker() {
   const [showError, setShowError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   
+  // Milestone notification system
+  const [reachedMilestones, setReachedMilestones] = useState<number[]>([]);
+  const [showMilestone, setShowMilestone] = useState<boolean>(false);
+  const [currentMilestone, setCurrentMilestone] = useState<number | null>(null);
+  
   // Save optimization - using ref instead of state to avoid render issues
   const lastClickSaveTimeRef = useRef<number>(0);
   
@@ -229,6 +234,33 @@ export function CookieClicker() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoClickers, grandmas, factories, mines, temples, wizardTowers, shipments, alchemyLabs, cookiesPerSecond, fallingCookies.length]);
   
+  // Define milestones (cookie counts where we want to show notifications)
+  const milestones = [
+    100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000
+  ];
+  
+  // Check for milestones when cookies change
+  useEffect(() => {
+    // Check if we've reached a new milestone
+    const newMilestone = milestones.find(milestone => 
+      cookies >= milestone && !reachedMilestones.includes(milestone)
+    );
+    
+    if (newMilestone) {
+      // We've reached a new milestone
+      setCurrentMilestone(newMilestone);
+      setShowMilestone(true);
+      setReachedMilestones(prev => [...prev, newMilestone]);
+      
+      // Auto-hide the milestone notification after 5 seconds
+      const timer = setTimeout(() => {
+        setShowMilestone(false);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [cookies, reachedMilestones, milestones]);
+  
   // Save game data to the server
   useEffect(() => {
     // Don't save on initial load, only when values change
@@ -255,7 +287,9 @@ export function CookieClicker() {
             wizardTowers,
             shipments,
             alchemyLabs,
-            background
+            background,
+            // Also save reached milestones
+            reachedMilestones
           }),
         });
         
@@ -270,7 +304,7 @@ export function CookieClicker() {
     }, 2000); // Save every 2 seconds when data changes
     
     return () => clearTimeout(saveTimeout);
-  }, [cookies, clickPower, autoClickers, grandmas, factories, mines, temples, wizardTowers, shipments, alchemyLabs, background]);
+  }, [cookies, clickPower, autoClickers, grandmas, factories, mines, temples, wizardTowers, shipments, alchemyLabs, background, reachedMilestones]);
   
   // Create falling cookie effect
   const createFallingCookie = (x: number, y: number, isAutoClick = false) => {
@@ -503,50 +537,75 @@ export function CookieClicker() {
   const handleAdminGift = async () => {
     if (!isAdmin) return;
     
-    // If target is self or not specified, apply to self
-    if (!targetUsername || targetUsername === "self") {
-      // Apply to self
-      switch (giftType) {
-        case "cookies":
-          setCookies(prevCookies => prevCookies + giftAmount);
-          break;
-        case "clickers":
-          setAutoClickers(prevAutoClickers => prevAutoClickers + Math.floor(giftAmount));
-          break;
-        case "power":
-          setClickPower(prevClickPower => prevClickPower + Math.floor(giftAmount));
-          break;
-        case "grandmas":
-          setGrandmas(prevGrandmas => prevGrandmas + Math.floor(giftAmount));
-          break;
-        case "factories":
-          setFactories(prevFactories => prevFactories + Math.floor(giftAmount));
-          break;
-        case "mines":
-          setMines(prevMines => prevMines + Math.floor(giftAmount));
-          break;
-        case "temples":
-          setTemples(prevTemples => prevTemples + Math.floor(giftAmount));
-          break;
-        case "wizardTowers":
-          setWizardTowers(prevWizardTowers => prevWizardTowers + Math.floor(giftAmount));
-          break;
-        case "shipments":
-          setShipments(prevShipments => prevShipments + Math.floor(giftAmount));
-          break;
-        case "alchemyLabs":
-          setAlchemyLabs(prevAlchemyLabs => prevAlchemyLabs + Math.floor(giftAmount));
-          break;
-        default:
-          break;
-      }
-      setErrorMessage(`You gave yourself ${giftAmount} ${giftType}.`);
-      setShowError(true);
-      return;
-    }
-    
-    // Send gift to another user
     try {
+      // If target is self or not specified, apply to self
+      if (!targetUsername || targetUsername === "self") {
+        // Apply to self
+        switch (giftType) {
+          case "cookies":
+            setCookies(prevCookies => prevCookies + giftAmount);
+            break;
+          case "clickers":
+            setAutoClickers(prevAutoClickers => prevAutoClickers + Math.floor(giftAmount));
+            break;
+          case "power":
+            setClickPower(prevClickPower => prevClickPower + Math.floor(giftAmount));
+            break;
+          case "grandmas":
+            setGrandmas(prevGrandmas => prevGrandmas + Math.floor(giftAmount));
+            break;
+          case "factories":
+            setFactories(prevFactories => prevFactories + Math.floor(giftAmount));
+            break;
+          case "mines":
+            setMines(prevMines => prevMines + Math.floor(giftAmount));
+            break;
+          case "temples":
+            setTemples(prevTemples => prevTemples + Math.floor(giftAmount));
+            break;
+          case "wizardTowers":
+            setWizardTowers(prevWizardTowers => prevWizardTowers + Math.floor(giftAmount));
+            break;
+          case "shipments":
+            setShipments(prevShipments => prevShipments + Math.floor(giftAmount));
+            break;
+          case "alchemyLabs":
+            setAlchemyLabs(prevAlchemyLabs => prevAlchemyLabs + Math.floor(giftAmount));
+            break;
+          default:
+            break;
+        }
+        
+        // Immediately save the changes to the server to prevent desync
+        const saveData = {
+          cookies: giftType === "cookies" ? cookies + giftAmount : cookies,
+          clickPower: giftType === "power" ? clickPower + Math.floor(giftAmount) : clickPower,
+          autoClickers: giftType === "clickers" ? autoClickers + Math.floor(giftAmount) : autoClickers,
+          grandmas: giftType === "grandmas" ? grandmas + Math.floor(giftAmount) : grandmas,
+          factories: giftType === "factories" ? factories + Math.floor(giftAmount) : factories,
+          mines: giftType === "mines" ? mines + Math.floor(giftAmount) : mines,
+          temples: giftType === "temples" ? temples + Math.floor(giftAmount) : temples,
+          wizardTowers: giftType === "wizardTowers" ? wizardTowers + Math.floor(giftAmount) : wizardTowers,
+          shipments: giftType === "shipments" ? shipments + Math.floor(giftAmount) : shipments,
+          alchemyLabs: giftType === "alchemyLabs" ? alchemyLabs + Math.floor(giftAmount) : alchemyLabs,
+          background,
+          reachedMilestones
+        };
+        
+        await fetch('/api/games/cookie-clicker/save', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(saveData),
+        });
+        
+        setErrorMessage(`You gave yourself ${giftAmount} ${giftType}.`);
+        setShowError(true);
+        return;
+      }
+      
+      // Send gift to another user
       const response = await fetch('/api/games/cookie-clicker/gift', {
         method: 'POST',
         headers: {
@@ -563,8 +622,14 @@ export function CookieClicker() {
         setErrorMessage(`Successfully gifted ${giftAmount} ${giftType} to ${targetUsername}!`);
         setShowError(true);
       } else {
-        const error = await response.json();
-        setErrorMessage(`Failed to gift to ${targetUsername}: ${error.message || 'Unknown error'}`);
+        let errorMsg = 'Unknown error';
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.message || 'Gift operation failed';
+        } catch (e) {
+          errorMsg = await response.text() || 'Gift operation failed';
+        }
+        setErrorMessage(`Failed to gift to ${targetUsername}: ${errorMsg}`);
         setShowError(true);
       }
     } catch (error) {
@@ -1164,6 +1229,32 @@ export function CookieClicker() {
           </ErrorBoundary>
         </div>
       </div>
+      
+      {/* Milestone achievement dialog */}
+      <Dialog open={showMilestone} onOpenChange={setShowMilestone}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <span className="text-2xl mr-2">🍪</span> Cookie Milestone Reached!
+            </DialogTitle>
+            <DialogDescription>
+              Congratulations! You've reached a cookie milestone.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="p-4 bg-amber-50 rounded-lg text-center">
+            <div className="text-5xl mb-4">🍪</div>
+            <h3 className="text-2xl font-bold mb-2">{currentMilestone && currentMilestone.toLocaleString()} Cookies</h3>
+            <p className="text-sm">You've baked a lot of cookies! Keep going to reach the next milestone.</p>
+          </div>
+          
+          <DialogFooter className="flex justify-center sm:justify-center">
+            <Button variant="default" onClick={() => setShowMilestone(false)}>
+              Continue Baking
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -774,7 +774,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           autoClickers: 0,
           grandmas: 0,
           factories: 0,
-          background: "none"
+          mines: 0,
+          temples: 0,
+          wizardTowers: 0,
+          shipments: 0,
+          alchemyLabs: 0,
+          background: "none",
+          reachedMilestones: []
         });
         return res.json(initialData);
       }
@@ -791,16 +797,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
       
-      const { cookies, clickPower, autoClickers, grandmas, factories, background } = req.body;
+      const { 
+        cookies, 
+        clickPower, 
+        autoClickers, 
+        grandmas, 
+        factories, 
+        mines, 
+        temples, 
+        wizardTowers, 
+        shipments, 
+        alchemyLabs, 
+        background,
+        reachedMilestones 
+      } = req.body;
       
-      // Update cookie clicker data
+      // Update cookie clicker data with all possible fields
       const updatedData = await storage.updateCookieClickerData(req.user.id, {
         cookies: cookies !== undefined ? cookies : undefined,
         clickPower: clickPower !== undefined ? clickPower : undefined,
         autoClickers: autoClickers !== undefined ? autoClickers : undefined,
         grandmas: grandmas !== undefined ? grandmas : undefined,
         factories: factories !== undefined ? factories : undefined,
-        background: background !== undefined ? background : undefined
+        mines: mines !== undefined ? mines : undefined,
+        temples: temples !== undefined ? temples : undefined,
+        wizardTowers: wizardTowers !== undefined ? wizardTowers : undefined,
+        shipments: shipments !== undefined ? shipments : undefined,
+        alchemyLabs: alchemyLabs !== undefined ? alchemyLabs : undefined,
+        background: background !== undefined ? background : undefined,
+        reachedMilestones: reachedMilestones !== undefined ? reachedMilestones : undefined
       });
       
       if (!updatedData) {
@@ -812,7 +837,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           autoClickers: autoClickers || 0,
           grandmas: grandmas || 0,
           factories: factories || 0,
-          background: background || "none"
+          mines: mines || 0,
+          temples: temples || 0,
+          wizardTowers: wizardTowers || 0,
+          shipments: shipments || 0,
+          alchemyLabs: alchemyLabs || 0,
+          background: background || "none",
+          reachedMilestones: reachedMilestones || []
         });
         return res.status(201).json(newData);
       }
@@ -859,7 +890,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             autoClickers: 0,
             grandmas: 0,
             factories: 0,
-            background: "none"
+            mines: 0,
+            temples: 0,
+            wizardTowers: 0,
+            shipments: 0,
+            alchemyLabs: 0,
+            background: "none",
+            reachedMilestones: []
           };
           
           // Add the gifted resource
@@ -871,6 +908,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             initialData.grandmas = parseInt(amount);
           } else if (giftType === 'factories') {
             initialData.factories = parseInt(amount);
+          } else if (giftType === 'mines') {
+            initialData.mines = parseInt(amount);
+          } else if (giftType === 'temples') {
+            initialData.temples = parseInt(amount);
+          } else if (giftType === 'wizardTowers') {
+            initialData.wizardTowers = parseInt(amount);
+          } else if (giftType === 'shipments') {
+            initialData.shipments = parseInt(amount);
+          } else if (giftType === 'alchemyLabs') {
+            initialData.alchemyLabs = parseInt(amount);
           }
           
           updatedData = await storage.createCookieClickerData(initialData);
@@ -886,6 +933,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             updateObj.grandmas = userData.grandmas + parseInt(amount);
           } else if (giftType === 'factories') {
             updateObj.factories = userData.factories + parseInt(amount);
+          } else if (giftType === 'mines') {
+            updateObj.mines = (userData.mines || 0) + parseInt(amount);
+          } else if (giftType === 'temples') {
+            updateObj.temples = (userData.temples || 0) + parseInt(amount);
+          } else if (giftType === 'wizardTowers') {
+            updateObj.wizardTowers = (userData.wizardTowers || 0) + parseInt(amount);
+          } else if (giftType === 'shipments') {
+            updateObj.shipments = (userData.shipments || 0) + parseInt(amount);
+          } else if (giftType === 'alchemyLabs') {
+            updateObj.alchemyLabs = (userData.alchemyLabs || 0) + parseInt(amount);
           }
           
           updatedData = await storage.updateCookieClickerData(targetUser.id, updateObj);
@@ -916,7 +973,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         autoClickers: 0,
         grandmas: 0,
         factories: 0,
-        background: "none"
+        mines: 0,
+        temples: 0,
+        wizardTowers: 0,
+        shipments: 0,
+        alchemyLabs: 0,
+        background: "none",
+        reachedMilestones: [] // Reset milestones too
       });
       
       if (!resetData) {
@@ -928,7 +991,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           autoClickers: 0,
           grandmas: 0,
           factories: 0,
-          background: "none"
+          mines: 0,
+          temples: 0,
+          wizardTowers: 0,
+          shipments: 0,
+          alchemyLabs: 0,
+          background: "none",
+          reachedMilestones: []
         });
         return res.status(201).json(initialData);
       }
