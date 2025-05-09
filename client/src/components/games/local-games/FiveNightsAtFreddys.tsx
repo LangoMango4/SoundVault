@@ -303,179 +303,310 @@ export function FiveNightsAtFreddys() {
     });
   };
   
-  // Render camera feed
+  // Render camera feed with authentic FNAF security camera styling
   const renderCameraView = () => {
     const animatronicsInRoom = Object.entries(animatronics)
       .filter(([_, data]) => data.room === currentCam)
       .map(([name]) => name);
     
     return (
-      <div className="bg-black p-4 h-full">
-        <div className="flex justify-between mb-4">
-          <div className="text-green-500 text-sm">CAM {currentCam}</div>
-          <div className="text-green-500 text-sm">POWER: {power}%</div>
+      <div className="bg-black p-4 h-full fnaf-container">
+        {/* Camera header with recording indicator */}
+        <div className="flex justify-between items-center mb-3">
+          <div className="flex items-center">
+            <div className="w-3 h-3 rounded-full bg-red-600 animate-pulse mr-2"></div>
+            <div className="text-yellow-500 text-xs uppercase font-mono">REC</div>
+          </div>
+          <div className="text-yellow-500 text-sm font-bold">CAM {currentCam}</div>
+          <div className="text-yellow-500 text-xs">POWER: {power}%</div>
         </div>
         
-        <div className="camera-screen bg-gray-900 h-[350px] flex items-center justify-center relative border-2 border-gray-700">
-          {/* Camera static effect */}
-          <div className="absolute inset-0 opacity-20 pointer-events-none" 
+        {/* Camera feed screen with border and static effects */}
+        <div className="camera-screen bg-gray-900 h-[350px] flex items-center justify-center relative border-4 border-gray-800 overflow-hidden">
+          {/* Camera static and noise overlay */}
+          <div className="absolute inset-0 opacity-30 pointer-events-none z-10" 
                style={{ 
-                 background: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.2) 0px, rgba(0,0,0,0.2) 1px, transparent 1px, transparent 2px)',
-                 animation: 'camera-static 0.5s infinite' 
+                 background: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.3) 0px, rgba(0,0,0,0.3) 1px, transparent 1px, transparent 2px)',
+                 animation: 'camera-static 0.2s infinite' 
                }}>
           </div>
           
-          {/* Render animatronics in the current room */}
-          {animatronicsInRoom.includes('freddy') && (
-            <img 
-              src={freddy1} 
-              alt="Freddy" 
-              className="h-4/5 absolute" 
-              style={{ filter: 'brightness(0.7) contrast(1.2)' }}
-            />
-          )}
+          {/* Scanline effect */}
+          <div className="absolute inset-0 opacity-10 pointer-events-none" 
+               style={{ 
+                 background: 'linear-gradient(transparent 0%, rgba(255,255,255,0.2) 50%, transparent 51%, transparent 100%)',
+                 backgroundSize: '100% 4px',
+                 animation: 'camera-static 3s infinite' 
+               }}>
+          </div>
           
-          {animatronicsInRoom.includes('bonnie') && (
-            <img 
-              src={bonnie} 
-              alt="Bonnie" 
-              className="h-4/5 absolute" 
-              style={{ filter: 'brightness(0.7) contrast(1.2)' }}
-            />
-          )}
+          {/* Room background - dark, indistinct area */}
+          <div className="absolute inset-0 bg-gray-950 flex items-center justify-center">
+            <div className="relative w-full h-full flex items-center justify-center">
+              {/* Room identifier */}
+              <div className="absolute top-2 left-2 text-white text-xs opacity-50">
+                CAM {currentCam} - {
+                  currentCam === "1A" ? "Stage" : 
+                  currentCam === "1B" ? "Dining Area" : 
+                  currentCam === "1C" ? "Pirate Cove" : 
+                  currentCam === "2A" ? "West Hall" : 
+                  currentCam === "2B" ? "W. Hall Corner" : 
+                  currentCam === "3" ? "Supply Closet" : 
+                  currentCam === "4A" ? "East Hall" : 
+                  currentCam === "4B" ? "E. Hall Corner" : 
+                  currentCam === "5" ? "Backstage" : 
+                  currentCam === "6" ? "Kitchen" : 
+                  currentCam === "7" ? "Restrooms" : "Unknown"
+                }
+              </div>
+              
+              {/* Render animatronics in the current room with glitch effects */}
+              {animatronicsInRoom.map(name => (
+                <div key={name} className="absolute" style={{
+                  animation: 'power-flicker 3s infinite',
+                  filter: 'brightness(0.3) contrast(1.5) grayscale(0.5)',
+                  transform: 'scale(0.9)',
+                }}>
+                  <img 
+                    src={
+                      name === 'freddy' ? freddy1 : 
+                      name === 'bonnie' ? bonnie : 
+                      name === 'chica' ? chica : foxy
+                    } 
+                    alt={name.charAt(0).toUpperCase() + name.slice(1)} 
+                    className="h-[300px] object-contain"
+                  />
+                </div>
+              ))}
+              
+              {/* Empty room message if no animatronics */}
+              {animatronicsInRoom.length === 0 && (
+                <div className="text-gray-500 text-sm italic">
+                  {currentCam === "6" ? "AUDIO ONLY" : "No activity detected"}
+                </div>
+              )}
+            </div>
+          </div>
           
-          {animatronicsInRoom.includes('chica') && (
-            <img 
-              src={chica} 
-              alt="Chica" 
-              className="h-4/5 absolute" 
-              style={{ filter: 'brightness(0.7) contrast(1.2)' }}
-            />
-          )}
-          
-          {animatronicsInRoom.includes('foxy') && (
-            <img 
-              src={foxy} 
-              alt="Foxy" 
-              className="h-4/5 absolute" 
-              style={{ filter: 'brightness(0.7) contrast(1.2)' }}
-            />
-          )}
-          
-          {/* Empty room message if no animatronics */}
-          {animatronicsInRoom.length === 0 && (
-            <div className="text-gray-400 text-lg">No activity detected</div>
-          )}
+          {/* Camera UI overlay */}
+          <div className="absolute bottom-2 right-2 text-yellow-500 text-xs">
+            NIGHT 1 - {hour}:00 AM
+          </div>
         </div>
         
-        {/* Camera controls */}
-        <div className="grid grid-cols-3 gap-2 mt-4">
-          {rooms.map(room => (
+        {/* Camera selection panel */}
+        <div className="mt-4 bg-gray-900 p-3 border-2 border-gray-800">
+          <div className="text-yellow-500 text-xs uppercase mb-2 text-center">Camera Selection</div>
+          <div className="grid grid-cols-4 gap-2">
+            {rooms.map(room => (
+              <Button 
+                key={room}
+                variant="outline"
+                onClick={() => switchCamera(room)}
+                className={`security-btn text-xs py-1 px-2 ${currentCam === room ? 'active' : ''}`}
+              >
+                {room}
+              </Button>
+            ))}
+          </div>
+          
+          <div className="mt-3 text-center">
             <Button 
-              key={room}
-              variant={currentCam === room ? "default" : "outline"}
-              onClick={() => switchCamera(room)}
-              className="text-xs"
+              onClick={toggleCamera} 
+              variant="outline" 
+              className="security-btn uppercase text-sm w-full"
             >
-              CAM {room}
+              Back to Office
             </Button>
-          ))}
+          </div>
         </div>
       </div>
     );
   };
   
-  // Render office view
+  // Render office view - the main gameplay screen
   const renderOfficeView = () => {
     return (
-      <div className="relative h-full bg-gray-800 flex flex-col">
-        {/* Office view */}
-        <div className="flex-grow relative flex justify-center">
-          <div className="office-background flex items-center justify-center h-full w-full">
-            {/* Office scene - doors on left and right */}
-            <div className="relative w-full h-full flex justify-between">
-              {/* Left door and controls */}
-              <div className="door-left flex flex-col justify-center items-center p-2">
-                <div className="relative">
+      <div className="relative h-full bg-gray-900 flex flex-col fnaf-container">
+        {/* FNAF Office view with flickering effects */}
+        <div className="flex-grow relative">
+          <div className="office-background h-full w-full relative overflow-hidden">
+            {/* Main office scene - a dark environment */}
+            <div className="h-full w-full bg-gray-950 flex items-center justify-between">
+              {/* Left side - door, light and warning */}
+              <div className="w-1/3 flex flex-col justify-center items-center relative">
+                {/* Door area */}
+                <div className="h-[60%] w-full flex items-center justify-start relative">
+                  <div 
+                    className={`absolute left-0 top-0 h-full w-[12px] bg-gray-700 ${leftDoorClosed ? 'bg-red-900' : ''}`}
+                    style={{ boxShadow: leftDoorClosed ? '0 0 15px rgba(255,0,0,0.5)' : 'none' }}
+                  ></div>
+                  
                   {leftDoorClosed && (
-                    <img src={door} alt="Left Door" className="h-[300px] object-contain" />
+                    <div className="absolute left-[12px] top-0 bottom-0 w-[40px] bg-gray-800">
+                      <img src={door} alt="Left Door" className="h-full object-cover" />
+                    </div>
                   )}
                   
-                  {/* Show danger warning */}
+                  {/* Light effect when on */}
+                  {leftLightOn && !leftDoorClosed && (
+                    <div className="absolute left-[12px] top-0 bottom-0 w-[120px] bg-yellow-800 opacity-30"></div>
+                  )}
+                  
+                  {/* Show danger warning with animatronic image */}
                   {(animatronics.bonnie.danger || animatronics.foxy.danger) && leftLightOn && !leftDoorClosed && (
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-red-600 text-2xl font-bold animate-pulse">
-                      DANGER!
+                    <div className="absolute left-[40px] bottom-0 h-[80%]">
+                      <img 
+                        src={animatronics.bonnie.danger ? bonnie : foxy} 
+                        alt={animatronics.bonnie.danger ? "Bonnie" : "Foxy"} 
+                        className="h-full object-contain"
+                        style={{ filter: 'brightness(0.4) contrast(1.3)' }}
+                      />
                     </div>
                   )}
                 </div>
                 
-                <div className="door-controls mt-2 space-y-2">
-                  <Button onClick={() => toggleDoor("left")} variant={leftDoorClosed ? "destructive" : "outline"}>
-                    {leftDoorClosed ? "Open Door" : "Close Door"}
+                {/* Left door controls */}
+                <div className="mt-auto mb-4 space-y-2 p-2 border-2 border-gray-700 bg-gray-800 rounded">
+                  <div className="text-center text-xs text-gray-400 mb-1">LEFT DOOR</div>
+                  <Button 
+                    onClick={() => toggleDoor("left")} 
+                    className={`security-btn w-full ${leftDoorClosed ? 'active' : ''}`}
+                    variant="outline"
+                  >
+                    {leftDoorClosed ? "DOOR: CLOSED" : "DOOR: OPEN"}
                   </Button>
-                  <Button onClick={() => toggleLight("left")} variant={leftLightOn ? "default" : "outline"}>
-                    {leftLightOn ? "Light On" : "Light Off"}
+                  <Button 
+                    onClick={() => toggleLight("left")} 
+                    className={`security-btn w-full ${leftLightOn ? 'active' : ''}`}
+                    variant="outline"
+                  >
+                    {leftLightOn ? "LIGHT: ON" : "LIGHT: OFF"}
                   </Button>
                 </div>
               </div>
               
-              {/* Center content */}
-              <div className="flex-grow flex flex-col justify-center items-center text-center px-4">
-                <h3 className="text-white text-xl mb-2">Office</h3>
-                <p className="text-gray-400 mb-4">Watch your power!</p>
-                <Button onClick={toggleCamera} variant={camera ? "destructive" : "default"}>
-                  {camera ? "Close Cameras" : "Check Cameras"}
-                </Button>
-              </div>
-              
-              {/* Right door and controls */}
-              <div className="door-right flex flex-col justify-center items-center p-2">
-                <div className="relative">
-                  {rightDoorClosed && (
-                    <img src={door} alt="Right Door" className="h-[300px] object-contain transform scale-x-[-1]" />
+              {/* Center view - main office and camera controls */}
+              <div className="flex-grow flex flex-col items-center justify-between">
+                {/* Main screen area */}
+                <div className="flex-grow flex items-center justify-center relative w-full">
+                  {power <= 20 && (
+                    <div 
+                      className="absolute inset-0 bg-black pointer-events-none z-10" 
+                      style={{ 
+                        opacity: 0.7 - (power / 100) * 0.7,
+                        animation: 'power-flicker 2s infinite'
+                      }}
+                    ></div>
                   )}
                   
-                  {/* Show danger warning */}
+                  {/* Camera button positioned at the bottom */}
+                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+                    <Button 
+                      onClick={toggleCamera} 
+                      variant="outline" 
+                      className="security-btn px-8 py-4 text-lg uppercase"
+                    >
+                      Monitor Cameras
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Right side - door, light and warning */}
+              <div className="w-1/3 flex flex-col justify-center items-center relative">
+                {/* Door area */}
+                <div className="h-[60%] w-full flex items-center justify-end relative">
+                  <div 
+                    className={`absolute right-0 top-0 h-full w-[12px] bg-gray-700 ${rightDoorClosed ? 'bg-red-900' : ''}`}
+                    style={{ boxShadow: rightDoorClosed ? '0 0 15px rgba(255,0,0,0.5)' : 'none' }}
+                  ></div>
+                  
+                  {rightDoorClosed && (
+                    <div className="absolute right-[12px] top-0 bottom-0 w-[40px] bg-gray-800">
+                      <img src={door} alt="Right Door" className="h-full object-cover transform scale-x-[-1]" />
+                    </div>
+                  )}
+                  
+                  {/* Light effect when on */}
+                  {rightLightOn && !rightDoorClosed && (
+                    <div className="absolute right-[12px] top-0 bottom-0 w-[120px] bg-yellow-800 opacity-30"></div>
+                  )}
+                  
+                  {/* Show danger warning with animatronic image */}
                   {(animatronics.chica.danger || animatronics.freddy.danger) && rightLightOn && !rightDoorClosed && (
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-red-600 text-2xl font-bold animate-pulse">
-                      DANGER!
+                    <div className="absolute right-[40px] bottom-0 h-[80%]">
+                      <img 
+                        src={animatronics.chica.danger ? chica : freddy1} 
+                        alt={animatronics.chica.danger ? "Chica" : "Freddy"} 
+                        className="h-full object-contain"
+                        style={{ filter: 'brightness(0.4) contrast(1.3)' }}
+                      />
                     </div>
                   )}
                 </div>
                 
-                <div className="door-controls mt-2 space-y-2">
-                  <Button onClick={() => toggleDoor("right")} variant={rightDoorClosed ? "destructive" : "outline"}>
-                    {rightDoorClosed ? "Open Door" : "Close Door"}
+                {/* Right door controls */}
+                <div className="mt-auto mb-4 space-y-2 p-2 border-2 border-gray-700 bg-gray-800 rounded">
+                  <div className="text-center text-xs text-gray-400 mb-1">RIGHT DOOR</div>
+                  <Button 
+                    onClick={() => toggleDoor("right")} 
+                    className={`security-btn w-full ${rightDoorClosed ? 'active' : ''}`}
+                    variant="outline"
+                  >
+                    {rightDoorClosed ? "DOOR: CLOSED" : "DOOR: OPEN"}
                   </Button>
-                  <Button onClick={() => toggleLight("right")} variant={rightLightOn ? "default" : "outline"}>
-                    {rightLightOn ? "Light On" : "Light Off"}
+                  <Button 
+                    onClick={() => toggleLight("right")} 
+                    className={`security-btn w-full ${rightLightOn ? 'active' : ''}`}
+                    variant="outline"
+                  >
+                    {rightLightOn ? "LIGHT: ON" : "LIGHT: OFF"}
                   </Button>
                 </div>
               </div>
+            </div>
+            
+            {/* Static overlay for authentic feel */}
+            <div 
+              className="absolute inset-0 pointer-events-none" 
+              style={{ 
+                background: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 1px, transparent 1px, transparent 2px)',
+                opacity: 0.05,
+                mixBlendMode: 'overlay',
+              }}>
             </div>
           </div>
         </div>
         
-        {/* Status bar */}
-        <div className="p-4 bg-black text-white grid grid-cols-3 gap-4">
-          <div>
-            <div className="text-sm mb-1">Power Left: {power}%</div>
-            <Progress value={power} className="h-2" />
-          </div>
-          <div className="text-center">
-            <div className="text-sm">Usage: {powerDrain}x</div>
-            <div className="flex justify-center space-x-1 mt-1">
-              {[...Array(Math.floor(powerDrain))].map((_, i) => (
-                <div key={i} className="w-3 h-3 bg-green-500"></div>
-              ))}
-              {powerDrain % 1 !== 0 && (
-                <div className="w-3 h-3 bg-green-500 opacity-50"></div>
-              )}
+        {/* HUD - power and time in the authentic FNAF style */}
+        <div className="bg-black p-3 text-white flex justify-between items-center border-t-4 border-gray-800">
+          <div className="flex flex-col">
+            <div className="text-xs text-yellow-500 mb-1">POWER LEFT: {power}%</div>
+            <Progress value={power} max={100} className="w-36 h-3 bg-gray-800 rounded-none">
+              <div 
+                className="h-full bg-gradient-to-r from-red-600 to-green-500" 
+                style={{ width: `${power}%` }}
+              ></div>
+            </Progress>
+            
+            <div className="flex mt-2 items-center">
+              <div className="text-xs text-yellow-500 mr-2">USAGE:</div>
+              {/* Power usage indicators in authentic green blocks */}
+              <div className="flex">
+                {Array.from({ length: Math.floor(powerDrain) }).map((_, i) => (
+                  <div key={i} className="w-3 h-5 bg-green-600 mr-[2px]"></div>
+                ))}
+                {powerDrain % 1 !== 0 && (
+                  <div className="w-3 h-5 bg-green-600 opacity-50"></div>
+                )}
+              </div>
             </div>
           </div>
+          
           <div className="text-right">
-            <div className="text-3xl font-bold">{hour} AM</div>
-            <div className="text-sm">Night 1</div>
+            <div className="text-3xl font-bold text-yellow-500">{hour} AM</div>
+            <div className="text-sm text-gray-400">NIGHT 1</div>
           </div>
         </div>
       </div>
