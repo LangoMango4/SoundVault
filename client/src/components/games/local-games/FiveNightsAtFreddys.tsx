@@ -6,34 +6,73 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
-// 100% Authentic FNAF assets ripped directly from the original game
-const freddy1 = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/3/30/Show_stage_nocamera2.png"; // Freddy Fazbear
-const bonnie = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/b/b6/Bonnie_%28FNaF1%29.png"; // Bonnie
-const chica = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/6/6b/ChicaAISwitch.png"; // Chica 
-const foxy = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/e/e7/Foxy.png"; // Foxy
-const door = "https://static.wikia.nocookie.net/five-nights-at-freddys-world/images/1/15/Door_side.png"; // Door
-const officeBackground = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/c/cb/Office.jpg"; // Original FNAF office background
-const staticImage = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/8/88/Static_x3.gif"; // Static effect
-const cameraMap = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/d/dc/Map.png"; // Original camera map
-// Jumpscare images from the actual game
-const freddyJumpscareImage = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/d/df/FreddyScare.gif"; // Actual Freddy jumpscare
-const bonnieJumpscareImage = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/8/8b/BonnieScare.gif"; // Actual Bonnie jumpscare
-const chicaJumpscareImage = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/1/1d/ChicaScare.gif"; // Actual Chica jumpscare
-const foxyJumpscareImage = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/e/ee/FoxyScare.gif"; // Actual Foxy jumpscare
-// Original camera room images
-const stage = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/2/29/1A.png"; // Stage - 1A
-const diningArea = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/e/e3/DiningArea.jpg"; // Dining Area - 1B
-const pirateCove = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/b/b5/PirateCove.png"; // Pirate Cove - 1C
-const westHall = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/f/f7/2A.png"; // West Hall - 2A
-const eastHall = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/5/5c/4A.png"; // East Hall - 4A
-// Authentic FNAF sound effects from the game
-const doorSound = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/c/c1/Door.ogg"; // Original door sound
-const cameraSound = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/e/ea/SoundEffect2.ogg"; // Original camera sound
-const jumpscareSound = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/a/a8/SCREECH.ogg"; // Original jumpscare sound
-const ambientSound = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/6/6c/Ambience2.ogg"; // Original ambient sound
-const powerDownSound = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/e/e6/PowerOutage.ogg"; // Power outage sound
-const fanSound = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/4/41/Fan.ogg"; // Office fan sound
-const foxyRunningSound = "https://static.wikia.nocookie.net/freddy-fazbears-pizza/images/8/8c/Run.ogg"; // Foxy running sound
+// Original authentic FNAF assets directly from the game
+// Animatronic character images
+const freddy1 = "/fnaf_assets/freddy.png"; // Freddy Fazbear when stationary
+const freddy2 = "/fnaf_assets/freddy_eyes.gif"; // Freddy with glowing eyes
+const bonnie = "/fnaf_assets/bonnie.png"; // Bonnie
+const bonnieAtDoor = "/fnaf_assets/bonnie_door.png"; // Bonnie at door
+const chica = "/fnaf_assets/chica.png"; // Chica 
+const chicaAtDoor = "/fnaf_assets/chica_door.png"; // Chica at door
+const foxy = "/fnaf_assets/foxy.png"; // Foxy
+const foxyPeeking = "/fnaf_assets/foxy_peeking.png"; // Foxy peeking out
+const foxyRunning = "/fnaf_assets/foxy_running.gif"; // Foxy running down hall
+
+// Environment assets
+const door = "/fnaf_assets/door.png"; // Door
+const officeBackground = "/fnaf_assets/office.jpg"; // FNAF office exact replica
+const staticImage = "/fnaf_assets/static.gif"; // Static noise effect
+const cameraMap = "/fnaf_assets/map.png"; // Original FNAF camera map
+const mainMenuImage = "/fnaf_assets/menu.jpg"; // Title screen
+const gameLogo = "/fnaf_assets/logo.png"; // FNAF logo
+
+// Jumpscare animations - exact replicas from the original game
+const freddyJumpscareImage = "/fnaf_assets/freddy_jumpscare.gif"; // Freddy jumpscare
+const bonnieJumpscareImage = "/fnaf_assets/bonnie_jumpscare.gif"; // Bonnie jumpscare
+const chicaJumpscareImage = "/fnaf_assets/chica_jumpscare.gif"; // Chica jumpscare
+const foxyJumpscareImage = "/fnaf_assets/foxy_jumpscare.gif"; // Foxy jumpscare
+
+// Camera room images - exact replicas of each room from the original game
+const stage = "/fnaf_assets/cam1a.png"; // Stage - 1A
+const stage_bonnie_missing = "/fnaf_assets/cam1a_bonnie_missing.png"; // Stage with Bonnie missing
+const stage_chica_missing = "/fnaf_assets/cam1a_chica_missing.png"; // Stage with Chica missing
+const stage_empty = "/fnaf_assets/cam1a_empty.png"; // Empty stage
+const diningArea = "/fnaf_assets/cam1b.png"; // Dining Area - 1B
+const diningArea_bonnie = "/fnaf_assets/cam1b_bonnie.png"; // Dining Area with Bonnie
+const pirateCove1 = "/fnaf_assets/cam1c_stage1.png"; // Pirate Cove closed - 1C
+const pirateCove2 = "/fnaf_assets/cam1c_stage2.png"; // Pirate Cove partially open
+const pirateCove3 = "/fnaf_assets/cam1c_stage3.png"; // Pirate Cove open (Foxy gone)
+const westHall = "/fnaf_assets/cam2a.png"; // West Hall - 2A
+const westHall_bonnie = "/fnaf_assets/cam2a_bonnie.png"; // West Hall with Bonnie
+const westHallCorner = "/fnaf_assets/cam2b.png"; // West Hall Corner - 2B
+const eastHall = "/fnaf_assets/cam4a.png"; // East Hall - 4A
+const eastHall_chica = "/fnaf_assets/cam4a_chica.png"; // East Hall with Chica
+const eastHallCorner = "/fnaf_assets/cam4b.png"; // East Hall Corner - 4B
+const supplycloset = "/fnaf_assets/cam3.png"; // Supply Closet - 3
+const supplycloset_bonnie = "/fnaf_assets/cam3_bonnie.png"; // Supply Closet with Bonnie
+const backstage = "/fnaf_assets/cam5.png"; // Backstage - 5
+const backstage_bonnie = "/fnaf_assets/cam5_bonnie.png"; // Backstage with Bonnie
+const kitchen = "/fnaf_assets/cam6.png"; // Kitchen (audio only) - 6
+const bathrooms = "/fnaf_assets/cam7.png"; // Restrooms - 7
+const bathrooms_chica = "/fnaf_assets/cam7_chica.png"; // Restrooms with Chica
+const cameraBorder = "/fnaf_assets/camera_border.png"; // Camera feed border
+const cameraButton = "/fnaf_assets/camera_button.png"; // Camera button
+
+// Sound effects directly from the original FNAF game
+const doorSound = "/fnaf_assets/door.mp3"; // Door sound
+const lightSound = "/fnaf_assets/light.mp3"; // Light switch sound
+const cameraSound = "/fnaf_assets/camera_toggle.mp3"; // Camera toggle sound
+const jumpscareSound = "/fnaf_assets/jumpscare.mp3"; // Jumpscare sound
+const ambientSound = "/fnaf_assets/ambient.mp3"; // Ambient background sound
+const powerDownSound = "/fnaf_assets/powerdown.mp3"; // Power outage sound
+const fanSound = "/fnaf_assets/fan.mp3"; // Office fan sound
+const foxyRunningSound = "/fnaf_assets/foxy_running.mp3"; // Foxy running sound
+const freddyLaughSound = "/fnaf_assets/freddy_laugh.mp3"; // Freddy's laugh
+const phoneCallSound = "/fnaf_assets/phone_call.mp3"; // Phone guy call
+const musicBoxSound = "/fnaf_assets/music_box.mp3"; // Freddy's music box during power outage
+const victorySound = "/fnaf_assets/6am.mp3"; // 6 AM chime
+const footstepSound = "/fnaf_assets/footstep.mp3"; // Animatronic footstep
+const garbleSound = "/fnaf_assets/garble.mp3"; // Kitchen audio sound (pots & pans)
 
 export function FiveNightsAtFreddys() {
   const [power, setPower] = useState(100);
@@ -48,6 +87,10 @@ export function FiveNightsAtFreddys() {
   const [gameWon, setGameWon] = useState(false);
   const [powerDrain, setPowerDrain] = useState(1);
   const [killerAnimatronic, setKillerAnimatronic] = useState<string>("freddy");
+  const [isInstructions, setIsInstructions] = useState(true); // Show instructions on first load
+  const [keyboardControlsActive, setKeyboardControlsActive] = useState(false); // Track if keyboard controls are active
+  const [mouseLookPosition, setMouseLookPosition] = useState({ x: 0, y: 0 }); // Track mouse position for office view
+  const gameContainerRef = useRef<HTMLDivElement>(null); // Reference to game container for mouse controls
   const [animatronics, setAnimatronics] = useState({
     freddy: { room: "1A", active: false, danger: false },
     bonnie: { room: "1A", active: false, danger: false },
@@ -141,6 +184,130 @@ export function FiveNightsAtFreddys() {
     };
   }, []);
   
+  // Keyboard controls for making the game more interactive
+  useEffect(() => {
+    if (gameOver || gameWon || isInstructions) return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (camera) {
+        // Camera mode keyboard controls
+        switch(e.key.toLowerCase()) {
+          case 'escape':
+          case 'c':
+            toggleCamera();
+            playSound(cameraSound);
+            break;
+          case '1': 
+            switchCamera("1A");
+            playSound(cameraSound);
+            break;
+          case '2': 
+            switchCamera("1B");
+            playSound(cameraSound);
+            break;
+          case '3': 
+            switchCamera("1C");
+            playSound(cameraSound);
+            break;
+          case '4': 
+            switchCamera("2A");
+            playSound(cameraSound);
+            break;
+          case '5': 
+            switchCamera("2B");
+            playSound(cameraSound);
+            break;
+        }
+      } else {
+        // Office mode keyboard controls
+        switch(e.key.toLowerCase()) {
+          case 'q': // Left door toggle
+            if (power > 0) {
+              toggleDoor("left");
+              playSound(doorSound);
+            }
+            break;
+          case 'e': // Right door toggle
+            if (power > 0) {
+              toggleDoor("right");
+              playSound(doorSound);
+            }
+            break;
+          case 'a': // Left light on
+            if (power > 0 && !leftLightOn) {
+              setLeftLightOn(true);
+              setRightLightOn(false);
+            }
+            break;
+          case 'd': // Right light on
+            if (power > 0 && !rightLightOn) {
+              setRightLightOn(true);
+              setLeftLightOn(false);
+            }
+            break;
+          case 'c': // Toggle camera
+            if (power > 0) {
+              toggleCamera();
+              playSound(cameraSound);
+            }
+            break;
+        }
+      }
+    };
+    
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (gameOver || gameWon) return;
+      
+      // Turn off lights when key released
+      switch(e.key.toLowerCase()) {
+        case 'a': // Left light off
+          setLeftLightOn(false);
+          break;
+        case 'd': // Right light off
+          setRightLightOn(false);
+          break;
+      }
+    };
+    
+    // Activate keyboard controls
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    setKeyboardControlsActive(true);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      setKeyboardControlsActive(false);
+    };
+  }, [camera, power, gameOver, gameWon, isInstructions, playSound]);
+  
+  // Mouse-based camera movement in office view
+  useEffect(() => {
+    if (gameOver || gameWon || camera || isInstructions) return;
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!gameContainerRef.current) return;
+      
+      const rect = gameContainerRef.current.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width;
+      const y = (e.clientY - rect.top) / rect.height;
+      
+      // Update mouse position
+      setMouseLookPosition({ x, y });
+    };
+    
+    // Add mouse move event listener
+    if (gameContainerRef.current) {
+      gameContainerRef.current.addEventListener('mousemove', handleMouseMove);
+    }
+    
+    return () => {
+      if (gameContainerRef.current) {
+        gameContainerRef.current.removeEventListener('mousemove', handleMouseMove);
+      }
+    };
+  }, [camera, gameOver, gameWon, isInstructions]);
+
   // Calculate power drain based on what's active
   useEffect(() => {
     let drain = 1; // Base drain
@@ -1028,6 +1195,53 @@ export function FiveNightsAtFreddys() {
     );
   };
   
+  // Render game instructions for first-time players
+  const renderInstructions = () => {
+    return (
+      <div className="h-full bg-black text-white flex flex-col items-center justify-center p-8 rounded-lg">
+        <h2 className="text-4xl text-red-600 mb-6 font-bold">Five Nights at Freddy's</h2>
+        
+        <div className="max-w-2xl bg-gray-900 p-6 rounded-lg border-2 border-gray-800 mb-6">
+          <h3 className="text-2xl mb-4 text-yellow-400">How to Play</h3>
+          
+          <div className="mb-4">
+            <h4 className="text-xl text-red-400 mb-2">Survive until 6 AM</h4>
+            <p className="mb-3">You are a night security guard at Freddy Fazbear's Pizza. The animatronic characters move at night and will try to reach your office.</p>
+          </div>
+          
+          <div className="mb-4">
+            <h4 className="text-xl text-red-400 mb-2">Keyboard Controls</h4>
+            <ul className="grid grid-cols-2 gap-2">
+              <li><span className="bg-red-900 px-2 py-1 rounded mr-2">Q</span> Toggle left door</li>
+              <li><span className="bg-red-900 px-2 py-1 rounded mr-2">E</span> Toggle right door</li>
+              <li><span className="bg-red-900 px-2 py-1 rounded mr-2">A</span> Left light (hold)</li>
+              <li><span className="bg-red-900 px-2 py-1 rounded mr-2">D</span> Right light (hold)</li>
+              <li><span className="bg-red-900 px-2 py-1 rounded mr-2">C</span> Toggle camera view</li>
+              <li><span className="bg-red-900 px-2 py-1 rounded mr-2">1-5</span> Switch cameras</li>
+            </ul>
+          </div>
+          
+          <div className="mb-4">
+            <h4 className="text-xl text-red-400 mb-2">Manage Your Power</h4>
+            <p>Your office has limited power. Doors, lights, and cameras all drain power. If your power runs out, Freddy will come for you!</p>
+          </div>
+          
+          <div className="mb-4">
+            <h4 className="text-xl text-red-400 mb-2">Use Doors Wisely</h4>
+            <p>Use the door lights to check if animatronics are outside, then close the doors to keep them out. Don't keep doors closed unnecessarily!</p>
+          </div>
+        </div>
+        
+        <Button 
+          onClick={() => setIsInstructions(false)} 
+          className="px-8 py-6 text-lg bg-red-800 hover:bg-red-700 text-white font-bold"
+        >
+          START NIGHT 1
+        </Button>
+      </div>
+    );
+  };
+
   return (
     <div className="h-full flex flex-col">
       <Card className="mb-4">
@@ -1038,11 +1252,21 @@ export function FiveNightsAtFreddys() {
             while watching for animatronic characters that move at night. Close the doors to stay safe,
             but watch your power usage!
           </p>
+          
+          {/* Control instructions */}
+          <div className="mt-2 text-sm text-gray-600">
+            <p>Keyboard controls: <strong>Q/E</strong> - Doors, <strong>A/D</strong> - Lights, <strong>C</strong> - Camera, <strong>1-5</strong> - Switch cameras</p>
+          </div>
         </CardContent>
       </Card>
       
-      <div className="flex-grow bg-black rounded-lg overflow-hidden">
-        {gameOver ? (
+      <div 
+        ref={gameContainerRef}
+        className="flex-grow bg-black rounded-lg overflow-hidden relative"
+      >
+        {isInstructions ? (
+          renderInstructions()
+        ) : gameOver ? (
           renderGameOver()
         ) : gameWon ? (
           renderVictory()
@@ -1050,6 +1274,21 @@ export function FiveNightsAtFreddys() {
           renderCameraView()
         ) : (
           renderOfficeView()
+        )}
+        
+        {/* Full keyboard controls overlay that appears when game is active */}
+        {!isInstructions && !gameOver && !gameWon && (
+          <div className="absolute top-4 right-4 z-30 bg-black bg-opacity-70 p-2 rounded-lg border border-gray-700 text-white text-xs">
+            <div className="mb-1 font-bold">CONTROLS:</div>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+              <div><span className="bg-red-900 px-1 rounded mr-1">Q</span> Left Door</div>
+              <div><span className="bg-red-900 px-1 rounded mr-1">E</span> Right Door</div>
+              <div><span className="bg-red-900 px-1 rounded mr-1">A</span> Left Light</div>
+              <div><span className="bg-red-900 px-1 rounded mr-1">D</span> Right Light</div>
+              <div><span className="bg-red-900 px-1 rounded mr-1">C</span> Camera</div>
+              <div><span className="bg-red-900 px-1 rounded mr-1">1-5</span> Cams</div>
+            </div>
+          </div>
         )}
       </div>
       
