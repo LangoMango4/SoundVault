@@ -1,53 +1,61 @@
-import { useQuery, UseQueryOptions } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { OnlineUser } from "@shared/schema";
-import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 
 export function useOnlineUsers(currentPage?: string) {
-  const { toast } = useToast();
-  
-  const queryOptions: UseQueryOptions<OnlineUser[]> = {
-    queryKey: ["/api/online-users"],
-    queryFn: async () => {
-      const url = currentPage 
-        ? `/api/online-users?page=${encodeURIComponent(currentPage)}` 
-        : "/api/online-users";
-      
-      const response = await fetch(url, {
-        credentials: "include"
-      });
-      
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || "Failed to fetch online users");
-      }
-      
-      return response.json();
-    },
-    // Refresh every 15 seconds to keep the list updated
-    refetchInterval: 15000,
-    // Don't throw errors to the UI
-    useErrorBoundary: false,
-    // Retry fewer times
-    retry: 2,
-  };
-  
-  const query = useQuery<OnlineUser[]>(queryOptions);
-  
-  // Handle error through an effect to avoid render loops
+  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
   useEffect(() => {
-    if (query.error) {
-      console.error("Error fetching online users:", query.error);
-      // We'll only show an error toast on the first error
-      if (query.failureCount === 1) {
-        toast({
-          title: "Error",
-          description: "Failed to load online users list",
-          variant: "destructive",
+    const fetchUsers = async () => {
+      try {
+        setIsLoading(true);
+        const url = currentPage 
+          ? `/api/online-users?page=${encodeURIComponent(currentPage)}` 
+          : "/api/online-users";
+        
+        const response = await fetch(url, {
+          credentials: "include"
         });
+        
+        if (!response.ok) {
+          // For 401 unauthorized, just return empty array without error
+          if (response.status === 401) {
+            setOnlineUsers([]);
+            setError(null);
+            return;
+          }
+          
+          const errorText = await response.text();
+          throw new Error(errorText || "Failed to fetch online users");
+        }
+        
+        const data = await response.json();
+        setOnlineUsers(data);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching online users:", err);
+        setError(err instanceof Error ? err : new Error('Unknown error'));
+        // Don't clear users on error to avoid flickering
+      } finally {
+        setIsLoading(false);
       }
-    }
-  }, [query.error, query.failureCount, toast]);
-  
-  return query;
+    };
+
+    // Initial fetch
+    fetchUsers();
+
+    // Set up interval for periodic refreshes
+    const interval = setInterval(fetchUsers, 15000);
+    
+    // Clean up interval on unmount
+    return () => clearInterval(interval);
+  }, [currentPage]);
+
+  return {
+    data: onlineUsers,
+    isLoading,
+    error
+  };
 }
