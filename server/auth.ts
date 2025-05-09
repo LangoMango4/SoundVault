@@ -38,9 +38,13 @@ export function setupAuth(app: Express) {
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
+    rolling: true,
+    name: 'soundboard.sid',
     cookie: {
       secure: process.env.NODE_ENV === "production",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
+      httpOnly: true,
+      sameSite: 'lax'
     }
   };
 
@@ -67,9 +71,13 @@ export function setupAuth(app: Express) {
   passport.deserializeUser(async (id: number, done) => {
     try {
       const user = await storage.getUser(id);
-      done(null, user);
+      if (!user) {
+        return done(new Error('Failed to deserialize user - user not found'), null);
+      }
+      return done(null, user);
     } catch (error) {
-      done(error);
+      console.error('Error deserializing user:', error);
+      return done(error);
     }
   });
 
