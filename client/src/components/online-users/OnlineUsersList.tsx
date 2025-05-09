@@ -6,6 +6,7 @@ import { User } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { OnlineUser } from "@shared/schema";
 
 interface OnlineUsersListProps {
   currentPage?: string;
@@ -38,6 +39,8 @@ export function OnlineUsersList({ currentPage, maxHeight = "300px" }: OnlineUser
     );
   }
 
+  const onlineUsersArray = onlineUsers as OnlineUser[] || [];
+  
   return (
     <Card>
       <CardHeader className="p-3">
@@ -45,13 +48,13 @@ export function OnlineUsersList({ currentPage, maxHeight = "300px" }: OnlineUser
           <span>Online Users</span>
           {!isLoading && (
             <Badge variant="outline" className="ml-2">
-              {onlineUsers?.length || 0}
+              {onlineUsersArray.length}
             </Badge>
           )}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-3 pt-0">
-        <ScrollArea className={`pr-2 ${maxHeight ? `max-h-[${maxHeight}]` : ""}`}>
+        <ScrollArea className={`pr-2`} style={{ maxHeight: maxHeight }}>
           {isLoading ? (
             <>
               {[1, 2, 3].map((i) => (
@@ -64,9 +67,9 @@ export function OnlineUsersList({ currentPage, maxHeight = "300px" }: OnlineUser
                 </div>
               ))}
             </>
-          ) : onlineUsers && onlineUsers.length > 0 ? (
+          ) : onlineUsersArray.length > 0 ? (
             <div className="space-y-2">
-              {onlineUsers.map((user) => (
+              {onlineUsersArray.map((user: OnlineUser) => (
                 <div
                   key={user.id}
                   className="flex items-center p-1 rounded hover:bg-accent/50"
