@@ -9,6 +9,7 @@ import { Trash2, AlertCircle, Info } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { useChatNotification } from "@/hooks/use-chat-notification";
 
 interface ChatMessage {
   id: number;
@@ -38,6 +39,7 @@ export function Chat() {
   const [message, setMessage] = useState("");
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [previousMessageCount, setPreviousMessageCount] = useState(0);
 
   // Fetch all chat messages
   const { data: chatMessages = [], isLoading } = useQuery<ChatMessage[]>({
@@ -56,6 +58,17 @@ export function Chat() {
     refetchInterval: 2000 // Auto refresh every 2 seconds to show new messages
   });
   
+  // Use chat notification hook after messages are loaded
+  const { newMessageReceived, resetNotification } = useChatNotification({
+    messages: chatMessages,
+    previousLength: previousMessageCount
+  });
+
+  // Update the previous message count when messages change
+  useEffect(() => {
+    setPreviousMessageCount(chatMessages.length);
+  }, [chatMessages.length]);
+
   // Scroll to bottom whenever messages change
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -229,14 +242,14 @@ export function Chat() {
                           {!isCurrentUser && (
                             <Avatar className="h-8 w-8">
                               <AvatarFallback className="bg-primary text-primary-foreground">
-                                {userInfo.username.substring(0, 2).toUpperCase()}
+                                {userInfo.fullName.substring(0, 2).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
                           )}
                           <div className="flex-1">
                             <div className="flex justify-between items-center mb-1">
                               <div className="font-medium text-sm">
-                                {userInfo.username}
+                                {userInfo.fullName}
                                 {userInfo.role === "admin" && (
                                   <span className="ml-1 text-xs px-1 py-0.5 bg-red-100 text-red-800 rounded">
                                     Admin
@@ -251,7 +264,7 @@ export function Chat() {
                               {msg.isDeleted ? (
                                 <div className="flex items-center gap-1 py-1">
                                   <AlertCircle className="h-3.5 w-3.5 text-red-500" />
-                                  <span className="italic text-gray-500 text-xs">Message was deleted by {userInfo.username}</span>
+                                  <span className="italic text-gray-500 text-xs">Message was deleted by {userInfo.fullName}</span>
                                 </div>
                               ) : (
                                 <div className="flex justify-between items-start gap-4">
