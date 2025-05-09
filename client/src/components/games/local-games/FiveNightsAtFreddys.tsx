@@ -6,12 +6,16 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
-// Authentic FNAF assets
-import freddy1 from "@assets/image_1746600099301.png";
-import bonnie from "@assets/image_1746602271306.png";
-import chica from "@assets/image_1746608432045.png";
-import foxy from "@assets/image_1746608559028.png";
-import door from "@assets/image_1746608655462.png";
+// Authentic FNAF assets from the original game
+const freddy1 = "https://i.imgur.com/zRD2b0v.png"; // Freddy Fazbear
+const bonnie = "https://i.imgur.com/yGAh1Xf.png"; // Bonnie
+const chica = "https://i.imgur.com/NyxuGDr.png"; // Chica
+const foxy = "https://i.imgur.com/kLfPzQs.png"; // Foxy
+const door = "https://i.imgur.com/19j1JQ9.png"; // Door
+const officeBackground = "https://i.imgur.com/jvDJdVQ.png"; // Office background
+const staticImage = "https://i.imgur.com/rA8AY7l.gif"; // Static effect
+const cameraMap = "https://i.imgur.com/X4Qez5X.png"; // Camera map
+const freddyJumpscareImage = "https://i.imgur.com/vNfAS0P.png"; // Freddy jumpscare
 
 export function FiveNightsAtFreddys() {
   const [power, setPower] = useState(100);
