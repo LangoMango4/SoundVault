@@ -286,7 +286,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Update the current user's activity with their current page
       if (req.user && req.query.page) {
-        storage.updateUserActivity(req.user.id, req.query.page as string);
+        // If the page is a game name, prefix it for clarity
+        const page = req.query.page as string;
+        if (page === "Cookie Clicker" || 
+            page === "Dino Dash" || 
+            page === "Memory Match" ||
+            page === "Word Scramble" ||
+            page === "Snake Game" ||
+            page === "Tic-Tac-Toe" ||
+            page === "Math Challenge" ||
+            page === "Geometry Dash") {
+          storage.updateUserActivity(req.user.id, `Playing: ${page}`);
+        } else {
+          storage.updateUserActivity(req.user.id, page);
+        }
       } else if (req.user) {
         storage.updateUserActivity(req.user.id);
       }

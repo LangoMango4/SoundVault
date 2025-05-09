@@ -1,7 +1,8 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { OnlineUsersList } from "@/components/online-users";
 import { Button } from "@/components/ui/button";
 import { Users, X } from "lucide-react";
+import { useLocation } from "wouter";
 
 interface GlobalLayoutProps {
   children: ReactNode;
@@ -9,6 +10,24 @@ interface GlobalLayoutProps {
 
 export function GlobalLayout({ children }: GlobalLayoutProps) {
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+  const [location] = useLocation();
+  const [currentPage, setCurrentPage] = useState("Global");
+  
+  // Update the current page based on the URL location
+  useEffect(() => {
+    let pageName = "Global";
+    
+    // Check if we're on a specific page based on the URL
+    if (location === "/") {
+      pageName = "Home";
+    } else if (location.includes("/auth")) {
+      pageName = "Login";
+    }
+    
+    // Note: This is just the fallback - individual components like games
+    // will override this with their specific game name using the OnlineUsersGameTracker
+    setCurrentPage(pageName);
+  }, [location]);
 
   return (
     <div className="flex min-h-screen relative">
@@ -45,7 +64,7 @@ export function GlobalLayout({ children }: GlobalLayoutProps) {
           </Button>
         )}
         <h2 className="text-xl font-semibold mb-4">Online Users</h2>
-        <OnlineUsersList currentPage="Global" maxHeight="calc(100vh - 6rem)" />
+        <OnlineUsersList currentPage={currentPage} maxHeight="calc(100vh - 6rem)" />
       </div>
     </div>
   );

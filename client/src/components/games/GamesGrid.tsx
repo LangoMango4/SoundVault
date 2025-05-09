@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,36 @@ import { SnakeGame } from "./local-games/SnakeGame";
 import { TicTacToe } from "./local-games/TicTacToe";
 import { MathPuzzle } from "./local-games/MathPuzzle";
 import { ScratchGame } from "./local-games/ScratchGame";
+
+// Component to track the current game for the online users list
+interface OnlineUsersGameTrackerProps {
+  children: ReactNode;
+  gameName: string;
+}
+
+export function OnlineUsersGameTracker({ children, gameName }: OnlineUsersGameTrackerProps) {
+  useEffect(() => {
+    // Update online status with the current game name
+    const updateOnlineStatus = async () => {
+      try {
+        await fetch(`/api/online-users?page=${encodeURIComponent(gameName)}`, {
+          method: 'GET',
+          credentials: 'include'
+        });
+      } catch (error) {
+        console.error("Failed to update online status with game name:", error);
+      }
+    };
+    
+    // Update immediately and then on an interval
+    updateOnlineStatus();
+    const interval = setInterval(updateOnlineStatus, 30000);
+    
+    return () => clearInterval(interval);
+  }, [gameName]);
+  
+  return <>{children}</>;
+}
 
 interface Game {
   id: string;
@@ -191,7 +221,10 @@ export function GamesGrid() {
           {activeGame.isLocal ? (
             // Render local game component
             <div className="w-full h-full p-4 bg-white overflow-y-auto">
-              {activeGame.component && <activeGame.component />}
+              {/* Pass the game name to update online users tracking */}
+              <OnlineUsersGameTracker gameName={activeGame.name}>
+                {activeGame.component && <activeGame.component />}
+              </OnlineUsersGameTracker>
             </div>
           ) : (
             // Render external game in iframe
