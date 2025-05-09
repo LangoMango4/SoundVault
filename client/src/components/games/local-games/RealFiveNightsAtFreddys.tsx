@@ -626,31 +626,31 @@ export function RealFiveNightsAtFreddys() {
       
       case "4B": // East Hall Corner
         if (animatronicsInRoom.includes("chica"))
-          return "/fnaf_assets/cam4b_chica.png"; // Chica in corner
+          return "/src/assets/fnaf/images/cam4b_chica.png"; // Chica in corner
         else if (animatronicsInRoom.includes("freddy"))
-          return "/fnaf_assets/cam4b_freddy.png"; // Freddy in corner
+          return "/src/assets/fnaf/images/cam4b_freddy.png"; // Freddy in corner
         else
-          return "/fnaf_assets/cam4b.png"; // Empty corner
+          return "/src/assets/fnaf/images/cam4b.png"; // Empty corner
         
       case "5": // Backstage
         if (animatronicsInRoom.includes("bonnie"))
-          return "/fnaf_assets/cam5_bonnie.png"; // Bonnie backstage
+          return "/src/assets/fnaf/images/cam5_bonnie.png"; // Bonnie backstage
         else
-          return "/fnaf_assets/cam5.png"; // Empty backstage
+          return "/src/assets/fnaf/images/cam5.png"; // Empty backstage
         
       case "6": // Kitchen (audio only)
-        return "/fnaf_assets/cam6.png"; // Always black - "CAMERA DISABLED - AUDIO ONLY"
+        return "/src/assets/fnaf/images/cam6.png"; // Always black - "CAMERA DISABLED - AUDIO ONLY"
         
       case "7": // Restrooms
         if (animatronicsInRoom.includes("chica"))
-          return "/fnaf_assets/cam7_chica.png"; // Chica in restrooms
+          return "/src/assets/fnaf/images/cam7_chica.png"; // Chica in restrooms
         else if (animatronicsInRoom.includes("freddy"))
-          return "/fnaf_assets/cam7_freddy.png"; // Freddy in restrooms
+          return "/src/assets/fnaf/images/cam7_freddy.png"; // Freddy in restrooms
         else
-          return "/fnaf_assets/cam7.png"; // Empty restrooms
+          return "/src/assets/fnaf/images/cam7.png"; // Empty restrooms
 
       default:
-        return "/fnaf_assets/static.gif";
+        return "/src/assets/fnaf/images/static.gif";
     }
   };
 
