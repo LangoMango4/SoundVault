@@ -1,8 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+
+// Authentic FNAF assets
 import freddy1 from "@assets/image_1746600099301.png";
 import bonnie from "@assets/image_1746602271306.png";
 import chica from "@assets/image_1746608432045.png";
@@ -478,19 +482,43 @@ export function FiveNightsAtFreddys() {
     );
   };
   
-  // Game over screen
+  // Game over screen with authentic jumpscare
   const renderGameOver = () => {
     return (
       <div className="h-full bg-black flex flex-col items-center justify-center">
-        <h2 className="text-red-600 text-4xl mb-8 animate-pulse">GAME OVER</h2>
-        <img 
-          src={freddy1} 
-          alt="Freddy Jumpscare" 
-          className="h-64 mb-8 animate-bounce"
-        />
-        <Button onClick={restartGame} variant="default" size="lg">
-          Try Again
-        </Button>
+        <div className="relative w-full h-full flex flex-col items-center justify-center">
+          {/* Full screen jumpscare image */}
+          <div className="absolute inset-0 flex items-center justify-center bg-black">
+            <img 
+              src={freddy1} 
+              alt="Freddy Jumpscare" 
+              className="max-h-full max-w-full object-contain"
+              style={{ 
+                animation: 'jumpScare 0.5s forwards',
+              }}
+            />
+          </div>
+          
+          {/* Static overlay effect */}
+          <div 
+            className="absolute inset-0 pointer-events-none z-10" 
+            style={{ 
+              background: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.3) 0px, rgba(0,0,0,0.3) 1px, transparent 1px, transparent 2px)',
+              opacity: 0.3,
+              mixBlendMode: 'overlay',
+            }}>
+          </div>
+          
+          {/* Game over text with delayed appearance */}
+          <div className="relative z-20 text-center mt-8">
+            <h2 className="text-red-600 text-5xl mb-8 animate-pulse font-bold mt-16">GAME OVER</h2>
+            <div className="mt-32">
+              <Button onClick={restartGame} variant="destructive" size="lg" className="px-8 py-6 text-lg">
+                Try Again
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   };
@@ -499,11 +527,34 @@ export function FiveNightsAtFreddys() {
   const renderVictory = () => {
     return (
       <div className="h-full bg-black flex flex-col items-center justify-center">
-        <h2 className="text-green-500 text-4xl mb-8">YOU SURVIVED!</h2>
-        <div className="text-white text-xl mb-8">6 AM - Night Complete</div>
-        <Button onClick={restartGame} variant="default" size="lg">
-          Play Again
-        </Button>
+        <div className="text-center">
+          <h2 className="text-yellow-400 text-5xl mb-4 font-pixel">6 AM</h2>
+          <div className="border-t border-b border-yellow-400 py-4 my-6">
+            <h1 className="text-green-400 text-6xl mb-6 animate-pulse font-bold">
+              YOU SURVIVED!
+            </h1>
+            <p className="text-gray-300 text-xl mb-8">Night 1 Complete</p>
+          </div>
+          
+          <div className="mt-8">
+            <p className="text-gray-400 mb-6 text-lg">
+              But they'll be more active tomorrow night...
+            </p>
+            <Button onClick={restartGame} variant="default" size="lg" className="px-8 py-4 text-lg bg-green-800 hover:bg-green-700">
+              Continue to Night 2
+            </Button>
+          </div>
+        </div>
+        
+        {/* Static overlay for authentic feel */}
+        <div 
+          className="absolute inset-0 pointer-events-none z-0" 
+          style={{ 
+            background: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 1px, transparent 1px, transparent 2px)',
+            opacity: 0.1,
+            mixBlendMode: 'overlay',
+          }}>
+        </div>
       </div>
     );
   };
@@ -533,14 +584,60 @@ export function FiveNightsAtFreddys() {
         )}
       </div>
       
-      {/* Add some global CSS for the camera static effect */}
-      <style jsx global>{`
+      {/* Add CSS for the camera static effect */}
+      <style>
+        {`
         @keyframes camera-static {
           0% { opacity: 0.1; }
           50% { opacity: 0.2; }
           100% { opacity: 0.1; }
         }
-      `}</style>
+        
+        @keyframes power-flicker {
+          0% { opacity: 1; }
+          50% { opacity: 0.7; }
+          60% { opacity: 0.8; }
+          70% { opacity: 0.6; }
+          80% { opacity: 0.8; }
+          100% { opacity: 1; }
+        }
+        
+        @keyframes jumpScare {
+          0% { transform: scale(0.8); filter: brightness(0.3); }
+          25% { transform: scale(0.9) rotate(-1deg); filter: brightness(0.5); }
+          50% { transform: scale(1) rotate(1deg); filter: brightness(0.7); }
+          75% { transform: scale(1.1) rotate(-1deg); filter: brightness(0.9); }
+          100% { transform: scale(1.2); filter: brightness(1); }
+        }
+        
+        .fnaf-container {
+          font-family: 'Courier New', monospace;
+          color: #b9b9b9;
+        }
+        
+        .office-background {
+          background-color: #0a0a0a;
+          background-image: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(20,20,20,0.8) 100%);
+        }
+        
+        .security-btn {
+          border: 2px solid #444;
+          background: #222;
+          color: #ddd;
+          transition: all 0.2s ease;
+        }
+        
+        .security-btn:hover {
+          background: #333;
+          border-color: #555;
+        }
+        
+        .security-btn.active {
+          background: #553333;
+          border-color: #664444;
+        }
+        `}
+      </style>
     </div>
   );
 }
