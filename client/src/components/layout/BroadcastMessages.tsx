@@ -98,6 +98,27 @@ export function BroadcastMessages() {
     }
   });
   
+  // Dismiss a message (won't show in notifications again)
+  const dismissMessageMutation = useMutation({
+    mutationFn: async (messageId: number) => {
+      const res = await apiRequest('POST', `/api/messages/${messageId}/dismiss`);
+      return res.json();
+    },
+    onSuccess: () => {
+      // Invalidate all message-related queries to update the UI
+      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/messages', 'unread'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/messages', 'all'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to dismiss message",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+  
   // Mark all messages as read
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
