@@ -11,12 +11,11 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { formatDistance } from 'date-fns';
 import { BroadcastMessage } from '@shared/schema';
 import warningIcon from '@/assets/warning-icon.png';
 import windowsExeIcon from '@/assets/windows-exe-icon.png';
@@ -86,8 +85,6 @@ export function BroadcastMessages() {
     onSuccess: () => {
       // Invalidate all message-related queries to update the UI
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/messages', 'unread'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/messages', 'all'] });
     },
     onError: (error: Error) => {
       toast({
@@ -107,8 +104,6 @@ export function BroadcastMessages() {
     onSuccess: () => {
       // Invalidate all message-related queries to update the UI
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/messages', 'unread'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/messages', 'all'] });
     },
     onError: (error: Error) => {
       toast({
@@ -133,8 +128,6 @@ export function BroadcastMessages() {
     onSuccess: () => {
       // Invalidate all message-related queries
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/messages', 'unread'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/messages', 'all'] });
       toast({
         title: "All messages marked as read",
         description: "You've cleared all your notifications",
@@ -154,15 +147,28 @@ export function BroadcastMessages() {
   
   // Open notifications when there are new unread messages
   useEffect(() => {
-    if (unreadMessages && unreadMessages.length > 0) {
-      // Check if we have a new unread message
-      const latestMessage = unreadMessages[0];
+    if (!unreadMessages || unreadMessages.length === 0) return;
+    
+    // Only show notifications for messages that aren't dismissed
+    // and aren't deleted (should already be filtered by the API)
+    const activeMessages = unreadMessages.filter(msg => {
+      // Skip deleted messages (shouldn't happen due to API filter but just in case)
+      if (msg.isDeleted) return false;
+      
+      // Skip messages that have been dismissed by this user
+      const dismissedBy = Array.isArray(msg.dismissedBy) ? msg.dismissedBy : [];
+      return !dismissedBy.includes(user?.id || 0);
+    });
+    
+    if (activeMessages.length > 0) {
+      // Show the newest unread message first
+      const latestMessage = activeMessages[0];
       
       // Show Windows-style notification
       setActiveNotification(latestMessage);
       setShowWindowsNotification(true);
     }
-  }, [unreadMessages]);
+  }, [unreadMessages, user?.id]);
   
   // Only render if the user is authenticated
   if (!user) return null;
@@ -176,8 +182,6 @@ export function BroadcastMessages() {
     onSuccess: () => {
       // Invalidate all message-related queries to update the UI
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/messages', 'unread'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/messages', 'all'] });
       
       toast({
         title: "Message deleted",
@@ -197,9 +201,13 @@ export function BroadcastMessages() {
   const handleCloseNotification = () => {
     setShowWindowsNotification(false);
     
-    // Mark the message as read
+    // Mark the message as read AND dismiss it so it doesn't show again
     if (activeNotification) {
+      // First mark as read
       markAsReadMutation.mutate(activeNotification.id);
+      
+      // Then dismiss it so it won't show in future notifications
+      dismissMessageMutation.mutate(activeNotification.id);
     }
   };
   
@@ -277,17 +285,44 @@ export function BroadcastMessages() {
                   const hasBeenRead = Array.isArray(message.hasBeenRead) 
                     ? message.hasBeenRead.includes(user.id)
                     : false;
-                    
+
+                  // Check if message is dismissed
+                  const dismissedBy = Array.isArray(message.dismissedBy) 
+                    ? message.dismissedBy 
+                    : [];
+                  const isDismissed = dismissedBy.includes(user.id);
+                  const isDeleted = message.isDeleted;
+                  
+                  // Different styling for different message states
+                  let cardClassName = '';
+                  if (hasBeenRead) cardClassName += ' opacity-70';
+                  if (isDismissed) cardClassName += ' bg-gray-50';
+                  if (isDeleted && isAdmin) cardClassName += ' border-red-200 bg-red-50';
+                  
                   return (
-                    <Card key={message.id} className={hasBeenRead ? 'opacity-70' : ''}>
+                    <Card key={message.id} className={cardClassName}>
                       <CardHeader className="pb-2">
-                        <div className="flex items-center">
-                          <img 
-                            src={windowsExeIcon} 
-                            alt="Windows" 
-                            className="h-3 w-3 mr-2"
-                          />
-                          <CardTitle className="text-base">{message.title}</CardTitle>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <img 
+                              src={windowsExeIcon} 
+                              alt="Windows" 
+                              className="h-3 w-3 mr-2"
+                            />
+                            <CardTitle className="text-base">{message.title}</CardTitle>
+                          </div>
+                          <div className="flex items-center">
+                            {isDismissed && (
+                              <Badge variant="outline" className="text-xs ml-2">
+                                Dismissed
+                              </Badge>
+                            )}
+                            {isDeleted && isAdmin && (
+                              <Badge variant="destructive" className="text-xs ml-2">
+                                Deleted
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </CardHeader>
                       <CardContent className="pb-2">
@@ -302,6 +337,17 @@ export function BroadcastMessages() {
                           >
                             <Check className="mr-1 h-4 w-4" />
                             Mark as read
+                          </Button>
+                        )}
+                        {/* Non-admin users can dismiss messages they've already read */}
+                        {hasBeenRead && !isDismissed && !isAdmin && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => dismissMessageMutation.mutate(message.id)}
+                          >
+                            <X className="mr-1 h-4 w-4" />
+                            Dismiss
                           </Button>
                         )}
                         {isAdmin && (
