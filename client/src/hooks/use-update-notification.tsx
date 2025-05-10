@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/use-auth';
 // Exported interface definition moved below
 
 // Version control to show notification when version changes
-export const CURRENT_VERSION = '1.5.0'; // Current version displayed in notification
+export const CURRENT_VERSION = '1.6.0'; // Current version displayed in notification
 const VERSION_STORAGE_KEY = 'math-homework-version';
 const DEPLOYMENT_CHECK_KEY = 'math-homework-last-deployment-check';
 const DEPLOYMENT_TIMESTAMP_KEY = 'math-homework-deployment-timestamp';
@@ -15,6 +15,17 @@ const DEPLOYMENT_CHECK_INTERVAL = 2 * 60 * 1000; // Check for new deployment eve
 
 // Version history with information about each update
 export const VERSION_HISTORY: Record<string, { title: string; date: string; changes: string[] }> = {
+  '1.6.0': {
+    title: 'Enhancement Update',
+    date: '2025-05-10',
+    changes: [
+      'Added update changelog notifications when the site is redeployed',
+      'Improved broadcast message system with better dismissal tracking',
+      'Chat notification title now shows for only 2 seconds',
+      'Visual indicators for dismissed and deleted messages',
+      'Fixed notification display for previously viewed messages'
+    ]
+  },
   '1.5.0': {
     title: 'Feature Update',
     date: '2025-05-07',

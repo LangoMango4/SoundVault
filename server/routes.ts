@@ -53,7 +53,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(200).json({
       deployedAt: deploymentTime.toISOString(),
       timestamp: deploymentTime.getTime(),
-      version: "1.5.0" // Incremented to trigger update notification
+      version: "1.6.0" // Incremented to trigger update notification
     });
   });
   
