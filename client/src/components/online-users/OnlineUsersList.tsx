@@ -43,7 +43,7 @@ export function OnlineUsersList({ currentPage, maxHeight = "300px" }: OnlineUser
   const onlineUsersArray = onlineUsers as OnlineUser[] || [];
   
   return (
-    <Card className="transition-none">
+    <Card className="transition-none online-users-list">
       <CardHeader className="p-3">
         <CardTitle className="text-sm font-medium flex items-center justify-between">
           <span>Online Users</span>
@@ -53,8 +53,8 @@ export function OnlineUsersList({ currentPage, maxHeight = "300px" }: OnlineUser
         </CardTitle>
       </CardHeader>
       <CardContent className="p-3 pt-0">
-        <ScrollArea className={`pr-2`} style={{ maxHeight: maxHeight }}>
-          <div ref={contentRef}>
+        <ScrollArea className="pr-2" style={{ maxHeight: maxHeight }}>
+          <div ref={contentRef} className="fixed-height-container">
             {isLoading ? (
               <>
                 {[1, 2, 3].map((i) => (

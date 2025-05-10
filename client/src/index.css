@@ -130,3 +130,25 @@
   background-size: 40px 40px;
   background-position: 0 0, 20px 20px;
 }
+
+/* Custom anti-flicker styles */
+.transition-none, 
+.transition-none * {
+  transition: none !important;
+  animation: none !important;
+  will-change: auto !important;
+}
+
+/* Fix height to prevent layout shifts */
+.fixed-height-container {
+  min-height: 100px;
+  max-height: 300px;
+  height: auto;
+  overflow: hidden;
+}
+
+/* Online users list optimizations */
+.online-users-list * {
+  animation-duration: 0s !important;
+  transition-duration: 0s !important;
+}
