@@ -55,7 +55,7 @@ export function Chat() {
       // Hide deleted messages for everyone in the chat (they'll still be visible in chat logs for admins)
       return messages.filter((msg: ChatMessage) => !msg.isDeleted);
     },
-    refetchInterval: 2000 // Auto refresh every 2 seconds to show new messages
+    refetchInterval: 1000 // Auto refresh every 1 second to show new messages
   });
   
   // Use chat notification hook after messages are loaded
@@ -68,6 +68,27 @@ export function Chat() {
   useEffect(() => {
     setPreviousMessageCount(chatMessages.length);
   }, [chatMessages.length]);
+  
+  // Add page tracking for online users list - set to update every 1 second
+  useEffect(() => {
+    // Update online status with "Chat" page name
+    const updatePageStatus = async () => {
+      try {
+        await fetch(`/api/online-users?page=Chat`, {
+          method: 'GET',
+          credentials: 'include'
+        });
+      } catch (error) {
+        console.error("Failed to update status with Chat page:", error);
+      }
+    };
+    
+    // Update immediately and then every second
+    updatePageStatus();
+    const interval = setInterval(updatePageStatus, 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   // Scroll to bottom whenever messages change
   useEffect(() => {
