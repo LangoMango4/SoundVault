@@ -58,6 +58,28 @@ export function GamesGrid() {
   const [fullscreen, setFullscreen] = useState<boolean>(false);
   const [activeGame, setActiveGame] = useState<Game | null>(null);
   
+  // Add page tracking when on the games grid with no active game
+  useEffect(() => {
+    if (!activeGame) {
+      const updatePageStatus = async () => {
+        try {
+          await fetch(`/api/online-users?page=Games`, {
+            method: 'GET',
+            credentials: 'include'
+          });
+        } catch (error) {
+          console.error("Failed to update status with Games page:", error);
+        }
+      };
+      
+      // Update immediately and then on an interval
+      updatePageStatus();
+      const interval = setInterval(updatePageStatus, 30000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [activeGame]);
+  
   // Game library - all local games that will work even with strict school filters
   const games: Game[] = [
     {
