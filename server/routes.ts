@@ -308,7 +308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           storage.updateUserActivity(req.user.id, "Admin Panel");
         }
         else if (page === "Chat") {
-          storage.updateUserActivity(req.user.id, "Chat Room");
+          storage.updateUserActivity(req.user.id, "Chat");
         }
         else if (page === "Games") {
           storage.updateUserActivity(req.user.id, "Games Menu");

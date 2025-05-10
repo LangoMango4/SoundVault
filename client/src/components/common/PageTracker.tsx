@@ -24,9 +24,9 @@ export function PageTracker({ pageName, children }: PageTrackerProps) {
       }
     };
     
-    // Update immediately and then on an interval
+    // Update immediately and then every second for real-time status updates
     updatePageStatus();
-    const interval = setInterval(updatePageStatus, 30000);
+    const interval = setInterval(updatePageStatus, 1000);
     
     return () => clearInterval(interval);
   }, [pageName]);

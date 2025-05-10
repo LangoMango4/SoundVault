@@ -46,8 +46,8 @@ export function useOnlineUsers(currentPage?: string) {
     // Initial fetch
     fetchUsers();
 
-    // Set up interval for periodic refreshes
-    const interval = setInterval(fetchUsers, 15000);
+    // Set up interval for more frequent 1-second refreshes
+    const interval = setInterval(fetchUsers, 1000);
     
     // Clean up interval on unmount
     return () => clearInterval(interval);

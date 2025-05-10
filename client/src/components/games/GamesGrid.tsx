@@ -33,9 +33,9 @@ export function OnlineUsersGameTracker({ children, gameName }: OnlineUsersGameTr
       }
     };
     
-    // Update immediately and then on an interval
+    // Update immediately and then every second for real-time status updates
     updateOnlineStatus();
-    const interval = setInterval(updateOnlineStatus, 30000);
+    const interval = setInterval(updateOnlineStatus, 1000);
     
     return () => clearInterval(interval);
   }, [gameName]);
@@ -72,9 +72,9 @@ export function GamesGrid() {
         }
       };
       
-      // Update immediately and then on an interval
+      // Update immediately and then every second for real-time status updates
       updatePageStatus();
-      const interval = setInterval(updatePageStatus, 30000);
+      const interval = setInterval(updatePageStatus, 1000);
       
       return () => clearInterval(interval);
     }
