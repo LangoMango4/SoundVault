@@ -35,22 +35,13 @@ export function useOnlineUsers(currentPage?: string) {
   const [error, setError] = useState<Error | null>(null);
   const previousUsersRef = useRef<OnlineUser[]>([]);
   const isFirstLoadRef = useRef(true);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const isMountedRef = useRef(true);
 
   // Memoize the fetchUsers function to prevent recreating it on each render
   const fetchUsers = useCallback(async () => {
-    // Cancel any in-flight requests to prevent race conditions
-    try {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    } catch (e) {
-      console.error("Error aborting previous request:", e);
-    }
-    
-    // Create a new abort controller for this request
-    abortControllerRef.current = new AbortController();
-    
+    // Skip if component is unmounted
+    if (!isMountedRef.current) return;
+
     try {
       // Only show loading indicator on first load
       if (isFirstLoadRef.current) {
@@ -62,9 +53,11 @@ export function useOnlineUsers(currentPage?: string) {
         : "/api/online-users";
       
       const response = await fetch(url, {
-        credentials: "include",
-        signal: abortControllerRef.current.signal
+        credentials: "include"
       });
+      
+      // Skip processing if component unmounted during fetch
+      if (!isMountedRef.current) return;
       
       if (!response.ok) {
         // For 401 unauthorized, just return empty array without error
@@ -92,18 +85,22 @@ export function useOnlineUsers(currentPage?: string) {
       setError(null);
       isFirstLoadRef.current = false;
     } catch (err) {
-      // Ignore AbortError as it's expected when we cancel requests
-      if (err instanceof Error && err.name !== 'AbortError') {
-        console.error("Error fetching online users:", err);
-        setError(err);
+      console.error("Error fetching online users:", err);
+      if (isMountedRef.current) {
+        setError(err instanceof Error ? err : new Error('Unknown error'));
       }
       // Don't clear users on error to avoid flickering
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   }, [currentPage, onlineUsers.length]);
 
   useEffect(() => {
+    // Set the mounted flag
+    isMountedRef.current = true;
+    
     // Initial fetch
     fetchUsers();
 
@@ -111,17 +108,10 @@ export function useOnlineUsers(currentPage?: string) {
     // while still being responsive enough for user experience
     const interval = setInterval(fetchUsers, 3000);
     
-    // Clean up interval and abort any in-flight requests on unmount
+    // Clean up interval on unmount
     return () => {
       clearInterval(interval);
-      try {
-        if (abortControllerRef.current) {
-          abortControllerRef.current.abort();
-          abortControllerRef.current = null;
-        }
-      } catch (e) {
-        console.error("Error cleaning up AbortController:", e);
-      }
+      isMountedRef.current = false;
     };
   }, [fetchUsers]);
 
