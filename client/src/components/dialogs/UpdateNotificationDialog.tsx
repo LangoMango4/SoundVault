@@ -28,12 +28,8 @@ export function UpdateNotificationDialog({ open, onAccept, onRefresh }: UpdateNo
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-primary">
-            <img 
-              src="/assets/green_warning_icon.svg" 
-              alt="Warning" 
-              className="h-5 w-5"
-            />
-            System Notification
+            <AlertTriangle className="h-5 w-5 text-primary" />
+            Application Update
           </DialogTitle>
           <DialogDescription>
             The site has been updated with new features and improvements!
