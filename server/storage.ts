@@ -88,6 +88,8 @@ export interface IStorage {
   getBroadcastMessages(): Promise<BroadcastMessage[]>;
   markBroadcastMessageAsRead(messageId: number, userId: number): Promise<BroadcastMessage | undefined>;
   getUnreadBroadcastMessages(userId: number): Promise<BroadcastMessage[]>;
+  softDeleteBroadcastMessage(id: number): Promise<BroadcastMessage | undefined>;
+  dismissBroadcastMessage(messageId: number, userId: number): Promise<BroadcastMessage | undefined>;
   
   // Chat message operations
   getChatMessage(id: number): Promise<ChatMessage | undefined>;
@@ -581,9 +583,56 @@ export class MemStorage implements IStorage {
   async getUnreadBroadcastMessages(userId: number): Promise<BroadcastMessage[]> {
     return (await this.getBroadcastMessages())
       .filter(message => {
+        // Skip deleted messages
+        if (message.isDeleted) return false;
+        
+        // Skip messages dismissed by this user
+        const dismissedBy = Array.isArray(message.dismissedBy) 
+          ? message.dismissedBy 
+          : [];
+        if (dismissedBy.includes(userId)) return false;
+        
+        // Only return unread messages
         const hasBeenRead = Array.isArray(message.hasBeenRead) ? message.hasBeenRead : [];
         return !hasBeenRead.includes(userId);
       });
+  }
+  
+  async softDeleteBroadcastMessage(id: number): Promise<BroadcastMessage | undefined> {
+    const message = await this.getBroadcastMessage(id);
+    if (!message) return undefined;
+    
+    const updatedMessage = { 
+      ...message, 
+      isDeleted: true 
+    };
+    
+    this.broadcastMessages.set(id, updatedMessage);
+    this.saveDataToFiles(); // Save after modification
+    return updatedMessage;
+  }
+  
+  async dismissBroadcastMessage(messageId: number, userId: number): Promise<BroadcastMessage | undefined> {
+    const message = await this.getBroadcastMessage(messageId);
+    if (!message) return undefined;
+    
+    // Check if user has already dismissed this message
+    const dismissedBy = Array.isArray(message.dismissedBy)
+      ? message.dismissedBy
+      : [];
+      
+    if (!dismissedBy.includes(userId)) {
+      const updatedMessage = { 
+        ...message, 
+        dismissedBy: [...dismissedBy, userId] 
+      };
+      
+      this.broadcastMessages.set(messageId, updatedMessage);
+      this.saveDataToFiles(); // Save after modification
+      return updatedMessage;
+    }
+    
+    return message;
   }
 
   // Chat message operations
@@ -1405,11 +1454,58 @@ export class DatabaseStorage implements IStorage {
   async getUnreadBroadcastMessages(userId: number): Promise<BroadcastMessage[]> {
     const messages = await this.getBroadcastMessages();
     return messages.filter(message => {
+      // Skip deleted messages
+      if (message.isDeleted) return false;
+      
+      // Skip messages dismissed by this user
+      const dismissedBy = Array.isArray(message.dismissedBy) 
+        ? message.dismissedBy 
+        : [];
+      if (dismissedBy.includes(userId)) return false;
+      
+      // Only return unread messages
       const hasBeenRead = Array.isArray(message.hasBeenRead)
         ? message.hasBeenRead
         : [];
       return !hasBeenRead.includes(userId);
     });
+  }
+  
+  async softDeleteBroadcastMessage(id: number): Promise<BroadcastMessage | undefined> {
+    const message = await this.getBroadcastMessage(id);
+    if (!message) return undefined;
+    
+    const [updatedMessage] = await db
+      .update(broadcastMessages)
+      .set({ isDeleted: true })
+      .where(eq(broadcastMessages.id, id))
+      .returning();
+      
+    return updatedMessage;
+  }
+  
+  async dismissBroadcastMessage(messageId: number, userId: number): Promise<BroadcastMessage | undefined> {
+    const message = await this.getBroadcastMessage(messageId);
+    if (!message) return undefined;
+    
+    // Check if user has already dismissed this message
+    const dismissedBy = Array.isArray(message.dismissedBy)
+      ? message.dismissedBy
+      : [];
+      
+    if (!dismissedBy.includes(userId)) {
+      const updatedDismissedBy = [...dismissedBy, userId];
+      
+      const [updatedMessage] = await db
+        .update(broadcastMessages)
+        .set({ dismissedBy: updatedDismissedBy })
+        .where(eq(broadcastMessages.id, messageId))
+        .returning();
+        
+      return updatedMessage;
+    }
+    
+    return message;
   }
 
   // Chat message operations
