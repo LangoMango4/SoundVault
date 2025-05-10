@@ -40,8 +40,12 @@ export function useOnlineUsers(currentPage?: string) {
   // Memoize the fetchUsers function to prevent recreating it on each render
   const fetchUsers = useCallback(async () => {
     // Cancel any in-flight requests to prevent race conditions
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
+    try {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    } catch (e) {
+      console.error("Error aborting previous request:", e);
     }
     
     // Create a new abort controller for this request
@@ -110,8 +114,13 @@ export function useOnlineUsers(currentPage?: string) {
     // Clean up interval and abort any in-flight requests on unmount
     return () => {
       clearInterval(interval);
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+      try {
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+          abortControllerRef.current = null;
+        }
+      } catch (e) {
+        console.error("Error cleaning up AbortController:", e);
       }
     };
   }, [fetchUsers]);

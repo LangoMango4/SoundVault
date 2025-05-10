@@ -54,7 +54,7 @@ export function OnlineUsersList({ currentPage, maxHeight = "300px" }: OnlineUser
       </CardHeader>
       <CardContent className="p-3 pt-0">
         <ScrollArea className="pr-2" style={{ maxHeight: maxHeight }}>
-          <div ref={contentRef} className="fixed-height-container">
+          <div ref={contentRef}>
             {isLoading ? (
               <>
                 {[1, 2, 3].map((i) => (
