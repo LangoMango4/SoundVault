@@ -104,7 +104,12 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center">
-            <img src={ABTutorIcon} alt="Maths Homework" className="h-6 w-6 mr-2" />
+            <div className="relative mr-2">
+              <div className="absolute inset-0 border-2 border-blue-500 rounded-full animate-pulse"></div>
+              <div className="relative p-0.5 rounded-full overflow-hidden border-4 border-blue-500">
+                <img src={ABTutorIcon} alt="Maths Homework" className="h-6 w-6" />
+              </div>
+            </div>
             <div>
               <h1 className="text-xl font-semibold text-primary">
                 {user ? "top homework sigma1!!11" : "Maths Homework"}
