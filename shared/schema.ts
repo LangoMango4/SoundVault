@@ -77,12 +77,16 @@ export const broadcastMessages = pgTable("broadcast_messages", {
   priority: text("priority").notNull().default("normal"), // "low", "normal", "high", "urgent"
   expiresAt: timestamp("expires_at"), // Optional: when the message expires
   hasBeenRead: jsonb("has_been_read").default("[]").notNull(), // Array of user IDs who've read the message
+  isDeleted: boolean("is_deleted").default(false).notNull(), // Whether the message has been deleted
+  dismissedBy: jsonb("dismissed_by").default("[]").notNull(), // Array of user IDs who've dismissed the message
 });
 
 export const insertBroadcastMessageSchema = createInsertSchema(broadcastMessages).omit({
   id: true,
   createdAt: true,
   hasBeenRead: true,
+  isDeleted: true,
+  dismissedBy: true,
 });
 
 export type BroadcastMessage = typeof broadcastMessages.$inferSelect;
