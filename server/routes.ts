@@ -1485,7 +1485,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.query.unread === "true" && req.user) {
         messages = await storage.getUnreadBroadcastMessages(req.user.id);
       } else {
-        messages = await storage.getBroadcastMessages();
+        // Filter out deleted messages for normal users, but show them for admins with a flag
+        const allMessages = await storage.getBroadcastMessages();
+        if (req.user?.role === 'admin') {
+          messages = allMessages;
+        } else {
+          // Regular users don't see deleted messages
+          messages = allMessages.filter(msg => !msg.isDeleted);
+        }
       }
       
       res.json(messages);
@@ -1502,7 +1509,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const messageData = {
         ...req.body,
-        createdBy: req.user.id
+        createdBy: req.user.id,
+        isDeleted: false,
+        dismissedBy: []
       };
       
       const validation = insertBroadcastMessageSchema.safeParse(messageData);
@@ -1542,6 +1551,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // New endpoint to dismiss a message (won't show in notifications again for this user)
+  app.post("/api/messages/:id/dismiss", isAuthenticated, async (req, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid message ID" });
+      }
+      
+      const message = await storage.dismissBroadcastMessage(id, req.user.id);
+      if (!message) {
+        return res.status(404).json({ message: "Message not found" });
+      }
+      
+      res.json(message);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Change to soft delete instead of hard delete
   app.delete("/api/messages/:id", isAdmin, async (req, res, next) => {
     try {
       const id = parseInt(req.params.id);
@@ -1549,9 +1582,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid message ID" });
       }
       
-      const success = await storage.deleteBroadcastMessage(id);
-      if (!success) {
-        return res.status(404).json({ message: "Message not found" });
+      // Use hard delete if explicitly requested
+      if (req.query.hard === "true") {
+        const success = await storage.deleteBroadcastMessage(id);
+        if (!success) {
+          return res.status(404).json({ message: "Message not found" });
+        }
+      } else {
+        // Otherwise use soft delete (mark as deleted)
+        const message = await storage.softDeleteBroadcastMessage(id);
+        if (!message) {
+          return res.status(404).json({ message: "Message not found" });
+        }
       }
       
       res.status(204).send();
