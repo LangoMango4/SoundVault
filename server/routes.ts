@@ -305,7 +305,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           storage.updateUserActivity(req.user.id, "Soundboard");
         }
         else if (page === "Admin") {
-          storage.updateUserActivity(req.user.id, "Admin Panel");
+          storage.updateUserActivity(req.user.id, "Administrator Menu");
         }
         else if (page === "Chat") {
           storage.updateUserActivity(req.user.id, "Chat");
@@ -317,7 +317,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           storage.updateUserActivity(req.user.id, "Settings");
         }
         else if (page === "Approvals") {
-          storage.updateUserActivity(req.user.id, "User Approvals");
+          storage.updateUserActivity(req.user.id, "Administrator Menu");
+        }
+        else if (page === "ChatLogs") {
+          storage.updateUserActivity(req.user.id, "Administrator Menu");
         }
         else {
           // Keep the original name for other pages

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Trash2, AlertCircle, FileText } from "lucide-react";
+import { PageTracker } from "@/components/common/PageTracker";
 import { 
   Table, 
   TableBody, 
@@ -112,60 +113,62 @@ export function ChatLogs() {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex items-center mb-6 gap-2">
-        <FileText className="h-5 w-5" />
-        <h2 className="text-xl font-bold">Chat Logs</h2>
-      </div>
-      
-      {isLoading ? (
-        <div className="text-center py-8">Loading chat logs...</div>
-      ) : chatMessages.length === 0 ? (
-        <div className="text-center py-8">No chat messages found</div>
-      ) : (
-        <div className="border rounded-md">
-          <Table>
-            <TableCaption>Complete history of all chat messages</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">ID</TableHead>
-                <TableHead>User</TableHead>
-                <TableHead>Message</TableHead>
-                <TableHead>Timestamp</TableHead>
-                <TableHead className="text-right">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {chatMessages.map((message) => {
-                const userInfo = getUserInfo(message.userId);
-                return (
-                  <TableRow 
-                    key={message.id}
-                    className={message.isDeleted ? "bg-red-50/30" : ""}
-                  >
-                    <TableCell className="font-medium">{message.id}</TableCell>
-                    <TableCell>
-                      {userInfo.username}
-                      {userInfo.role === "admin" && (
-                        <span className="ml-1 text-xs px-1 py-0.5 bg-red-100 text-red-800 rounded">
-                          Admin
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell className={message.isDeleted ? "line-through text-gray-500" : ""}>
-                      {message.content}
-                    </TableCell>
-                    <TableCell>{formatTimestamp(message.timestamp)}</TableCell>
-                    <TableCell className="text-right">
-                      {getMessageStatusLabel(message)}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+    <PageTracker pageName="ChatLogs">
+      <div className="container mx-auto p-4">
+        <div className="flex items-center mb-6 gap-2">
+          <FileText className="h-5 w-5" />
+          <h2 className="text-xl font-bold">Chat Logs</h2>
         </div>
-      )}
-    </div>
+        
+        {isLoading ? (
+          <div className="text-center py-8">Loading chat logs...</div>
+        ) : chatMessages.length === 0 ? (
+          <div className="text-center py-8">No chat messages found</div>
+        ) : (
+          <div className="border rounded-md">
+            <Table>
+              <TableCaption>Complete history of all chat messages</TableCaption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[100px]">ID</TableHead>
+                  <TableHead>User</TableHead>
+                  <TableHead>Message</TableHead>
+                  <TableHead>Timestamp</TableHead>
+                  <TableHead className="text-right">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {chatMessages.map((message) => {
+                  const userInfo = getUserInfo(message.userId);
+                  return (
+                    <TableRow 
+                      key={message.id}
+                      className={message.isDeleted ? "bg-red-50/30" : ""}
+                    >
+                      <TableCell className="font-medium">{message.id}</TableCell>
+                      <TableCell>
+                        {userInfo.username}
+                        {userInfo.role === "admin" && (
+                          <span className="ml-1 text-xs px-1 py-0.5 bg-red-100 text-red-800 rounded">
+                            Admin
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className={message.isDeleted ? "line-through text-gray-500" : ""}>
+                        {message.content}
+                      </TableCell>
+                      <TableCell>{formatTimestamp(message.timestamp)}</TableCell>
+                      <TableCell className="text-right">
+                        {getMessageStatusLabel(message)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </div>
+    </PageTracker>
   );
 }
