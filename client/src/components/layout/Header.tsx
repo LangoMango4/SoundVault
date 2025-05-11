@@ -11,7 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import ABTutorIcon from "@assets/ABTutor.ico";
+import NewAppIcon from "@assets/shell32_279.ico";
 
 interface HeaderProps {
   onOpenAdminPanel?: () => void;
@@ -104,7 +104,7 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center">
-            <img src={ABTutorIcon} alt="Maths Homework" className="h-6 w-6 mr-2" />
+            <img src={NewAppIcon} alt="Maths Homework" className="h-6 w-6 mr-2" />
             <div>
               <h1 className="text-xl font-semibold text-primary">
                 {user ? "top homework sigma1!!11" : "Maths Homework"}
