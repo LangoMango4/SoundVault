@@ -1,652 +1,1302 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
-  AlertDialogTitle 
-} from "@/components/ui/alert-dialog";
-import { Users, FileAudio, Settings, ShieldAlert, UserCheck } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Plus, Edit, Trash2, PlayCircle, Loader2, Calendar, Clock, UserCircle, Tag, Monitor, Globe, Smartphone, CheckCircle, Search, Bell, AlertTriangle, Shield, AlertCircle } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { User, Sound, Category, TermsAcceptanceLog, ChatModerationLog, UserStrike } from "@shared/schema";
+import { CURRENT_VERSION, VERSION_HISTORY } from "@/hooks/use-update-notification";
+import { useUpdateNotification } from "@/hooks/use-update-notification";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2 } from "lucide-react";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-import { 
-  Table, 
-  TableBody, 
-  TableCaption, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
 import { UserForm } from "./UserForm";
 import { SoundForm } from "./SoundForm";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
-import { CURRENT_VERSION, VERSION_HISTORY } from "@/hooks/use-update-notification";
-
-// Import other admin components
+import { ScreenLockControl } from "./ScreenLockControl";
+import { BatchSoundImport } from "./BatchSoundImport";
 import BlockedWordsManager from "./BlockedWordsManager";
-import TestNotification from "./TestNotification";
 import UpdateNotificationTester from "./UpdateNotificationTester";
+import { TestNotification } from "@/components/TestNotification";
+import { PageTracker } from "@/components/common/PageTracker";
+import { Howl } from "howler";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+
 
 interface AdminPanelProps {
   open: boolean;
-  onOpenChange: (value: boolean) => void;
+  onOpenChange: (open: boolean) => void;
+  isScreenLocked?: boolean;
+  onLockChange?: (locked: boolean) => void;
 }
 
-export function AdminPanel({ open, onOpenChange }: AdminPanelProps) {
-  const [searchText, setSearchText] = useState("");
-  const [tableTab, setTableTab] = useState("users");
+export function AdminPanel({ 
+  open, 
+  onOpenChange,
+  isScreenLocked = false,
+  onLockChange
+}: AdminPanelProps) {
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("users");
+  const [termsLogsLimit, setTermsLogsLimit] = useState(100);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isUserFormOpen, setIsUserFormOpen] = useState(false);
   const [isSoundFormOpen, setIsSoundFormOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<any>(null);
-  const [editingSound, setEditingSound] = useState<any>(null);
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [userToApprove, setUserToApprove] = useState<any>(null);
-  const [approvalAction, setApprovalAction] = useState<"approve" | "reject">(
-    "approve"
-  );
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{ type: "user" | "sound" | "termslog" | "moderationlog", id: number } | null>(null);
+  const [searchParams, setSearchParams] = useState<{username?: string; version?: string; method?: string}>({});
+  const [isSearching, setIsSearching] = useState(false);
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [userToApprove, setUserToApprove] = useState<User | null>(null);
+  const [userToReject, setUserToReject] = useState<User | null>(null);
+  
+  // Moderation state
+  const [moderationLogsLimit, setModerationLogsLimit] = useState(100);
 
-  const { toast } = useToast();
-
-  // Fetch users data
-  const {
-    data: users = [],
-    isLoading: isLoadingUsers,
-    refetch: refetchUsers,
-  } = useQuery({
+  // Users query
+  const { 
+    data: users,
+    isLoading: usersLoading,
+  } = useQuery<User[]>({
     queryKey: ["/api/users"],
-    queryFn: async ({ signal }) => {
-      const res = await fetch("/api/users", { signal });
-      if (!res.ok) throw new Error("Failed to fetch users");
-      return res.json();
-    }
+    enabled: open && activeTab === "users",
+  });
+  
+  // Pending users query
+  const {
+    data: pendingUsers,
+    isLoading: pendingUsersLoading,
+    refetch: refetchPendingUsers
+  } = useQuery<User[]>({
+    queryKey: ["/api/users/pending"],
+    enabled: open && activeTab === "approvals",
   });
 
-  // Fetch sounds data
-  const {
-    data: sounds = [],
-    isLoading: isLoadingSounds,
-    refetch: refetchSounds,
-  } = useQuery({
+  // Sounds and categories queries
+  const { 
+    data: sounds,
+    isLoading: soundsLoading,
+  } = useQuery<Sound[]>({
     queryKey: ["/api/sounds"],
-    queryFn: async ({ signal }) => {
-      const res = await fetch("/api/sounds", { signal });
-      if (!res.ok) throw new Error("Failed to fetch sounds");
-      return res.json();
-    }
+    enabled: open && activeTab === "sounds",
   });
 
-  // Fetch terms acceptance logs
-  const {
-    data: termsLogs = [],
-    isLoading: isLoadingTermsLogs,
-  } = useQuery({
-    queryKey: ["/api/terms/logs"],
-    queryFn: async ({ signal }) => {
-      try {
-        const res = await fetch("/api/terms/logs", { signal });
-        if (!res.ok) return [];
-        return res.json();
-      } catch (error) {
-        console.error("Error fetching terms logs:", error);
-        return [];
-      }
-    }
+  const { 
+    data: categories
+  } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
+    enabled: open,
   });
-
-  // Fetch moderation logs
+  
+  // Terms & Conditions logs query
   const {
-    data: moderationLogs = [],
-    isLoading: isLoadingModerationLogs,
-  } = useQuery({
-    queryKey: ["/api/moderation/logs"],
-    queryFn: async ({ signal }) => {
-      try {
-        const res = await fetch("/api/moderation/logs", { signal });
-        if (!res.ok) return [];
-        return res.json();
-      } catch (error) {
-        console.error("Error fetching moderation logs:", error);
-        return [];
-      }
-    }
+    data: termsLogs,
+    isLoading: termsLogsLoading,
+    refetch: refetchTermsLogs
+  } = useQuery<TermsAcceptanceLog[]>({
+    queryKey: ["/api/terms/logs", termsLogsLimit],
+    enabled: open && activeTab === "termslogs",
   });
-
-  // Fetch user strikes
+  
+  // Chat moderation logs query
   const {
-    data: userStrikes = [],
-    isLoading: isLoadingUserStrikes,
-  } = useQuery({
+    data: moderationLogs,
+    isLoading: moderationLogsLoading,
+    refetch: refetchModerationLogs
+  } = useQuery<ChatModerationLog[]>({
+    queryKey: ["/api/moderation/logs", moderationLogsLimit],
+    enabled: open && activeTab === "moderation",
+  });
+  
+  // User strikes query
+  const {
+    data: userStrikes,
+    isLoading: userStrikesLoading,
+    refetch: refetchUserStrikes
+  } = useQuery<UserStrike[]>({
     queryKey: ["/api/moderation/strikes"],
-    queryFn: async ({ signal }) => {
-      try {
-        const res = await fetch("/api/moderation/strikes", { signal });
-        if (!res.ok) return [];
-        return res.json();
-      } catch (error) {
-        console.error("Error fetching user strikes:", error);
-        return [];
-      }
-    }
+    enabled: open && activeTab === "moderation",
   });
-
-  // Mutation for approving/rejecting users
-  const approveUserMutation = useMutation({
-    mutationFn: async ({ userId, approved }: { userId: number; approved: boolean }) => {
-      const res = await apiRequest("PATCH", `/api/users/${userId}`, { approved });
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.message || "Failed to update user approval status");
+  
+  // Search Terms & Conditions logs
+  const searchTermsLogs = async () => {
+    try {
+      setIsSearching(true);
+      const params = new URLSearchParams();
+      
+      if (searchParams.username?.trim()) {
+        params.append("username", searchParams.username.trim());
       }
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
-      setConfirmDialogOpen(false);
-      setUserToApprove(null);
+      
+      if (searchParams.version?.trim()) {
+        params.append("version", searchParams.version.trim());
+      }
+      
+      if (searchParams.method?.trim() && searchParams.method !== 'all') {
+        params.append("acceptanceMethod", searchParams.method.trim());
+      }
+      
+      const response = await fetch(`/api/terms/logs/search?${params.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error(`Search failed: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      queryClient.setQueryData(["/api/terms/logs", termsLogsLimit], data);
+      
       toast({
-        title: `User ${approvalAction === "approve" ? "approved" : "rejected"}`,
-        description: approvalAction === "approve" 
-          ? "The user can now log in to the system" 
-          : "The user's registration has been rejected",
-        variant: approvalAction === "approve" ? "default" : "destructive",
+        title: "Search completed",
+        description: `Found ${data.length} result${data.length !== 1 ? 's' : ''}`,
       });
-    },
-    onError: (error) => {
+    } catch (error) {
       toast({
-        title: "Error",
-        description: error.message,
+        title: "Search failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
         variant: "destructive",
       });
+    } finally {
+      setIsSearching(false);
     }
+  };
+
+  // Delete mutations
+  const deleteTermsLogMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/terms/logs/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/terms/logs"] });
+      toast({
+        title: "Success",
+        description: "Log entry deleted successfully",
+      });
+      setDeleteDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to delete log: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  const deleteModerationLogMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/moderation/logs/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/moderation/logs"] });
+      toast({
+        title: "Success",
+        description: "Moderation log deleted successfully",
+      });
+      setDeleteDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to delete moderation log: ${error.message}`,
+        variant: "destructive",
+      });
+    },
   });
 
-  // Handle user filtering
-  const filteredUsers = users.filter((user: any) => {
-    const searchLower = searchText.toLowerCase();
-    return (
-      user.username.toLowerCase().includes(searchLower) ||
-      user.fullName?.toLowerCase().includes(searchLower) ||
-      user.role?.toLowerCase().includes(searchLower)
-    );
+  const deleteUserMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/users/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({
+        title: "Success",
+        description: "User deleted successfully",
+      });
+      setDeleteDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to delete user: ${error.message}`,
+        variant: "destructive",
+      });
+    },
   });
 
-  // Count pending approvals
-  const pendingApprovalCount = filteredUsers.filter(
-    (user: any) => user.approved === false
-  ).length;
+  const deleteSoundMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/sounds/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/sounds"] });
+      toast({
+        title: "Success",
+        description: "Sound deleted successfully",
+      });
+      setDeleteDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to delete sound: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Chat moderation mutations
+  const toggleChatRestrictionMutation = useMutation({
+    mutationFn: async ({ userId, restrict }: { userId: number; restrict: boolean }) => {
+      return await apiRequest("POST", `/api/moderation/strikes/user/${userId}/restrict`, { restrict });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/moderation/strikes"] });
+      toast({
+        title: "Success",
+        description: "User chat restriction status updated",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to update chat restriction: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  const clearStrikesMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      return await apiRequest("POST", `/api/moderation/strikes/user/${userId}/clear`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/moderation/strikes"] });
+      toast({
+        title: "Success",
+        description: "User strikes cleared successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to clear strikes: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // User approval mutation
+  const approveUserMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      return await apiRequest("POST", `/api/users/${userId}/approve`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users/pending"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      refetchPendingUsers();
+      toast({
+        title: "Success",
+        description: "User approved successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to approve user: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
 
-  // Handle user edit
-  const handleEditUser = (user: any) => {
-    setEditingUser(user);
-    setIsUserFormOpen(true);
-  };
-
-  // Handle sound edit
-  const handleEditSound = (sound: any) => {
-    setEditingSound(sound);
-    setIsSoundFormOpen(true);
-  };
-
-  // Handle user form close
-  const handleUserFormClose = (userUpdated: boolean) => {
-    setIsUserFormOpen(false);
-    setEditingUser(null);
-    if (userUpdated) {
-      refetchUsers();
+  // Close forms when panel closes
+  useEffect(() => {
+    if (!open) {
+      setIsUserFormOpen(false);
+      setIsSoundFormOpen(false);
+      setEditingUser(null);
     }
-  };
+  }, [open]);
 
-  // Handle sound form close
-  const handleSoundFormClose = (soundUpdated: boolean) => {
-    setIsSoundFormOpen(false);
-    setEditingSound(null);
-    if (soundUpdated) {
-      refetchSounds();
-    }
-  };
-
-  // Handle approval/rejection confirmation
-  const handleConfirmApproval = () => {
-    if (!userToApprove) return;
+  // Handle deletion confirmation
+  const handleConfirmDelete = () => {
+    if (!itemToDelete) return;
     
-    approveUserMutation.mutate({
-      userId: userToApprove.id,
-      approved: approvalAction === "approve"
+    if (itemToDelete.type === "user") {
+      deleteUserMutation.mutate(itemToDelete.id);
+    } else if (itemToDelete.type === "sound") {
+      deleteSoundMutation.mutate(itemToDelete.id);
+    } else if (itemToDelete.type === "termslog") {
+      deleteTermsLogMutation.mutate(itemToDelete.id);
+    } else if (itemToDelete.type === "moderationlog") {
+      deleteModerationLogMutation.mutate(itemToDelete.id);
+    }
+  };
+
+  // Handle opening delete dialog
+  const openDeleteDialog = (type: "user" | "sound" | "termslog" | "moderationlog", id: number) => {
+    setItemToDelete({ type, id });
+    setDeleteDialogOpen(true);
+  };
+
+  // Play sound
+  const playSound = (sound: Sound) => {
+    const howl = new Howl({
+      src: [`/api/sounds/files/${sound.filename}`],
+      html5: true,
     });
+    howl.play();
   };
 
-  // Open confirm dialog for approval/rejection
-  const openConfirmDialog = (user: any, action: "approve" | "reject") => {
-    setUserToApprove(user);
-    setApprovalAction(action);
-    setConfirmDialogOpen(true);
-  };
-
-  // Format date for display
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleString();
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl h-[80vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Admin Panel</DialogTitle>
-        </DialogHeader>
+  // User columns for data table
+  const userColumns = [
+    {
+      accessorKey: "username",
+      header: "Username",
+    },
+    {
+      accessorKey: "fullName",
+      header: "Full Name",
+    },
+    {
+      accessorKey: "accessLevel",
+      header: "Access Level",
+      cell: (user: User) => {
+        const variant = 
+          user.accessLevel === "full" ? "success" :
+          user.accessLevel === "limited" ? "info" : "warning";
         
-        <Tabs defaultValue="users" className="flex-1 flex flex-col">
-          <TabsList className="grid grid-cols-5">
-            <TabsTrigger value="users" onClick={() => setTableTab("users")}>
-              <Users className="mr-2 h-4 w-4" />
-              Users
-            </TabsTrigger>
-            <TabsTrigger value="sounds" onClick={() => setTableTab("sounds")}>
-              <FileAudio className="mr-2 h-4 w-4" />
-              Sounds
-            </TabsTrigger>
-            <TabsTrigger value="logs" onClick={() => setTableTab("logs")}>
-              <FileAudio className="mr-2 h-4 w-4" />
-              Logs
-            </TabsTrigger>
-            <TabsTrigger value="moderation" onClick={() => setTableTab("moderation")}>
-              <ShieldAlert className="mr-2 h-4 w-4" />
-              Moderation
-            </TabsTrigger>
-            <TabsTrigger value="settings" onClick={() => setTableTab("settings")}>
-              <Settings className="mr-2 h-4 w-4" />
-              Settings
-            </TabsTrigger>
-          </TabsList>
+        const label = 
+          user.accessLevel === "full" ? "Full Access" :
+          user.accessLevel === "limited" ? "Limited Access" : "Basic Access";
           
-          <TabsContent value="users" className="flex-1 flex flex-col">
-            <div className="flex justify-between items-center mb-4">
-              <div className="relative w-full max-w-sm">
-                <Input
-                  placeholder="Search users..."
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  className="pl-8"
-                />
-                <Users className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        return <Badge variant={variant}>{label}</Badge>;
+      },
+    },
+    {
+      header: "Actions",
+      cell: (user: User) => (
+        <div className="flex space-x-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditingUser(user);
+              setIsUserFormOpen(true);
+            }}
+          >
+            <Edit className="h-4 w-4 text-primary" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              openDeleteDialog("user", user.id);
+            }}
+            disabled={user.role === "admin"}
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+  
+  // Pending user approval columns
+  const pendingUserColumns = [
+    {
+      accessorKey: "username",
+      header: "Username",
+    },
+    {
+      accessorKey: "fullName",
+      header: "Full Name",
+    },
+    {
+      accessorKey: "registrationDate",
+      header: "Registration Date",
+      cell: (user: User) => {
+        const date = new Date(user.registrationDate);
+        return (
+          <div className="flex flex-col">
+            <span>{date.toLocaleDateString()}</span>
+            <span className="text-xs text-muted-foreground">{date.toLocaleTimeString()}</span>
+          </div>
+        );
+      }
+    },
+    {
+      header: "Actions",
+      cell: (user: User) => (
+        <div className="flex space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-green-600 hover:bg-green-700 text-white"
+            onClick={(e) => {
+              e.stopPropagation();
+              setUserToApprove(user);
+              setApproveDialogOpen(true);
+            }}
+          >
+            <CheckCircle className="h-4 w-4 mr-2" />
+            Approve
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              setUserToReject(user);
+              setRejectDialogOpen(true);
+            }}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Reject
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  // Terms & Conditions logs columns for data table
+  const termsLogsColumns = [
+    {
+      accessorKey: "username",
+      header: "Username",
+      cell: (log: TermsAcceptanceLog) => (
+        <div className="flex items-center gap-1.5">
+          <UserCircle className="h-4 w-4 text-muted-foreground" />
+          {log.username}
+        </div>
+      )
+    },
+    {
+      accessorKey: "version",
+      header: "Version",
+      cell: (log: TermsAcceptanceLog) => (
+        <div className="flex items-center gap-1.5">
+          <Tag className="h-4 w-4 text-muted-foreground" />
+          {log.version}
+        </div>
+      )
+    },
+    {
+      accessorKey: "acceptanceTime",
+      header: "Date",
+      cell: (log: TermsAcceptanceLog) => {
+        const date = new Date(log.acceptanceTime);
+        return (
+          <div className="flex items-center gap-1.5">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            {date.toLocaleDateString()}
+          </div>
+        );
+      }
+    },
+    {
+      accessorKey: "acceptanceTime",
+      header: "Time",
+      cell: (log: TermsAcceptanceLog) => {
+        const date = new Date(log.acceptanceTime);
+        return (
+          <div className="flex items-center gap-1.5">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            {date.toLocaleTimeString()}
+          </div>
+        );
+      }
+    },
+    {
+      accessorKey: "acceptanceMethod",
+      header: "Method",
+      cell: (log: TermsAcceptanceLog) => (
+        <div className="flex items-center gap-1.5">
+          {log.acceptanceMethod === "web" ? (
+            <>
+              <Globe className="h-4 w-4 text-muted-foreground" />
+              Web Interface
+            </>
+          ) : log.acceptanceMethod === "mobile" ? (
+            <>
+              <Smartphone className="h-4 w-4 text-muted-foreground" />
+              Mobile App
+            </>
+          ) : (
+            <>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              {log.acceptanceMethod}
+            </>
+          )}
+        </div>
+      )
+    },
+    {
+      header: "Actions",
+      cell: (log: TermsAcceptanceLog) => (
+        <div className="flex space-x-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              openDeleteDialog("termslog", log.id);
+            }}
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  // Chat moderation logs columns for data table
+  const moderationLogsColumns = [
+    {
+      accessorKey: "username",
+      header: "Username",
+      cell: (log: ChatModerationLog) => (
+        <div className="flex items-center gap-1.5">
+          <UserCircle className="h-4 w-4 text-muted-foreground" />
+          {log.username}
+        </div>
+      )
+    },
+    {
+      accessorKey: "originalMessage",
+      header: "Original Message",
+      cell: (log: ChatModerationLog) => (
+        <div className="max-w-[280px] truncate">
+          <span className="font-medium text-yellow-500">{log.originalMessage}</span>
+        </div>
+      )
+    },
+    {
+      accessorKey: "moderationType",
+      header: "Type",
+      cell: (log: ChatModerationLog) => {
+        const variant = 
+          log.moderationType === "profanity" ? "warning" :
+          log.moderationType === "hate_speech" ? "destructive" : "default";
+        
+        const label = 
+          log.moderationType === "profanity" ? "Profanity" :
+          log.moderationType === "hate_speech" ? "Hate Speech" : 
+          log.moderationType === "inappropriate" ? "Inappropriate" : log.moderationType;
+          
+        return <Badge variant={variant}>{label}</Badge>;
+      },
+    },
+    {
+      accessorKey: "reason",
+      header: "Reason",
+      cell: (log: ChatModerationLog) => (
+        <div className="max-w-[200px] truncate">
+          {log.reason}
+        </div>
+      )
+    },
+    {
+      accessorKey: "moderatedAt",
+      header: "Date",
+      cell: (log: ChatModerationLog) => {
+        const date = new Date(log.moderatedAt);
+        return (
+          <div className="flex items-center gap-1.5">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            {date.toLocaleDateString()}
+          </div>
+        );
+      }
+    },
+    {
+      accessorKey: "moderatedAt",
+      header: "Time",
+      cell: (log: ChatModerationLog) => {
+        const date = new Date(log.moderatedAt);
+        return (
+          <div className="flex items-center gap-1.5">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            {date.toLocaleTimeString()}
+          </div>
+        );
+      }
+    },
+    {
+      header: "Actions",
+      cell: (log: ChatModerationLog) => (
+        <div className="flex space-x-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              openDeleteDialog("moderationlog", log.id);
+            }}
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  // User strikes columns for data table
+  const userStrikesColumns = [
+    {
+      accessorKey: "username",
+      header: "Username",
+      cell: (strike: UserStrike) => (
+        <div className="flex items-center gap-1.5">
+          <UserCircle className="h-4 w-4 text-muted-foreground" />
+          {strike.username}
+        </div>
+      )
+    },
+    {
+      accessorKey: "strikesCount",
+      header: "Strikes",
+      cell: (strike: UserStrike) => {
+        let variant = "default";
+        if (strike.strikesCount >= 5) {
+          variant = "destructive";
+        } else if (strike.strikesCount >= 3) {
+          variant = "warning";
+        }
+        
+        return <Badge variant={variant}>{strike.strikesCount}</Badge>;
+      }
+    },
+    {
+      accessorKey: "isChatRestricted",
+      header: "Chat Status",
+      cell: (strike: UserStrike) => {
+        return strike.isChatRestricted ? 
+          <Badge variant="destructive">Restricted</Badge> : 
+          <Badge variant="success">Active</Badge>;
+      }
+    },
+    {
+      accessorKey: "lastStrikeAt",
+      header: "Last Strike",
+      cell: (strike: UserStrike) => {
+        if (!strike.lastStrikeAt) return "Never";
+        
+        const date = new Date(strike.lastStrikeAt);
+        return (
+          <div className="flex flex-col">
+            <span>{date.toLocaleDateString()}</span>
+            <span className="text-xs text-muted-foreground">{date.toLocaleTimeString()}</span>
+          </div>
+        );
+      }
+    },
+    {
+      header: "Actions",
+      cell: (strike: UserStrike) => (
+        <div className="flex space-x-2">
+          <Button
+            variant={strike.isChatRestricted ? "outline" : "ghost"}
+            size="sm"
+            className={strike.isChatRestricted ? "border-green-500 text-green-500 hover:bg-green-50" : ""}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleChatRestrictionMutation.mutate({
+                userId: strike.userId,
+                restrict: !strike.isChatRestricted
+              });
+            }}
+          >
+            {strike.isChatRestricted ? "Restore Chat" : "Restrict Chat"}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              clearStrikesMutation.mutate(strike.userId);
+            }}
+          >
+            Clear Strikes
+          </Button>
+        </div>
+      )
+    },
+  ];
+
+  // Sound columns for data table
+  const soundColumns = [
+    {
+      accessorKey: "name",
+      header: "Name",
+    },
+    {
+      accessorKey: "categoryId",
+      header: "Category",
+      cell: (sound: Sound) => {
+        const category = categories?.find(c => c.id === sound.categoryId);
+        return category?.name || "-";
+      },
+    },
+    {
+      accessorKey: "duration",
+      header: "Duration",
+      cell: (sound: Sound) => `${sound.duration}s`,
+    },
+    {
+      accessorKey: "accessLevel",
+      header: "Access Level",
+      cell: (sound: Sound) => {
+        const variant = 
+          sound.accessLevel === "all" ? "success" :
+          sound.accessLevel === "limited" ? "info" : "warning";
+        
+        const label = 
+          sound.accessLevel === "all" ? "All Users" :
+          sound.accessLevel === "limited" ? "Limited Users" : "Admin Only";
+          
+        return <Badge variant={variant}>{label}</Badge>;
+      },
+    },
+    {
+      header: "Actions",
+      cell: (sound: Sound) => (
+        <div className="flex space-x-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              playSound(sound);
+            }}
+          >
+            <PlayCircle className="h-4 w-4 text-neutral-600" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              openDeleteDialog("sound", sound.id);
+            }}
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  // Use the PageTracker component in a useEffect instead
+  useEffect(() => {
+    if (open) {
+      const updatePageStatus = async () => {
+        try {
+          await fetch(`/api/online-users?page=Admin`, {
+            method: 'GET',
+            credentials: 'include'
+          });
+        } catch (error) {
+          console.error("Failed to update status with Admin page:", error);
+        }
+      };
+      
+      // Update immediately and then on an interval
+      updatePageStatus();
+      const interval = setInterval(updatePageStatus, 30000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [open]);
+  
+  return (
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Admin Panel</DialogTitle>
+          </DialogHeader>
+          
+          {/* Screen Lock Control */}
+          <div className="mb-6 border-b pb-4">
+            <h3 className="text-lg font-medium mb-4">Security Settings</h3>
+            {onLockChange && (
+              <ScreenLockControl
+                isLocked={isScreenLocked}
+                onLockChange={onLockChange}
+              />
+            )}
+          </div>
+            
+          <Tabs 
+            defaultValue="users" 
+            value={activeTab} 
+            onValueChange={setActiveTab}
+            className="flex-1 flex flex-col overflow-hidden"
+          >
+            <TabsList className="border-b rounded-none justify-start">
+              <TabsTrigger value="users">Users</TabsTrigger>
+              <TabsTrigger value="approvals">Account Approvals</TabsTrigger>
+              <TabsTrigger value="sounds">Sounds</TabsTrigger>
+              <TabsTrigger value="termslogs">Terms & Conditions Logs</TabsTrigger>
+              <TabsTrigger value="moderation">Moderation</TabsTrigger>
+              <TabsTrigger value="system">System</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="users" className="flex-1 overflow-auto p-1">
+              <div className="flex justify-between mb-6">
+                <h3 className="text-lg font-medium">Manage Users</h3>
+                <Button 
+                  onClick={() => {
+                    setEditingUser(null);
+                    setIsUserFormOpen(true);
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" /> Add User
+                </Button>
               </div>
               
-              <Button onClick={() => setIsUserFormOpen(true)}>
-                Add User
-              </Button>
-            </div>
-            
-            <div className="flex-1 overflow-hidden">
-              {isLoadingUsers ? (
-                <div className="flex items-center justify-center h-full">
-                  <Loader2 className="h-8 w-8 animate-spin text-border" />
+              {usersLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 </div>
               ) : (
-                <div className="h-full overflow-auto">
-                  {pendingApprovalCount > 0 && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-4">
-                      <h3 className="text-amber-800 font-medium flex items-center gap-2">
-                        <UserCheck className="h-5 w-5" />
-                        New Account Approvals Required ({pendingApprovalCount})
-                      </h3>
-                      <p className="text-amber-700 text-sm mt-1">
-                        There are {pendingApprovalCount} new user account(s) waiting for approval. Review these accounts below.
+                <DataTable columns={userColumns} data={users || []} />
+              )}
+            </TabsContent>
+            
+            <TabsContent value="approvals" className="flex-1 overflow-auto p-1">
+              <div className="flex justify-between mb-6">
+                <h3 className="text-lg font-medium">Pending Account Approvals</h3>
+                <Button 
+                  variant="outline"
+                  onClick={() => refetchPendingUsers()}
+                >
+                  <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                    <path d="M21 3v5h-5"/>
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                    <path d="M8 16H3v5"/>
+                  </svg>
+                  Refresh
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  This section shows users who have registered but are awaiting admin approval.
+                  Approve or reject users to manage access to the system.
+                </p>
+                
+                {pendingUsersLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : pendingUsers && pendingUsers.length > 0 ? (
+                  <DataTable columns={pendingUserColumns} data={pendingUsers} />
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-center border rounded-md">
+                    <div className="mb-2 rounded-full bg-muted p-3">
+                      <CheckCircle className="h-6 w-6 text-green-500" />
+                    </div>
+                    <h3 className="text-lg font-medium">No pending approvals</h3>
+                    <p className="text-sm text-muted-foreground">
+                      All user accounts have been approved. New registrations will appear here.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="sounds" className="flex-1 overflow-auto p-1">
+              <div className="flex justify-between mb-6">
+                <h3 className="text-lg font-medium">Manage Sounds</h3>
+                <Button 
+                  onClick={() => setIsSoundFormOpen(true)}
+                >
+                  <Plus className="mr-2 h-4 w-4" /> Add Sound
+                </Button>
+              </div>
+              
+              {/* Batch Sound Import Component */}
+              <div className="mb-6">
+                <BatchSoundImport />
+              </div>
+              
+              <div className="mt-8">
+                <h3 className="text-lg font-medium mb-4">Sound Library</h3>
+                {soundsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <DataTable columns={soundColumns} data={sounds || []} />
+                )}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="termslogs" className="flex-1 overflow-auto p-1">
+              <div className="flex justify-between mb-6">
+                <h3 className="text-lg font-medium">Terms & Conditions Acceptance Logs</h3>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      refetchTermsLogs();
+                    }}
+                  >
+                    <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                      <path d="M21 3v5h-5"/>
+                      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                      <path d="M8 16H3v5"/>
+                    </svg>
+                    Refresh
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  This table shows all instances where users have accepted the Terms & Conditions. Logs are sorted by the most recent acceptance first.
+                </p>
+                
+                {/* Search Form */}
+                <div className="bg-card rounded-md border shadow-sm p-4">
+                  <h4 className="font-medium mb-3">Search Logs</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="username">Username</Label>
+                      <Input 
+                        id="username" 
+                        placeholder="Search by username"
+                        onChange={(e) => setSearchParams(prev => ({ ...prev, username: e.target.value }))} 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="version">Version</Label>
+                      <Input 
+                        id="version" 
+                        placeholder="e.g. 1.2.0"
+                        onChange={(e) => setSearchParams(prev => ({ ...prev, version: e.target.value }))} 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="method">Acceptance Method</Label>
+                      <Select onValueChange={(value) => setSearchParams(prev => ({ ...prev, method: value }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All methods</SelectItem>
+                          <SelectItem value="web">Web Interface</SelectItem>
+                          <SelectItem value="mobile">Mobile App</SelectItem>
+                          <SelectItem value="api">API</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end mt-4 gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setSearchParams({});
+                        refetchTermsLogs();
+                      }}
+                    >
+                      Clear
+                    </Button>
+                    <Button 
+                      onClick={() => searchTermsLogs()}
+                      disabled={isSearching}
+                    >
+                      {isSearching ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Searching...
+                        </>
+                      ) : (
+                        <>
+                          <Search className="mr-2 h-4 w-4" />
+                          Search
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                
+                {termsLogsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : termsLogs && termsLogs.length > 0 ? (
+                  <DataTable columns={termsLogsColumns} data={termsLogs} />
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="mb-2 rounded-full bg-muted p-3">
+                      <svg className="h-6 w-6 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15V6" />
+                        <path d="M18.5 18a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
+                        <path d="M12 12H3" />
+                        <path d="M16 6H3" />
+                        <path d="M12 18H3" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium">No logs found</h3>
+                    <p className="text-sm text-muted-foreground">
+                      No Terms & Conditions acceptance logs have been recorded yet.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="moderation" className="flex-1 overflow-auto p-1">
+              <div className="flex justify-between mb-6">
+                <h3 className="text-lg font-medium">Chat Moderation</h3>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      refetchModerationLogs();
+                      refetchUserStrikes();
+                    }}
+                  >
+                    <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                      <path d="M21 3v5h-5"/>
+                      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                      <path d="M8 16H3v5"/>
+                    </svg>
+                    Refresh
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="space-y-8">
+                {/* Custom Blocked Words Manager */}
+                <BlockedWordsManager className="mb-8" />
+                
+                {/* User Strikes */}
+                <div>
+                  <h4 className="text-lg font-medium mb-4">User Strikes</h4>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    This table shows users who have received strikes for chat violations. 
+                    Users with 5 or more strikes have limited chat privileges.
+                  </p>
+                  
+                  {userStrikesLoading ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </div>
+                  ) : userStrikes && userStrikes.length > 0 ? (
+                    <DataTable columns={userStrikesColumns} data={userStrikes} />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 text-center border rounded-md">
+                      <div className="mb-2 rounded-full bg-muted p-3">
+                        <svg className="h-6 w-6 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                          <path d="m9 11 3 3L22 4" />
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-medium">No strikes yet</h3>
+                      <p className="text-sm text-muted-foreground">
+                        No users have received strikes for chat violations.
                       </p>
                     </div>
                   )}
+                </div>
+                
+                {/* Moderation Logs */}
+                <div>
+                  <h4 className="text-lg font-medium mb-4">Moderation Logs</h4>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    This table shows all instances where chat messages were moderated.
+                    Messages highlighted in yellow contain the original, unfiltered content.
+                  </p>
                   
-                  <div className="border rounded-md">
-                    <Table>
-                      <TableCaption>A list of all users</TableCaption>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>ID</TableHead>
-                          <TableHead>Username</TableHead>
-                          <TableHead>Full Name</TableHead>
-                          <TableHead>Role</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredUsers.map((user) => (
-                          <TableRow key={user.id}>
-                            <TableCell className="font-medium">{user.id}</TableCell>
-                            <TableCell>{user.username}</TableCell>
-                            <TableCell>{user.fullName}</TableCell>
-                            <TableCell>
-                              <Badge 
-                                variant={user.role === "admin" ? "destructive" : "outline"}
-                              >
-                                {user.role}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Badge 
-                                variant={user.approved ? "success" : "secondary"}
-                              >
-                                {user.approved ? "Approved" : "Pending"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                {!user.approved && (
-                                  <>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => openConfirmDialog(user, "approve")}
-                                    >
-                                      Approve
-                                    </Button>
-                                    <Button
-                                      variant="destructive"
-                                      size="sm"
-                                      onClick={() => openConfirmDialog(user, "reject")}
-                                    >
-                                      Reject
-                                    </Button>
-                                  </>
-                                )}
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleEditUser(user)}
-                                >
-                                  Edit
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                  {moderationLogsLoading ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </div>
+                  ) : moderationLogs && moderationLogs.length > 0 ? (
+                    <DataTable columns={moderationLogsColumns} data={moderationLogs} />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 text-center border rounded-md">
+                      <div className="mb-2 rounded-full bg-muted p-3">
+                        <svg className="h-6 w-6 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h1" />
+                          <path d="M15 3h1a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-1" />
+                          <path d="M8 11v5a4 4 0 0 0 8 0v-5" />
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-medium">No moderation logs</h3>
+                      <p className="text-sm text-muted-foreground">
+                        No chat messages have been moderated yet.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="system" className="flex-1 overflow-auto p-1">
+              <div className="flex justify-between mb-6">
+                <h3 className="text-lg font-medium">System Settings</h3>
+              </div>
+              
+              <div className="space-y-8">
+                {/* Update Notification Testing */}
+                <div className="bg-card rounded-md border shadow-sm p-6">
+                  <h4 className="font-medium text-lg mb-3">Update Notification</h4>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    The update notification automatically shows when the application is updated with a new version.
+                    For testing purposes, you can manually trigger the notification here.
+                  </p>
+                  
+                  <div className="space-y-4">
+                    <UpdateNotificationTester />
                   </div>
                 </div>
-              )}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="sounds" className="flex-1 flex flex-col">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Sound Management</h2>
-              <Button onClick={() => setIsSoundFormOpen(true)}>
-                Add Sound
-              </Button>
-            </div>
-            
-            <div className="flex-1 overflow-hidden">
-              {isLoadingSounds ? (
-                <div className="flex items-center justify-center h-full">
-                  <Loader2 className="h-8 w-8 animate-spin text-border" />
-                </div>
-              ) : (
-                <div className="border rounded-md">
-                  <Table>
-                    <TableCaption>A list of all sounds</TableCaption>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Filename</TableHead>
-                        <TableHead>Access Level</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {sounds.map((sound) => (
-                        <TableRow key={sound.id}>
-                          <TableCell className="font-medium">{sound.id}</TableCell>
-                          <TableCell>{sound.name}</TableCell>
-                          <TableCell>{sound.filename}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
-                              {sound.accessLevel}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {sound.category?.name || "Uncategorized"}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEditSound(sound)}
-                            >
-                              Edit
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="logs" className="flex-1 flex flex-col overflow-hidden">
-            <ScrollArea className="h-full pr-4">
-              <h2 className="text-xl font-bold mb-4">Terms &amp; Conditions Acceptance Logs</h2>
-              
-              {isLoadingTermsLogs ? (
-                <div className="flex items-center justify-center h-40">
-                  <Loader2 className="h-8 w-8 animate-spin text-border" />
-                </div>
-              ) : termsLogs.length === 0 ? (
-                <div className="text-center py-8 border rounded-md">
-                  <p className="text-muted-foreground">No terms acceptance logs found</p>
-                </div>
-              ) : (
-                <div className="border rounded-md">
-                  <Table>
-                    <TableCaption>History of terms and conditions acceptances</TableCaption>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>User</TableHead>
-                        <TableHead>IP Address</TableHead>
-                        <TableHead>Timestamp</TableHead>
-                        <TableHead>Terms Version</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {termsLogs.map((log) => (
-                        <TableRow key={log.id}>
-                          <TableCell className="font-medium">{log.id}</TableCell>
-                          <TableCell>{log.username}</TableCell>
-                          <TableCell>{log.ipAddress}</TableCell>
-                          <TableCell>{formatDate(log.timestamp)}</TableCell>
-                          <TableCell>{log.termsVersion || "1.0"}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </ScrollArea>
-          </TabsContent>
-          
-          <TabsContent value="moderation" className="flex-1 flex flex-col">
-            <ScrollArea className="h-full pr-4">
-              <div className="space-y-8">
-                <div>
-                  <h2 className="text-xl font-bold mb-4">User Strikes</h2>
-                  {isLoadingUserStrikes ? (
-                    <div className="flex items-center justify-center h-40">
-                      <Loader2 className="h-8 w-8 animate-spin text-border" />
+                
+                {/* System Information */}
+                <div className="bg-card rounded-md border shadow-sm p-6">
+                  <h4 className="font-medium text-lg mb-3">System Information</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium mb-1">Current Version</p>
+                      <p className="text-sm text-muted-foreground">{CURRENT_VERSION}</p>
                     </div>
-                  ) : userStrikes.length === 0 ? (
-                    <div className="text-center py-8 border rounded-md">
-                      <p className="text-muted-foreground">No user strikes found</p>
+                    <div>
+                      <p className="text-sm font-medium mb-1">Last Updated</p>
+                      <p className="text-sm text-muted-foreground">{VERSION_HISTORY[CURRENT_VERSION]?.date || 'Unknown'}</p>
                     </div>
-                  ) : (
-                    <div className="border rounded-md">
-                      <Table>
-                        <TableCaption>User moderation strikes</TableCaption>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>ID</TableHead>
-                            <TableHead>User</TableHead>
-                            <TableHead>Reason</TableHead>
-                            <TableHead>Strike Count</TableHead>
-                            <TableHead>Date</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {userStrikes.map((strike) => (
-                            <TableRow key={strike.id}>
-                              <TableCell className="font-medium">{strike.id}</TableCell>
-                              <TableCell>{strike.username}</TableCell>
-                              <TableCell>{strike.reason}</TableCell>
-                              <TableCell>{strike.strikeCount}</TableCell>
-                              <TableCell>{formatDate(strike.createdAt)}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
+                  </div>
                 </div>
                 
-                <div>
-                  <h2 className="text-xl font-bold mb-4">Moderation Logs</h2>
-                  {isLoadingModerationLogs ? (
-                    <div className="flex items-center justify-center h-40">
-                      <Loader2 className="h-8 w-8 animate-spin text-border" />
-                    </div>
-                  ) : moderationLogs.length === 0 ? (
-                    <div className="text-center py-8 border rounded-md">
-                      <p className="text-muted-foreground">No moderation logs found</p>
-                    </div>
-                  ) : (
-                    <div className="border rounded-md">
-                      <Table>
-                        <TableCaption>Content moderation history</TableCaption>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>ID</TableHead>
-                            <TableHead>User</TableHead>
-                            <TableHead>Content</TableHead>
-                            <TableHead>Action</TableHead>
-                            <TableHead>Reason</TableHead>
-                            <TableHead>Date</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {moderationLogs.map((log) => (
-                            <TableRow key={log.id}>
-                              <TableCell className="font-medium">{log.id}</TableCell>
-                              <TableCell>{log.username}</TableCell>
-                              <TableCell className="max-w-[200px] truncate">{log.content}</TableCell>
-                              <TableCell>{log.action}</TableCell>
-                              <TableCell>{log.reason}</TableCell>
-                              <TableCell>{formatDate(log.timestamp)}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                </div>
-                
-                <BlockedWordsManager />
-              </div>
-            </ScrollArea>
-          </TabsContent>
-          
-          <TabsContent value="settings" className="flex-1">
-            <ScrollArea className="h-full pr-4">
-              <div className="space-y-8">
-                <div>
-                  <h2 className="text-xl font-bold mb-4">Test Notifications</h2>
+                {/* Test Notifications */}
+                <div className="bg-card rounded-md border shadow-sm p-6 mt-4">
+                  <h4 className="font-medium text-lg mb-3">Test Notifications</h4>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Use the buttons below to test different types of notifications with the warning icon.
+                  </p>
                   <TestNotification />
                 </div>
-                
-                <div>
-                  <h2 className="text-xl font-bold mb-4">Update Notification</h2>
-                  <UpdateNotificationTester />
-                </div>
-                
-                <div>
-                  <h2 className="text-xl font-bold mb-4">Version Info</h2>
-                  <div className="border rounded-md p-4">
-                    <p>Current Version: <span className="font-semibold">{CURRENT_VERSION}</span></p>
-                    <div className="mt-4">
-                      <h3 className="font-semibold">Version History:</h3>
-                      <ul className="mt-2 space-y-2">
-                        {Object.entries(VERSION_HISTORY).map(([version, details], index) => (
-                          <li key={index} className="text-sm">
-                            <strong>{version}</strong> ({formatDate(details.date)})
-                            <ul className="ml-4 mt-1">
-                              {details.changes.map((change, i) => (
-                                <li key={i} className="text-xs">{change}</li>
-                              ))}
-                            </ul>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
               </div>
-            </ScrollArea>
-          </TabsContent>
-        </Tabs>
-      </DialogContent>
+            </TabsContent>
+
+
+            
+          </Tabs>
+        </DialogContent>
+      </Dialog>
       
       {/* User Form Dialog */}
-      <UserForm
+      <UserForm 
+        open={isUserFormOpen} 
+        onOpenChange={setIsUserFormOpen}
         user={editingUser}
-        open={isUserFormOpen}
-        onClose={handleUserFormClose}
       />
       
       {/* Sound Form Dialog */}
-      <SoundForm
-        sound={editingSound}
-        open={isSoundFormOpen}
-        onClose={handleSoundFormClose}
+      <SoundForm 
+        open={isSoundFormOpen} 
+        onOpenChange={setIsSoundFormOpen}
       />
       
-      {/* Approval Confirmation Dialog */}
-      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {approvalAction === "approve" 
-                ? "Approve User Registration" 
-                : "Reject User Registration"}
-            </AlertDialogTitle>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              {approvalAction === "approve"
-                ? `Are you sure you want to approve ${userToApprove?.username}'s registration? They will be able to log in to the system.`
-                : `Are you sure you want to reject ${userToApprove?.username}'s registration? They will not be able to log in.`}
+              {itemToDelete?.type === "user" && "This action cannot be undone. This will permanently delete this user account."}
+              {itemToDelete?.type === "sound" && "This action cannot be undone. This will permanently delete this sound from the system."}
+              {itemToDelete?.type === "termslog" && "This action cannot be undone. This will permanently delete this Terms & Conditions acceptance log."}
+              {itemToDelete?.type === "moderationlog" && "This action cannot be undone. This will permanently delete this moderation log entry."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmApproval}
-              className={approvalAction === "approve" ? "" : "bg-destructive hover:bg-destructive/90"}
-            >
-              {approvalAction === "approve" ? "Approve" : "Reject"}
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground">
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Dialog>
+      
+      {/* Approve User Dialog */}
+      <AlertDialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Approve User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to approve {userToApprove?.fullName} ({userToApprove?.username})? 
+              This will grant the user access to the system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              className="bg-green-600 hover:bg-green-700 text-white"
+              onClick={() => {
+                if (userToApprove) {
+                  approveUserMutation.mutate(userToApprove.id);
+                  setApproveDialogOpen(false);
+                  setUserToApprove(null);
+                }
+              }}
+            >
+              Approve
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* Reject User Dialog */}
+      <AlertDialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reject User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to reject {userToReject?.fullName} ({userToReject?.username})? 
+              This will delete their account from the system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              className="bg-destructive text-destructive-foreground"
+              onClick={() => {
+                if (userToReject) {
+                  deleteUserMutation.mutate(userToReject.id);
+                  setRejectDialogOpen(false);
+                  setUserToReject(null);
+                }
+              }}
+            >
+              Reject
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

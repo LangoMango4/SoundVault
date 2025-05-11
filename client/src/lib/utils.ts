@@ -1,53 +1,34 @@
-import { type ClassValue, clsx } from "clsx"
+import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { AlertTriangle } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
-import { AlertCircle } from "lucide-react"
- 
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-/**
- * Shows a system notification with error styling and longer duration
- * Handles different error formats (Error objects, JSON strings, quoted strings)
- */
-export function showSystemNotification(message: string | Error) {
-  let errorMessage = message;
+// Helper function to display system notifications with a consistent format
+export function showSystemNotification(
+  messageOrError: string | Error,
+  variant: "default" | "destructive" = "destructive"
+) {
+  // Extract message string if an Error object was provided
+  const message = messageOrError instanceof Error ? messageOrError.message : messageOrError;
   
-  // Handle Error objects
-  if (message instanceof Error) {
-    errorMessage = message.message;
-  }
+  // Clean up the message - remove any status code prefixes like "403:" or "500: "
+  const cleanMessage = message.replace(/^\d{3}:?\s*/, '');
   
-  // Convert to string if not already
-  let errorText = String(errorMessage);
+  // Remove any quotes or JSON syntax that might have leaked through
+  const formattedMessage = cleanMessage
+    .replace(/^["'{]|[}"']$/g, '')  // Remove surrounding quotes or braces
+    .replace(/\\"/g, '"')           // Replace escaped quotes
+    .replace(/\\/g, '');            // Remove any remaining backslashes
   
-  // Clean up HTTP status codes (e.g., "403: Forbidden" -> "Forbidden")
-  errorText = errorText.replace(/^\d{3}:\s+/g, '');
-  
-  // Remove quotes from JSON-formatted error messages
-  try {
-    // Check if it's a JSON string
-    if (errorText.startsWith('{') && errorText.endsWith('}')) {
-      const parsed = JSON.parse(errorText);
-      if (parsed.error || parsed.message) {
-        errorText = parsed.error || parsed.message;
-      }
-    }
-  } catch (e) {
-    // Not a valid JSON, continue with original message
-  }
-  
-  // Remove quotes from string literals
-  if (errorText.startsWith('"') && errorText.endsWith('"')) {
-    errorText = errorText.substring(1, errorText.length - 1);
-  }
-  
-  // Show toast with longer duration and error styling
+  // Use a plain string title for System Notification so the timeout system recognizes it
+  // and applies the correct duration
   toast({
     title: "System Notification",
-    description: errorText,
-    variant: "destructive",
-    duration: 10000, // 10 seconds
+    description: formattedMessage,
+    variant: variant
   });
 }
