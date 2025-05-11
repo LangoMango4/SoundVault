@@ -102,11 +102,11 @@ export function Header({ onOpenAdminPanel }: HeaderProps) {
   return (
     <>
       <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div className="container mx-auto px-4 py-5 flex justify-between items-center">
           <div className="flex items-center">
-            <img src={NewAppIcon} alt="Maths Homework" className="h-6 w-6 mr-2" />
+            <img src={NewAppIcon} alt="Maths Homework" className="h-10 w-10 mr-3" />
             <div>
-              <h1 className="text-xl font-semibold text-primary">
+              <h1 className="text-2xl font-semibold text-primary">
                 {user ? "top homework sigma1!!11" : "Maths Homework"}
               </h1>
               {user && (
