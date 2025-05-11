@@ -1,165 +1,121 @@
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { insertSoundSchema } from "@shared/schema";
-import { useMutation } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useState } from "react";
-
-// Extended schema with validation
-const formSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  accessLevel: z.string().min(1, "Access level is required"),
-  file: z.instanceof(FileList).refine(files => files.length > 0, "Sound file is required"),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { Loader2 } from "lucide-react";
 
 interface SoundFormProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange: (value: boolean) => void;
+  sound?: any;
 }
 
-export function SoundForm({ open, onOpenChange }: SoundFormProps) {
+export function SoundForm({ open, onOpenChange, sound }: SoundFormProps) {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { toast } = useToast();
-  const [audioPreview, setAudioPreview] = useState<string | null>(null);
   
-  // Initialize form with default values
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  const form = useForm({
     defaultValues: {
       name: "",
-      accessLevel: "all",
-      file: undefined,
+      categoryId: "",
+      accessLevel: "basic",
     },
   });
-
-  // Create sound mutation
-  const createSoundMutation = useMutation({
-    mutationFn: async (values: FormValues) => {
+  
+  // Fetch categories for dropdown
+  const { 
+    data: categories = [],
+    isLoading: categoriesLoading
+  } = useQuery({
+    queryKey: ['/api/categories'],
+    queryFn: async () => {
+      const response = await fetch('/api/categories');
+      if (!response.ok) {
+        throw new Error('Failed to fetch categories');
+      }
+      return response.json();
+    },
+    enabled: open,
+  });
+  
+  const addSoundMutation = useMutation({
+    mutationFn: async (data: any) => {
+      if (!selectedFile) {
+        throw new Error("Please select a sound file");
+      }
+      
+      // Use FormData to upload the file
       const formData = new FormData();
-      formData.append("name", values.name);
-      formData.append("accessLevel", values.accessLevel);
+      formData.append("file", selectedFile);
+      formData.append("name", data.name);
+      formData.append("categoryId", data.categoryId);
+      formData.append("accessLevel", data.accessLevel);
       
-      // Get duration of audio file
-      const file = values.file[0];
-      const audio = new Audio();
-      audio.src = URL.createObjectURL(file);
-      
-      return new Promise((resolve, reject) => {
-        audio.onloadedmetadata = async () => {
-          try {
-            // Round to 1 decimal place
-            const duration = Math.round(audio.duration * 10) / 10;
-            formData.append("duration", duration.toString());
-            formData.append("file", file);
-            
-            const res = await fetch("/api/sounds", {
-              method: "POST",
-              body: formData,
-              credentials: "include",
-            });
-            
-            if (!res.ok) {
-              const errorText = await res.text();
-              throw new Error(errorText);
-            }
-            
-            resolve(await res.json());
-          } catch (error) {
-            reject(error);
-          }
-        };
-        
-        audio.onerror = () => {
-          reject(new Error("Failed to load audio file"));
-        };
+      // Use fetch directly here because apiRequest doesn't support FormData
+      const response = await fetch("/api/sounds", {
+        method: "POST",
+        body: formData,
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to upload sound");
+      }
+      
+      return await response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/sounds"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/sounds'] });
       toast({
-        title: "Success",
-        description: "Sound created successfully",
+        title: "Sound uploaded",
+        description: "The sound has been uploaded successfully",
       });
       onOpenChange(false);
       form.reset();
-      if (audioPreview) {
-        URL.revokeObjectURL(audioPreview);
-        setAudioPreview(null);
-      }
+      setSelectedFile(null);
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: `Failed to create sound: ${error.message}`,
+        title: "Failed to upload sound",
+        description: error.message,
         variant: "destructive",
       });
     },
   });
-
-  const onSubmit = (values: FormValues) => {
-    createSoundMutation.mutate(values);
-  };
   
-  // Handle file change for preview
-  const handleFileChange = (files: FileList | null) => {
-    if (files && files.length > 0) {
-      // Clean up previous preview URL
-      if (audioPreview) {
-        URL.revokeObjectURL(audioPreview);
-      }
-      
-      // Create new preview URL
-      const url = URL.createObjectURL(files[0]);
-      setAudioPreview(url);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFile(e.target.files[0]);
     }
   };
   
-  // Clean up preview URL when dialog closes
-  const handleOpenChange = (open: boolean) => {
-    if (!open && audioPreview) {
-      URL.revokeObjectURL(audioPreview);
-      setAudioPreview(null);
+  const onSubmit = (data: any) => {
+    addSoundMutation.mutate(data);
+  };
+  
+  useEffect(() => {
+    if (!open) {
+      // Reset the form when the dialog closes
       form.reset();
+      setSelectedFile(null);
     }
-    onOpenChange(open);
-  };
-
+  }, [open, form]);
+  
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Sound</DialogTitle>
+          <DialogTitle>Add New Sound</DialogTitle>
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="name"
@@ -167,42 +123,44 @@ export function SoundForm({ open, onOpenChange }: SoundFormProps) {
                 <FormItem>
                   <FormLabel>Sound Name</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input placeholder="Enter sound name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             
-
-            
             <FormField
               control={form.control}
-              name="file"
-              render={({ field: { value, onChange, ...fieldProps } }) => (
+              name="categoryId"
+              render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Sound File</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="file" 
-                      accept="audio/*"
-                      onChange={(e) => {
-                        onChange(e.target.files);
-                        handleFileChange(e.target.files);
-                      }}
-                      {...fieldProps}
-                    />
-                  </FormControl>
+                  <FormLabel>Category</FormLabel>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {categoriesLoading ? (
+                        <div className="flex items-center justify-center p-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        </div>
+                      ) : (
+                        categories.map((category: any) => (
+                          <SelectItem key={category.id} value={category.id.toString()}>
+                            {category.name}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
-                  
-                  {audioPreview && (
-                    <div className="pt-2">
-                      <audio controls className="w-full">
-                        <source src={audioPreview} />
-                        Your browser does not support the audio element.
-                      </audio>
-                    </div>
-                  )}
                 </FormItem>
               )}
             />
@@ -214,8 +172,9 @@ export function SoundForm({ open, onOpenChange }: SoundFormProps) {
                 <FormItem>
                   <FormLabel>Access Level</FormLabel>
                   <Select 
-                    value={field.value} 
-                    onValueChange={field.onChange}
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
+                    value={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -223,8 +182,9 @@ export function SoundForm({ open, onOpenChange }: SoundFormProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="all">All Users</SelectItem>
-                      <SelectItem value="limited">Limited Users</SelectItem>
+                      <SelectItem value="basic">Basic</SelectItem>
+                      <SelectItem value="limited">Limited</SelectItem>
+                      <SelectItem value="full">Full</SelectItem>
                       <SelectItem value="admin">Admin Only</SelectItem>
                     </SelectContent>
                   </Select>
@@ -233,19 +193,41 @@ export function SoundForm({ open, onOpenChange }: SoundFormProps) {
               )}
             />
             
-            <DialogFooter className="pt-4">
+            <FormItem>
+              <FormLabel>Sound File</FormLabel>
+              <FormControl>
+                <Input 
+                  type="file" 
+                  accept="audio/*" 
+                  onChange={handleFileChange}
+                  className="cursor-pointer"
+                />
+              </FormControl>
+              <FormMessage />
+              {selectedFile && (
+                <p className="text-sm text-muted-foreground">
+                  Selected file: {selectedFile.name}
+                </p>
+              )}
+            </FormItem>
+            
+            <DialogFooter>
               <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => handleOpenChange(false)}
+                type="submit" 
+                disabled={
+                  addSoundMutation.isPending || 
+                  !selectedFile || 
+                  !form.formState.isValid
+                }
               >
-                Cancel
-              </Button>
-              <Button 
-                type="submit"
-                disabled={createSoundMutation.isPending}
-              >
-                {createSoundMutation.isPending ? "Uploading..." : "Add Sound"}
+                {addSoundMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                    Uploading...
+                  </>
+                ) : (
+                  "Upload Sound"
+                )}
               </Button>
             </DialogFooter>
           </form>

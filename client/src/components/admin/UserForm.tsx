@@ -1,143 +1,134 @@
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { User, insertUserSchema } from "@shared/schema";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-// Extended schema with validation
-const formSchema = insertUserSchema.extend({
-  password: z.string().min(6, {
-    message: "Password must be at least 6 characters.",
-  }),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 
 interface UserFormProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
-  user: User | null;
+  onOpenChange: (value: boolean) => void;
+  user?: any;
 }
 
 export function UserForm({ open, onOpenChange, user }: UserFormProps) {
+  const isEditMode = !!user;
   const { toast } = useToast();
-  const isEditing = !!user;
   
-  // Initialize form with default values
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  const form = useForm({
     defaultValues: {
-      username: user?.username || "",
-      fullName: user?.fullName || "",
-      password: "", // Don't prefill password
-      role: user?.role || "user",
-      accessLevel: user?.accessLevel || "basic",
+      username: "",
+      password: "",
+      fullName: "",
+      role: "user",
+      approved: true,
     },
   });
-
-  // Create user mutation
-  const createUserMutation = useMutation({
-    mutationFn: async (values: FormValues) => {
-      const res = await apiRequest("POST", "/api/register", values);
-      return await res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/users/plaintext-passwords"] });
-      toast({
-        title: "Success",
-        description: "User created successfully",
+  
+  useEffect(() => {
+    if (user) {
+      form.reset({
+        username: user.username,
+        password: "",  // Don't populate password for security
+        fullName: user.fullName,
+        role: user.role,
+        approved: user.approved,
       });
-      onOpenChange(false);
-      form.reset();
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: `Failed to create user: ${error.message}`,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Update user mutation
-  const updateUserMutation = useMutation({
-    mutationFn: async (values: FormValues) => {
-      // Only include password if it's provided
-      const dataToUpdate = values.password 
-        ? values 
-        : {
-            username: values.username,
-            fullName: values.fullName,
-            role: values.role,
-            accessLevel: values.accessLevel,
-          };
-          
-      const res = await apiRequest("PUT", `/api/users/${user?.id}`, dataToUpdate);
-      return await res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/users/plaintext-passwords"] });
-      toast({
-        title: "Success",
-        description: "User updated successfully",
-      });
-      onOpenChange(false);
-      form.reset();
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: `Failed to update user: ${error.message}`,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const onSubmit = (values: FormValues) => {
-    if (isEditing) {
-      updateUserMutation.mutate(values);
     } else {
-      createUserMutation.mutate(values);
+      form.reset({
+        username: "",
+        password: "",
+        fullName: "",
+        role: "user",
+        approved: true,
+      });
+    }
+  }, [user, form]);
+  
+  const createUserMutation = useMutation({
+    mutationFn: async (data: any) => {
+      await apiRequest("POST", "/api/users", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      toast({
+        title: "User created",
+        description: "The user has been created successfully",
+      });
+      onOpenChange(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to create user",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  const updateUserMutation = useMutation({
+    mutationFn: async (data: any) => {
+      await apiRequest("PATCH", `/api/users/${user.id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      toast({
+        title: "User updated",
+        description: "The user has been updated successfully",
+      });
+      onOpenChange(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to update user",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  const onSubmit = (data: any) => {
+    // For updates, only include what changed
+    if (isEditMode) {
+      const updatedData: any = {};
+      
+      if (data.fullName !== user.fullName) {
+        updatedData.fullName = data.fullName;
+      }
+      
+      if (data.role !== user.role) {
+        updatedData.role = data.role;
+      }
+      
+      if (data.approved !== user.approved) {
+        updatedData.approved = data.approved;
+      }
+      
+      // Only include password if it was provided
+      if (data.password.trim()) {
+        updatedData.password = data.password;
+      }
+      
+      updateUserMutation.mutate(updatedData);
+    } else {
+      createUserMutation.mutate(data);
     }
   };
-
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit User" : "Add User"}</DialogTitle>
+          <DialogTitle>{isEditMode ? "Edit User" : "Add New User"}</DialogTitle>
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="username"
@@ -145,7 +136,29 @@ export function UserForm({ open, onOpenChange, user }: UserFormProps) {
                 <FormItem>
                   <FormLabel>Username</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input 
+                      placeholder="Enter username" 
+                      {...field} 
+                      disabled={isEditMode} // Cannot change username when editing
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{isEditMode ? "New Password (leave blank to keep current)" : "Password"}</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="password" 
+                      placeholder={isEditMode ? "Leave blank to keep current password" : "Enter password"} 
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -159,31 +172,8 @@ export function UserForm({ open, onOpenChange, user }: UserFormProps) {
                 <FormItem>
                   <FormLabel>Full Name</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input placeholder="Enter full name" {...field} />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{isEditing ? "New Password (leave blank to keep current)" : "Password"}</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="text" 
-                      {...field} 
-                      required={!isEditing}
-                    />
-                  </FormControl>
-                  {isEditing && user?.password && (
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Current hashed password: <span className="font-mono text-xs break-all">{user.password}</span>
-                    </div>
-                  )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -196,9 +186,9 @@ export function UserForm({ open, onOpenChange, user }: UserFormProps) {
                 <FormItem>
                   <FormLabel>Role</FormLabel>
                   <Select 
-                    value={field.value} 
-                    onValueChange={field.onChange}
-                    disabled={user?.role === "admin"} // Prevent changing admin role
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
+                    value={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -217,49 +207,33 @@ export function UserForm({ open, onOpenChange, user }: UserFormProps) {
             
             <FormField
               control={form.control}
-              name="accessLevel"
+              name="approved"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Access Level</FormLabel>
-                  <Select 
-                    value={field.value} 
-                    onValueChange={field.onChange}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select access level" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="basic">Basic Access</SelectItem>
-                      <SelectItem value="limited">Limited Access</SelectItem>
-                      <SelectItem value="full">Full Access</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>
+                      Account Approved
+                    </FormLabel>
+                    <p className="text-sm text-muted-foreground">
+                      User can access the system if this is checked
+                    </p>
+                  </div>
                 </FormItem>
               )}
             />
             
-            <DialogFooter className="pt-4">
+            <DialogFooter>
               <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => onOpenChange(false)}
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit"
+                type="submit" 
                 disabled={createUserMutation.isPending || updateUserMutation.isPending}
               >
-                {(createUserMutation.isPending || updateUserMutation.isPending) ? (
-                  <>Loading...</>
-                ) : isEditing ? (
-                  "Update User"
-                ) : (
-                  "Add User"
-                )}
+                {isEditMode ? "Update User" : "Create User"}
               </Button>
             </DialogFooter>
           </form>
