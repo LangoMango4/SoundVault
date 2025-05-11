@@ -19,19 +19,20 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { DataTable } from "@/components/ui/data-table";
+import { 
+  Table, 
+  TableBody, 
+  TableCaption, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
 import { UserForm } from "./UserForm";
 import { SoundForm } from "./SoundForm";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { CURRENT_VERSION, VERSION_HISTORY } from "@/hooks/use-update-notification";
-
-// Import column definitions
-import { usersColumns } from "./columns/users-columns";
-import { soundsColumns } from "./columns/sounds-columns";
-import { termsLogsColumns } from "./columns/terms-logs-columns";
-import { userStrikesColumns } from "./columns/user-strikes-columns";
-import { moderationLogsColumns } from "./columns/moderation-logs-columns";
 
 // Import other admin components
 import BlockedWordsManager from "./BlockedWordsManager";
@@ -387,10 +388,53 @@ export function AdminPanel({ open, onOpenChange }: AdminPanelProps) {
                     </div>
                   )}
                   
-                  <DataTable
-                    columns={usersColumns}
-                    data={filteredUsers}
-                  />
+                  <div className="border rounded-md">
+                    <Table>
+                      <TableCaption>A list of all users</TableCaption>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>ID</TableHead>
+                          <TableHead>Username</TableHead>
+                          <TableHead>Full Name</TableHead>
+                          <TableHead>Role</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredUsers.map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell className="font-medium">{user.id}</TableCell>
+                            <TableCell>{user.username}</TableCell>
+                            <TableCell>{user.fullName}</TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant={user.role === "admin" ? "destructive" : "outline"}
+                              >
+                                {user.role}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant={user.approved ? "success" : "secondary"}
+                              >
+                                {user.approved ? "Approved" : "Pending"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditUser(user)}
+                              >
+                                Edit
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               )}
             </TabsContent>
