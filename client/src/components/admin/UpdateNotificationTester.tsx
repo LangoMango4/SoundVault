@@ -6,13 +6,11 @@ import { useUpdateNotification, CURRENT_VERSION } from "@/hooks/use-update-notif
 
 export default function UpdateNotificationTester() {
   const [version, setVersion] = useState(CURRENT_VERSION);
-  const { showUpdateNotification } = useUpdateNotification();
+  const { testShowUpdateNotification } = useUpdateNotification();
   
   const handleTestNotification = () => {
-    // Check if showUpdateNotification exists
-    if (typeof showUpdateNotification === 'function') {
-      showUpdateNotification(version);
-    }
+    // The hook provides testShowUpdateNotification method
+    testShowUpdateNotification();
   };
   
   return (
