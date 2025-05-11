@@ -1,67 +1,69 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, CheckCircle, XCircle } from "lucide-react";
-import { format } from "date-fns";
+import { ArrowUpDown, MoreHorizontal } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-interface UsersColumnsProps {
-  onEdit: (user: any) => void;
-  onDelete: (id: number) => void;
-  onApprove: (user: any) => void;
-  onReject: (user: any) => void;
-}
-
-export const usersColumns = ({ onEdit, onDelete, onApprove, onReject }: UsersColumnsProps): ColumnDef<any>[] => [
+// Define columns for users table
+export const usersColumns: ColumnDef<any>[] = [
   {
     accessorKey: "id",
     header: "ID",
   },
   {
     accessorKey: "username",
-    header: "Username",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Username
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+  },
+  {
+    accessorKey: "role",
+    header: "Role",
   },
   {
     accessorKey: "fullName",
     header: "Full Name",
   },
   {
-    accessorKey: "role",
-    header: "Role",
-    cell: ({ row }) => {
-      const role = row.getValue("role") as string;
-      
-      return (
-        <Badge variant={role === "admin" ? "destructive" : "secondary"}>
-          {role}
-        </Badge>
-      );
-    },
+    accessorKey: "accessLevel",
+    header: "Access Level",
   },
   {
     accessorKey: "approved",
-    header: "Status",
+    header: "Approved",
     cell: ({ row }) => {
       const approved = row.getValue("approved");
-      
       return (
-        <Badge variant={approved ? "success" : "outline"} className={approved ? "bg-green-100 text-green-800 hover:bg-green-100/80" : "bg-amber-100 text-amber-800 hover:bg-amber-100/80"}>
-          {approved ? "Approved" : "Pending"}
-        </Badge>
+        <div className="text-center">
+          {approved ? (
+            <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">Yes</span>
+          ) : (
+            <span className="px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">No</span>
+          )}
+        </div>
       );
     },
   },
   {
     accessorKey: "registration_date",
-    header: "Registered",
+    header: "Registration Date",
     cell: ({ row }) => {
-      const date = row.getValue("registration_date") as string;
-      if (!date) return "N/A";
-      
-      try {
-        return format(new Date(date), "MMM d, yyyy");
-      } catch (e) {
-        return date;
-      }
+      const date = row.getValue("registration_date");
+      return date ? new Date(date as string).toLocaleDateString() : "-";
     },
   },
   {
@@ -69,49 +71,27 @@ export const usersColumns = ({ onEdit, onDelete, onApprove, onReject }: UsersCol
     header: "Actions",
     cell: ({ row }) => {
       const user = row.original;
-      const approved = row.getValue("approved");
       
       return (
-        <div className="flex space-x-2 justify-end">
-          {!approved && (
-            <>
-              <Button 
-                size="icon" 
-                variant="outline" 
-                className="h-8 w-8 bg-green-50 border-green-200 hover:bg-green-100" 
-                onClick={() => onApprove(user)}
-              >
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              </Button>
-              <Button 
-                size="icon" 
-                variant="outline" 
-                className="h-8 w-8 bg-red-50 border-red-200 hover:bg-red-100" 
-                onClick={() => onReject(user)}
-              >
-                <XCircle className="h-4 w-4 text-red-600" />
-              </Button>
-            </>
-          )}
-          
-          <Button 
-            size="icon" 
-            variant="outline" 
-            className="h-8 w-8" 
-            onClick={() => onEdit(user)}
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-          
-          <Button 
-            size="icon" 
-            variant="outline"
-            className="h-8 w-8 border-red-200 hover:bg-red-100 hover:text-red-600"
-            onClick={() => onDelete(user.id)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              onClick={() => navigator.clipboard.writeText(user.id)}
+            >
+              Copy ID
+            </DropdownMenuItem>
+            <DropdownMenuItem>Edit User</DropdownMenuItem>
+            <DropdownMenuItem className="text-red-600">Delete User</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       );
     },
   },

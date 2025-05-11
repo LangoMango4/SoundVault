@@ -14,7 +14,7 @@ export default function TestNotification() {
     toast({
       title: "System Notification",
       description: notificationText,
-      icon: <AlertCircle className="h-5 w-5 text-amber-500" />,
+      // Remove icon prop as it's not in the Toast type
     });
   };
   
@@ -25,7 +25,7 @@ export default function TestNotification() {
       title: "System Error",
       description: notificationText,
       variant: "destructive",
-      icon: <AlertCircle className="h-5 w-5" />,
+      // Remove icon prop as it's not in the Toast type
     });
   };
   

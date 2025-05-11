@@ -9,7 +9,10 @@ export default function UpdateNotificationTester() {
   const { showUpdateNotification } = useUpdateNotification();
   
   const handleTestNotification = () => {
-    showUpdateNotification(version);
+    // Check if showUpdateNotification exists
+    if (typeof showUpdateNotification === 'function') {
+      showUpdateNotification(version);
+    }
   };
   
   return (

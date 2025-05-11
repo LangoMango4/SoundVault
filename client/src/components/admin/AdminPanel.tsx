@@ -388,12 +388,7 @@ export function AdminPanel({ open, onOpenChange }: AdminPanelProps) {
                   )}
                   
                   <DataTable
-                    columns={usersColumns({ 
-                      onEdit: handleEditUser, 
-                      onDelete: (id) => handleDeleteClick(id, "user"),
-                      onApprove: handleApproveUser,
-                      onReject: handleRejectUser
-                    })} 
+                    columns={usersColumns}
                     data={filteredUsers}
                   />
                 </div>
@@ -407,9 +402,7 @@ export function AdminPanel({ open, onOpenChange }: AdminPanelProps) {
                 </div>
               ) : (
                 <DataTable
-                  columns={soundsColumns({ 
-                    onDelete: (id) => handleDeleteClick(id, "sound") 
-                  })} 
+                  columns={soundsColumns}
                   data={filteredSounds}
                 />
               )}
@@ -422,9 +415,7 @@ export function AdminPanel({ open, onOpenChange }: AdminPanelProps) {
                 </div>
               ) : (
                 <DataTable
-                  columns={termsLogsColumns({ 
-                    onDelete: (id) => handleDeleteClick(id, "termslog") 
-                  })} 
+                  columns={termsLogsColumns}
                   data={filteredTermsLogs}
                 />
               )}

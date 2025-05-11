@@ -1,39 +1,64 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
-import { format } from "date-fns";
+import { ArrowUpDown, MoreHorizontal } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-interface TermsLogsColumnsProps {
-  onDelete: (id: number) => void;
-}
-
-export const termsLogsColumns = ({ onDelete }: TermsLogsColumnsProps): ColumnDef<any>[] => [
+// Define columns for terms logs table
+export const termsLogsColumns: ColumnDef<any>[] = [
   {
     accessorKey: "id",
     header: "ID",
   },
   {
-    accessorKey: "username",
-    header: "Username",
+    accessorKey: "userId",
+    header: "User ID",
   },
   {
-    accessorKey: "acceptedAt",
-    header: "Accepted Date",
-    cell: ({ row }) => {
-      const date = row.getValue("acceptedAt") as string;
-      if (!date) return "N/A";
-      
-      try {
-        return format(new Date(date), "MMM d, yyyy h:mm a");
-      } catch (e) {
-        return date;
-      }
+    accessorKey: "username",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Username
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
     },
   },
   {
     accessorKey: "ipAddress",
     header: "IP Address",
-    cell: ({ row }) => row.getValue("ipAddress") || "N/A",
+  },
+  {
+    accessorKey: "userAgent",
+    header: "User Agent",
+    cell: ({ row }) => {
+      const userAgent = row.getValue("userAgent") as string;
+      // Truncate long user agents
+      return userAgent?.length > 30 ? userAgent.substring(0, 30) + "..." : userAgent;
+    },
+  },
+  {
+    accessorKey: "acceptedAt",
+    header: "Accepted At",
+    cell: ({ row }) => {
+      const date = row.getValue("acceptedAt");
+      if (!date) return "-";
+      return new Date(date as string).toLocaleString();
+    },
+  },
+  {
+    accessorKey: "termsVersion",
+    header: "Terms Version",
   },
   {
     id: "actions",
@@ -42,16 +67,29 @@ export const termsLogsColumns = ({ onDelete }: TermsLogsColumnsProps): ColumnDef
       const log = row.original;
       
       return (
-        <div className="flex space-x-2 justify-end">
-          <Button 
-            size="icon" 
-            variant="outline"
-            className="h-8 w-8 border-red-200 hover:bg-red-100 hover:text-red-600"
-            onClick={() => onDelete(log.id)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => navigator.clipboard.writeText(log.id)}
+            >
+              Copy ID
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => navigator.clipboard.writeText(log.ipAddress)}
+            >
+              Copy IP Address
+            </DropdownMenuItem>
+            <DropdownMenuItem className="text-red-600">Delete Log</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       );
     },
   },
