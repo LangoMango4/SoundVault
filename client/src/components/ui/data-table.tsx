@@ -1,5 +1,14 @@
 import React from "react";
 import {
+  ColumnDef,
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  SortingState,
+  flexRender,
+  getPaginationRowModel,
+} from "@tanstack/react-table";
+import {
   Table,
   TableBody,
   TableCell,
@@ -7,64 +16,113 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-interface DataTableColumn<T> {
-  accessorKey: keyof T | ((row: T) => any);
-  header: string;
-  cell?: (row: T) => React.ReactNode;
+interface DataTableProps<TData> {
+  columns: ColumnDef<TData>[];
+  data: TData[];
+  pageSize?: number;
 }
 
-interface DataTableProps<T> {
-  columns: DataTableColumn<T>[];
-  data: T[];
-  onRowClick?: (row: T) => void;
-}
-
-export function DataTable<T>({
+export function DataTable<TData>({
   columns,
   data,
-  onRowClick,
-}: DataTableProps<T>) {
+  pageSize = 10,
+}: DataTableProps<TData>) {
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+
+  const table = useReactTable({
+    data,
+    columns,
+    state: {
+      sorting,
+    },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: {
+      pagination: {
+        pageSize,
+      },
+    },
+  });
+
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            {columns.map((column, index) => (
-              <TableHead key={index}>
-                {column.header}
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
-              </TableCell>
-            </TableRow>
-          ) : (
-            data.map((row, rowIndex) => (
-              <TableRow 
-                key={rowIndex} 
-                className={onRowClick ? "cursor-pointer hover:bg-muted/50" : ""}
-                onClick={onRowClick ? () => onRowClick(row) : undefined}
-              >
-                {columns.map((column, colIndex) => (
-                  <TableCell key={colIndex}>
-                    {column.cell
-                      ? column.cell(row)
-                      : typeof column.accessorKey === "function"
-                      ? column.accessorKey(row)
-                      : (row[column.accessorKey] as React.ReactNode)}
-                  </TableCell>
-                ))}
+    <div>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  );
+                })}
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="flex items-center justify-end space-x-2 py-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <div className="text-sm text-muted-foreground">
+          Page {table.getState().pagination.pageIndex + 1} of{" "}
+          {table.getPageCount()}
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 }
