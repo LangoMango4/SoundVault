@@ -58,16 +58,19 @@ export function Chat() {
     refetchInterval: 1000 // Auto refresh every 1 second to show new messages
   });
   
-  // Use chat notification hook after messages are loaded
-  const { newMessageReceived, resetNotification } = useChatNotification({
-    messages: chatMessages,
-    previousLength: previousMessageCount
-  });
-
-  // Update the previous message count when messages change
+  // Use chat notification hook
+  const { showNotification } = useChatNotification();
+  
+  // Check for new messages and trigger notification
   useEffect(() => {
+    if (chatMessages.length > previousMessageCount && previousMessageCount > 0) {
+      // If we have new messages and it's not the initial load
+      showNotification();
+    }
+    
+    // Update previous message count
     setPreviousMessageCount(chatMessages.length);
-  }, [chatMessages.length]);
+  }, [chatMessages.length, previousMessageCount, showNotification]);
 
   // Scroll to bottom whenever messages change
   useEffect(() => {

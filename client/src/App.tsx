@@ -203,6 +203,11 @@ function NotificationManager() {
 }
 
 function App() {
+  // Set default document title on application load
+  useEffect(() => {
+    document.title = 'Maths Homework';
+  }, []);
+  
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

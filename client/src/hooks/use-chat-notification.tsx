@@ -1,59 +1,63 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
-interface UseChatNotificationProps {
-  messages: any[];
-  previousLength?: number;
+// Default title of the application
+const DEFAULT_TITLE = 'Maths Homework';
+// Title to show when a new chat message arrives
+const NOTIFICATION_TITLE = 'New Chat Notification';
+// Duration to show the notification title (in milliseconds)
+const NOTIFICATION_DURATION = 3500; // 3.5 seconds
+
+export interface UseChatNotificationResult {
+  showNotification: () => void;
 }
 
-export function useChatNotification({ messages, previousLength = 0 }: UseChatNotificationProps) {
-  const [lastLength, setLastLength] = useState(previousLength || messages.length);
-  const [newMessageReceived, setNewMessageReceived] = useState(false);
-
-  // Check for new messages
+export function useChatNotification(): UseChatNotificationResult {
+  const [showingNotification, setShowingNotification] = useState(false);
+  const timeoutRef = useRef<number | null>(null);
+  
+  // Function to clear any existing timeout
+  const clearNotificationTimeout = () => {
+    if (timeoutRef.current) {
+      window.clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
+  
+  // Effect to update document title based on notification state
   useEffect(() => {
-    if (messages.length > lastLength) {
-      setNewMessageReceived(true);
-      // Change the title to show notification
-      document.title = "New Chat Notification";
+    if (showingNotification) {
+      // Update title when notification is active
+      document.title = NOTIFICATION_TITLE;
       
-      // Set a timeout to restore the title after just 2 seconds
-      const timeoutId = setTimeout(() => {
-        if (document.visibilityState === 'visible') {
-          document.title = "Maths Homework";
-          setNewMessageReceived(false);
-        }
-      }, 2000);
-      
-      return () => clearTimeout(timeoutId);
+      // Set timeout to clear notification after duration
+      clearNotificationTimeout();
+      timeoutRef.current = window.setTimeout(() => {
+        setShowingNotification(false);
+      }, NOTIFICATION_DURATION);
+    } else {
+      // Restore default title
+      document.title = DEFAULT_TITLE;
     }
     
-    setLastLength(messages.length);
-  }, [messages.length, lastLength]);
-  
-  // Reset notification when the document becomes visible again
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && newMessageReceived) {
-        document.title = "Maths Homework";
-        setNewMessageReceived(false);
-      }
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
+    // Clean up timeout on component unmount
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearNotificationTimeout();
     };
-  }, [newMessageReceived]);
+  }, [showingNotification]);
   
-  // Manually reset notification
-  const resetNotification = useCallback(() => {
-    document.title = "Maths Homework";
-    setNewMessageReceived(false);
-  }, []);
-  
-  return {
-    newMessageReceived,
-    resetNotification
+  // Function to trigger notification
+  const showNotification = () => {
+    // Only trigger if not already showing notification
+    if (!showingNotification) {
+      setShowingNotification(true);
+    } else {
+      // Reset timer if already showing notification
+      clearNotificationTimeout();
+      timeoutRef.current = window.setTimeout(() => {
+        setShowingNotification(false);
+      }, NOTIFICATION_DURATION);
+    }
   };
+  
+  return { showNotification };
 }
