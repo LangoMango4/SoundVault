@@ -1804,6 +1804,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       userRole: req.user?.role || "none"
     });
   });
+  
+  // Emergency lock endpoint - doesn't require authentication
+  app.get("/api/emergency-lock", async (req, res) => {
+    // Set the screen to locked
+    global.isScreenLocked = true;
+    global.lockReason = "Emergency lock activated";
+    console.log("EMERGENCY LOCK ACTIVATED");
+    res.json({ 
+      locked: global.isScreenLocked,
+      reason: global.lockReason,
+      message: "Website locked successfully"
+    });
+  });
 
   // Special endpoint for the "Unlock for Everyone" feature
   app.post("/api/settings/lock/unlock-all", isAuthenticated, async (req, res, next) => {
