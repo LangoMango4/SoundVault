@@ -60,6 +60,7 @@ export function setupAuth(app: Express) {
         if (!user || !(await comparePasswords(password, user.password))) {
           return done(null, false, { message: "Invalid username or password" });
         }
+        // Allow all users to login regardless of approval status
         return done(null, user);
       } catch (error) {
         return done(error);
