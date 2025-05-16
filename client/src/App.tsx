@@ -11,8 +11,8 @@ import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import { useOnlineStatus } from "./hooks/use-online-status";
 import { OfflineScreen } from "./components/layout/OfflineScreen";
+import { LockScreen } from "./components/layout/LockScreen";
 import { GlobalLayout } from "./components/layout/GlobalLayout";
-import { UpdateNotificationDialog } from "./components/dialogs/UpdateNotificationDialog";
 import { TermsAndConditionsDialog } from "./components/dialogs/TermsAndConditionsDialog";
 import { useUpdateNotification } from "./hooks/use-update-notification";
 import { useToast } from "@/hooks/use-toast";
@@ -198,19 +198,66 @@ function NotificationManager() {
 }
 
 function App() {
+  const [isLocked, setIsLocked] = useState(false);
+  const [lockReason, setLockReason] = useState<string | null>(null);
+  const [adminBypass, setAdminBypass] = useState(false);
+  
   // Set default document title on application load
   useEffect(() => {
     document.title = 'Maths Homework';
   }, []);
+  
+  // Check if screen is locked on load and periodically
+  useEffect(() => {
+    const checkLockStatus = async () => {
+      try {
+        const response = await fetch('/api/settings/lock');
+        const data = await response.json();
+        
+        setIsLocked(data.locked || false);
+        setLockReason(data.reason || null);
+        
+        // Check if this admin has temporary bypass access
+        setAdminBypass(data.hasAdminBypass || false);
+      } catch (error) {
+        console.error('Failed to check lock status:', error);
+      }
+    };
+    
+    // Check immediately on component mount
+    checkLockStatus();
+    
+    // Then check every 10 seconds
+    const interval = setInterval(checkLockStatus, 10000);
+    
+    // Cleanup
+    return () => clearInterval(interval);
+  }, []);
+  
+  // Handle screen unlock (this doesn't change the server state)
+  const handleUnlock = () => {
+    // Don't allow if not an admin with bypass
+    if (!adminBypass) return;
+    
+    // Only temporarily unlock for this admin session
+    setIsLocked(false);
+    
+    // The server's locked state remains TRUE
+    // Other users will still see the locked screen
+  };
   
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ConnectivityChecker />
         <NotificationManager />
-        <GlobalLayout>
-          <Router />
-        </GlobalLayout>
+        {isLocked && !adminBypass ? (
+          <LockScreen onUnlock={handleUnlock} />
+        ) : (
+          <GlobalLayout>
+            <Router />
+          </GlobalLayout>
+        )}
         <Toaster />
       </AuthProvider>
     </QueryClientProvider>

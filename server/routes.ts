@@ -1816,12 +1816,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/settings/lock", async (req, res) => {
     // Add debug info about authentication status
     const isAdminUser = req.isAuthenticated() && req.user?.role === "admin";
+    
+    // Check if this admin has temporary bypass access
+    let hasAdminBypass = false;
+    if (isAdminUser && global.adminBypass && Array.isArray(global.adminBypass)) {
+      hasAdminBypass = global.adminBypass.includes(req.user.id);
+    }
+    
     res.json({ 
       locked: global.isScreenLocked || false,
       reason: global.lockReason || null,
       isAdminUser: isAdminUser,
       isAuthenticated: req.isAuthenticated(),
-      userRole: req.user?.role || "none"
+      userRole: req.user?.role || "none",
+      hasAdminBypass: hasAdminBypass
     });
   });
   
@@ -1847,10 +1855,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.isAuthenticated() && req.user.role === "admin" && pin === "2012") {
         global.isScreenLocked = false;
         global.lockReason = null; // Clear the reason when unlocking for everyone
+        global.adminBypass = []; // Clear all admin bypasses
         return res.json({ locked: false, reason: null, success: true });
       } else {
         return res.status(403).json({ 
           message: "Forbidden: Admin access with correct PIN required to unlock for everyone",
+          success: false
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // New endpoint for admin-only temporary access without unlocking for everyone
+  app.post("/api/settings/lock/admin-only-access", isAuthenticated, async (req, res, next) => {
+    try {
+      const { pin } = req.body;
+      
+      // Only admin users with the correct PIN can get temporary access
+      if (req.isAuthenticated() && req.user.role === "admin" && pin === "2012") {
+        // Initialize admin bypass array if not exists
+        if (!global.adminBypass) {
+          global.adminBypass = [];
+        }
+        
+        // Add this admin to the bypass list (if not already there)
+        if (!global.adminBypass.includes(req.user.id)) {
+          global.adminBypass.push(req.user.id);
+        }
+        
+        // Keep the screen locked for everyone else
+        return res.json({ 
+          locked: true, 
+          adminBypass: true, 
+          success: true,
+          message: "Temporary admin access granted while keeping the site locked for others"
+        });
+      } else {
+        return res.status(403).json({ 
+          message: "Forbidden: Admin access with correct PIN required for temporary access",
           success: false
         });
       }
