@@ -180,24 +180,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Username already exists" });
       }
       
+      // Check if this IP address has already registered a user (limit one registration per IP)
+      const ipAddress = req.ip || req.connection.remoteAddress;
+      const usersWithSameIP = await storage.getUsersByRegistrationIP(ipAddress);
+      
+      if (usersWithSameIP && usersWithSameIP.length > 0) {
+        return res.status(400).json({ 
+          message: "Only one registration is allowed. Please contact an administrator if you need another account." 
+        });
+      }
+      
       // Hash password
       const hashedPassword = await hashPassword(password);
       
       // Record the plaintext password for admin use
       recordPlaintextPassword(username, password);
       
-      // Create user (not yet approved)
+      // Create user (not yet approved but can still access the site)
       const user = await storage.createUser({
         username,
         password: hashedPassword,
-        approved: false, // Users need admin approval
+        approved: false, // Users need admin approval but can still login
+        registrationIP: ipAddress,
         ...rest
+      });
+      
+      // Auto-login the user after registration
+      req.login(user, (loginErr) => {
+        if (loginErr) {
+          console.error('Error logging in after registration:', loginErr);
+        }
       });
       
       const { password: _, ...safeUser } = user;
       return res.status(201).json({ 
         ...safeUser,
-        message: "Registration successful! Your account is pending approval by an administrator." 
+        message: "Registration successful! Your account is awaiting approval, but you can use the site now with limited access." 
       });
     } catch (error) {
       next(error);

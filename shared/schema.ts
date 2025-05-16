@@ -25,6 +25,7 @@ export const users = pgTable("users", {
   // possible values: "basic", "limited", "full"
   approved: boolean("approved").notNull().default(false),
   registrationDate: timestamp("registration_date").defaultNow().notNull(),
+  registrationIP: text("registration_ip"),
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({

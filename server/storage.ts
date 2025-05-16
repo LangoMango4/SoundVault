@@ -433,6 +433,10 @@ export class MemStorage implements IStorage {
   async getPendingUsers(): Promise<User[]> {
     return Array.from(this.users.values()).filter(user => user.approved === false);
   }
+  
+  async getUsersByRegistrationIP(ipAddress: string): Promise<User[]> {
+    return Array.from(this.users.values()).filter(user => user.registrationIP === ipAddress);
+  }
 
   // Category CRUD operations
   async getCategory(id: number): Promise<Category | undefined> {
