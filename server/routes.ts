@@ -181,12 +181,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check if this IP address has already registered a user (limit one registration per IP)
-      const ipAddress = req.ip || req.connection.remoteAddress;
+      const ipAddress = req.ip || req.connection.remoteAddress || "unknown";
       const usersWithSameIP = await storage.getUsersByRegistrationIP(ipAddress);
       
       if (usersWithSameIP && usersWithSameIP.length > 0) {
         return res.status(400).json({ 
-          message: "Only one registration is allowed. Please contact an administrator if you need another account." 
+          message: "Only one registration is allowed per user. Please contact an administrator if you need another account." 
         });
       }
       
@@ -201,9 +201,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         username,
         password: hashedPassword,
         approved: false, // Users need admin approval but can still login
-        registrationIP: ipAddress,
         ...rest
       });
+      
+      // Track the registration IP
+      storage.trackRegistrationIP(ipAddress, user.id);
       
       // Auto-login the user after registration
       req.login(user, (loginErr) => {

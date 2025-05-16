@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Lock, ShieldCheck, Key, LogOut } from "lucide-react";
+import { Lock, ShieldCheck, Key, LogOut, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -87,14 +87,19 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
     if (adminPin === ADMIN_PIN) {
       try {
         // This doesn't change the global lock state, just unlocks for this admin
-        // We don't make an API request to change locked state for everyone
-        
         // Store in sessionStorage that this is a temporary admin-only unlock
         sessionStorage.setItem('temporaryUnlock', 'true');
         
+        // Make API request to record that an admin made a temporary unlock
+        // but the global state is still locked
+        await apiRequest("POST", "/api/settings/lock/admin-only-access", { 
+          pin: ADMIN_PIN,
+          adminId: user?.id
+        });
+        
         toast({
           title: "Admin Access Granted",
-          description: "The website has been unlocked for your admin session only.",
+          description: "The website has been unlocked for your admin session only. Site remains locked for all other users.",
         });
         setAdminPin("");
         setError("");

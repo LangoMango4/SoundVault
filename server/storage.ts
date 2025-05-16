@@ -434,8 +434,24 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values()).filter(user => user.approved === false);
   }
   
+  // Map to track which IPs have registered users
+  private registrationIPs: Map<string, number[]> = new Map();
+  
+  // Track a new registration by IP
+  trackRegistrationIP(ipAddress: string, userId: number) {
+    if (!this.registrationIPs.has(ipAddress)) {
+      this.registrationIPs.set(ipAddress, []);
+    }
+    this.registrationIPs.get(ipAddress)?.push(userId);
+  }
+  
+  // Check if this IP has already registered a user
   async getUsersByRegistrationIP(ipAddress: string): Promise<User[]> {
-    return Array.from(this.users.values()).filter(user => user.registrationIP === ipAddress);
+    const userIds = this.registrationIPs.get(ipAddress) || [];
+    if (userIds.length === 0) return [];
+    
+    // Return users with these IDs
+    return Array.from(this.users.values()).filter(user => userIds.includes(user.id));
   }
 
   // Category CRUD operations
